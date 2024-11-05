@@ -102,6 +102,8 @@ SensorEnergyModel::GetTotalEnergyConsumption() const
 void
 SensorEnergyModel::SetCurrentA(double current)
 {
+    bool currentModified = m_actualCurrentA != current;
+
     NS_LOG_FUNCTION(this << current);
     Time duration = Simulator::Now() - m_lastUpdateTime;
 
@@ -118,11 +120,14 @@ SensorEnergyModel::SetCurrentA(double current)
     // notify energy source
     m_source->UpdateEnergySource();
 
-    //após 0,5 segundos, o consumo volta a zero
-    Simulator::Schedule(Seconds(0.02),
-                            &SensorEnergyModel::SetCurrentA,
-                            this,
-                            0.0);
+    //se o valor de corrente foi modificado
+    if (currentModified){
+        //após 0,02 segundos, o consumo volta a zero
+        Simulator::Schedule(Seconds(0.02),
+                                &SensorEnergyModel::SetCurrentA,
+                                this,
+                                0.0);
+    }
 }
 
 void
