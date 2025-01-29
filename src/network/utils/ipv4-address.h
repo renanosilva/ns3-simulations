@@ -99,6 +99,8 @@ class Ipv4Address
      */
     void Print(std::ostream& os) const;
 
+    std::string toString() const;
+
     /**
      * \return true if address is initialized (i.e., set to something), false otherwise
      */

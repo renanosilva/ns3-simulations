@@ -327,6 +327,18 @@ Ipv4Address::Print(std::ostream& os) const
        << ((m_address >> 8) & 0xff) << "." << ((m_address >> 0) & 0xff);
 }
 
+std::string
+Ipv4Address::toString() const
+{
+    NS_LOG_FUNCTION(this);
+
+    std::stringstream s;
+    s << ((m_address >> 24) & 0xff) << "." << ((m_address >> 16) & 0xff) << "."
+       << ((m_address >> 8) & 0xff) << "." << ((m_address >> 0) & 0xff);
+
+    return s.str();
+}
+
 bool
 Ipv4Address::IsMatchingType(const Address& address)
 {

@@ -7,6 +7,8 @@ build_lib(
     helper/three-gpp-http-helper.cc
     helper/udp-client-server-helper.cc
     helper/udp-echo-helper.cc
+    helper/node-app-helper.cc
+    helper/checkpoint-helper.cc
     model/application-packet-probe.cc
     model/bulk-send-application.cc
     model/onoff-application.cc
@@ -24,6 +26,16 @@ build_lib(
     model/udp-echo-server.cc
     model/udp-server.cc
     model/udp-trace-client.cc
+    model/battery-node-app.cc
+    model/client-node-app.cc
+    model/battery.cc
+    model/energy-generator.cc
+    model/fixed-energy-generator.cc
+    model/circular-energy-generator.cc
+    model/checkpoint-strategy.cc
+    model/sync-predefined-times-checkpoint.cc
+    exception/node-asleep-exception.cc
+    exception/node-depleted-exception.cc
   HEADER_FILES
     helper/bulk-send-helper.h
     helper/on-off-helper.h
@@ -31,6 +43,8 @@ build_lib(
     helper/three-gpp-http-helper.h
     helper/udp-client-server-helper.h
     helper/udp-echo-helper.h
+    helper/node-app-helper.h
+    helper/checkpoint-helper.h
     model/application-packet-probe.h
     model/bulk-send-application.h
     model/onoff-application.h
@@ -48,6 +62,16 @@ build_lib(
     model/udp-echo-server.h
     model/udp-server.h
     model/udp-trace-client.h
+    model/battery-node-app.h
+    model/client-node-app.h
+    model/battery.h
+    model/energy-generator.h
+    model/fixed-energy-generator.h
+    model/circular-energy-generator.h
+    model/checkpoint-strategy.h
+    model/sync-predefined-times-checkpoint.h
+    exception/node-asleep-exception.h
+    exception/node-depleted-exception.h
   LIBRARIES_TO_LINK ${libinternet}
   TEST_SOURCES
     test/three-gpp-http-client-server-test.cc
