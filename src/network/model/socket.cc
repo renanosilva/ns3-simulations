@@ -958,4 +958,34 @@ SocketIpv6TclassTag::Print(std::ostream& os) const
     os << "IPV6_TCLASS = " << m_ipv6Tclass;
 }
 
+void to_json(json& j, const Socket& obj) {
+    j = json{
+        {"m_priority", obj.m_priority}, 
+        {"m_manualIpTtl", obj.m_manualIpTtl},
+        {"m_ipRecvTos", obj.m_ipRecvTos},
+        {"m_ipRecvTtl", obj.m_ipRecvTtl},
+        {"m_ipTos", obj.m_ipTos},
+        {"m_ipTtl", obj.m_ipTtl},
+        {"m_manualIpv6Tclass", obj.m_manualIpv6Tclass},
+        {"m_ipv6RecvTclass", obj.m_ipv6RecvTclass},
+        {"m_ipv6RecvHopLimit", obj.m_ipv6RecvHopLimit},
+        {"m_ipv6Tclass", obj.m_ipv6Tclass},
+        {"m_ipv6HopLimit", obj.m_ipv6HopLimit}
+    };
+}
+
+void from_json(const json& j, Socket& obj) {
+    j.at("m_priority").get_to(obj.m_priority);
+    j.at("m_manualIpTtl").get_to(obj.m_manualIpTtl);
+    j.at("m_ipRecvTos").get_to(obj.m_ipRecvTos);
+    j.at("m_ipRecvTtl").get_to(obj.m_ipRecvTtl);
+    j.at("m_ipTos").get_to(obj.m_ipTos);
+    j.at("m_ipTtl").get_to(obj.m_ipTtl);
+    j.at("m_manualIpv6Tclass").get_to(obj.m_manualIpv6Tclass);
+    j.at("m_ipv6RecvTclass").get_to(obj.m_ipv6RecvTclass);
+    j.at("m_ipv6RecvHopLimit").get_to(obj.m_ipv6RecvHopLimit);
+    j.at("m_ipv6Tclass").get_to(obj.m_ipv6Tclass);
+    j.at("m_ipv6HopLimit").get_to(obj.m_ipv6HopLimit);
+}
+
 } // namespace ns3

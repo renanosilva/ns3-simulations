@@ -139,4 +139,16 @@ Application::AssignStreams(int64_t stream)
     return 0;
 }
 
+json Application::to_json() const {
+    return json{
+        /* até o momento não é necessário gravar nada 
+        referente à classe Application para fins de
+        checkpointing */
+    };
+}
+
+void Application::from_json(const json& j) {
+    //TODO
+}
+
 } // namespace ns3

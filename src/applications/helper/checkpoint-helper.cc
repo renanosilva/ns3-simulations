@@ -24,6 +24,7 @@
 #include <fstream>
 #include <dirent.h>
 #include "ns3/simulator.h"
+#include "ns3/battery-node-app.h"
 
 using namespace std;
 
@@ -81,7 +82,8 @@ void CheckpointHelper::writeCheckpoint(string data){
 }
 
 void CheckpointHelper::writeCheckpoint(Application *app){
-    nlohmann::json j = to_json(app);
+    //nlohmann::json j = to_json(app);
+    json j = app->to_json();
 
     writeFile(getCheckpointFilename(counter), j);
     counter++;
@@ -137,15 +139,16 @@ string CheckpointHelper::getLogBasename(){
     return checkpointBaseName + "-log";
 }
 
-json CheckpointHelper::to_json(const Application *app) {
-    nlohmann::json j = json{{"m_startTime", "teste"}, {"address", "teste2"}};
-    return j;
+void to_json(json& j, const CheckpointHelper& obj) {
+    j = json{
+        {"checkpointBaseName", obj.checkpointBaseName}, 
+        {"counter", obj.counter}
+    };
 }
 
-void CheckpointHelper::from_json(const json& j, Application& app) {
-    /*j.at("m_startTime").get_to(app.name);
-    j.at("address").get_to(app.address);
-    j.at("age").get_to(app.age);*/
+void from_json(const json& j, CheckpointHelper& obj) {
+    j.at("checkpointBaseName").get_to(obj.checkpointBaseName);
+    j.at("counter").get_to(obj.counter);
 }
 
 } // namespace ns3

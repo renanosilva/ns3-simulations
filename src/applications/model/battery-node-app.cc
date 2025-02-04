@@ -21,7 +21,7 @@
 #include "seq-ts-header.h"
 
 #include "fixed-energy-generator.h"
-//#include "circular-energy-generator.h"
+#include "circular-energy-generator.h"
 
 #include "ns3/sync-predefined-times-checkpoint.h"
 
@@ -35,8 +35,6 @@
 #include "ns3/packet.h"
 #include "ns3/simulator.h"
 #include "ns3/socket-factory.h"
-#include "ns3/socket.h"
-#include "ns3/udp-socket.h"
 #include "ns3/uinteger.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -124,7 +122,7 @@ BatteryNodeApp::~BatteryNodeApp()
 {
     NS_LOG_FUNCTION(this);
     m_socket = nullptr;
-    m_socket6 = nullptr;
+    //m_socket6 = nullptr;
 
     delete energyGenerator;
 }
@@ -186,7 +184,7 @@ BatteryNodeApp::StartApplication()
         }
     }
 
-    if (!m_socket6)
+    /*if (!m_socket6)
     {
         TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
         m_socket6 = Socket::CreateSocket(GetNode(), tid);
@@ -208,11 +206,11 @@ BatteryNodeApp::StartApplication()
                 NS_FATAL_ERROR("Error: Failed to join multicast group");
             }
         }
-    }
+    }*/
 
     m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
     m_socket->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
-    m_socket6->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
+    //m_socket6->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
 
     NS_LOG_INFO("Nó servidor a bateria conectado.");
     decreaseConnectEnergy();
@@ -228,11 +226,11 @@ BatteryNodeApp::StopApplication()
         m_socket->Close();
         m_socket->SetRecvCallback(MakeNullCallback<void, Ptr<Socket>>());
     }
-    if (m_socket6)
+    /*if (m_socket6)
     {
         m_socket6->Close();
         m_socket6->SetRecvCallback(MakeNullCallback<void, Ptr<Socket>>());
-    }
+    }*/
 }
 
 void
@@ -434,6 +432,74 @@ void BatteryNodeApp::decreaseCurrentModeEnergy(){
     Simulator::Schedule(energyUpdateInterval,
                                 &BatteryNodeApp::decreaseCurrentModeEnergy,
                                 this);
+}
+
+json BatteryNodeApp::to_json() const {
+    
+    json j = Application::to_json();
+    j["m_port"] = m_port;
+    j["m_tos"] = m_tos;
+    j["m_received"] = m_received;
+    j["idleEnergyConsumption"] = idleEnergyConsumption;
+    j["sleepEnergyConsumption"] = sleepEnergyConsumption;
+    j["battery"] = battery;
+    j["m_local"] = m_local;
+    j["m_lossCounter"] = m_lossCounter;
+    j["energyUpdateInterval"] = energyUpdateInterval.GetTimeStep(); 
+    j["currentMode"] = currentMode;
+
+    j = energyGeneratorToJson(j);
+    j = checkpointStrategyToJson(j);
+    j = socketToJson(j);
+
+    return j;
+}
+
+json BatteryNodeApp::energyGeneratorToJson(json j) const {
+    FixedEnergyGenerator* feg = dynamic_cast<FixedEnergyGenerator*>(energyGenerator);
+
+    if (feg) {
+        j["energyGenerator"] = *feg;
+    } else {
+        CircularEnergyGenerator* ceg = dynamic_cast<CircularEnergyGenerator*>(energyGenerator);
+
+        if (ceg){
+            j["energyGenerator"] = *ceg;
+        } else {
+            j["energyGenerator"] = *energyGenerator;
+        }
+    }
+
+    return j;
+}
+
+json BatteryNodeApp::checkpointStrategyToJson(json j) const {
+    SyncPredefinedTimesCheckpoint* sptc = dynamic_cast<SyncPredefinedTimesCheckpoint*>(checkpointStrategy);
+
+    if (sptc) {
+        j["checkpointStrategy"] = *sptc;
+    } else {
+        j["checkpointStrategy"] = *checkpointStrategy;
+    }
+
+    return j;
+}
+
+json BatteryNodeApp::socketToJson(json j) const {
+    UdpSocket* us = dynamic_cast<UdpSocket*>(m_socket.operator->());
+
+    if (us) {
+        j["m_socket"] = *us;
+    } else {
+        j["m_socket"] = *m_socket;
+    }
+
+    return j;
+}
+
+void BatteryNodeApp::from_json(const json& j) {
+    //Application::from_json(j);  // Desserializa os membros da classe base
+    //j.at("idleEnergyConsumption").get_to(idleEnergyConsumption);  // Desserializa o membro da classe derivada
 }
 
 /*void BatteryNodeApp::addLog(bool sent, uint32_t bytes, Address from, uint32_t seqNumber, uint64_t uid) {

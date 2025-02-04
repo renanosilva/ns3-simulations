@@ -94,11 +94,11 @@ class CheckpointHelper
      * */
     string readCheckpoint(int index);
 
-    /** Especifica como um objeto da classe Application deve ser convertido em JSON (para checkpointing) */
-    json to_json(const Application *app);
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const CheckpointHelper& obj);
 
-    /** Especifica como um JSON pode ser convertido em objeto da classe Application. */
-    void from_json(const json& j, Application& app);
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, CheckpointHelper& obj);
 
   private:
 

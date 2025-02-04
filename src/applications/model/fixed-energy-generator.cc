@@ -54,4 +54,13 @@ double FixedEnergyGenerator::getValue() {
     return value;
 }
 
+void to_json(json& j, const FixedEnergyGenerator& obj) {
+    to_json(j, static_cast<const EnergyGenerator&>(obj));
+    j["value"] = obj.value;
+}
+
+void from_json(const json& j, FixedEnergyGenerator& obj) {
+    j.at("value").get_to(obj.value);
+}
+
 } // Namespace ns3

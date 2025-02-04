@@ -91,4 +91,16 @@ void Battery::decrementEnergy(double amount){
                 ". Energia restante: " << to_string(remainingEnergy));
 }
 
+void to_json(json& j, const Battery& b) {
+    j = nlohmann::json{
+        {"maxCapacity", b.maxCapacity}, 
+        {"remainingEnergy", b.remainingEnergy}
+    };
+}
+
+void from_json(const json& j, Battery& b) {
+    j.at("maxCapacity").get_to(b.maxCapacity);
+    j.at("remainingEnergy").get_to(b.remainingEnergy);
+}
+
 } // Namespace ns3

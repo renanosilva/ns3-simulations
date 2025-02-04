@@ -49,4 +49,14 @@ double EnergyGenerator::getValue(){
     return 0;
 }
 
+void to_json(json& j, const EnergyGenerator& obj) {
+    j = json{
+        //até o momento não é necessário converter nada
+    };
+}
+
+void from_json(const json& j, EnergyGenerator& obj) {
+    //até o momento não é necessário converter nada
+}
+
 } // Namespace ns3

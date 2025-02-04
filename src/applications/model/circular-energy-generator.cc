@@ -50,4 +50,13 @@ double CircularEnergyGenerator::getValue() {
     return v;
 }
 
+void to_json(json& j, const CircularEnergyGenerator& obj) {
+    to_json(j, static_cast<const EnergyGenerator&>(obj));
+    j["i"] = obj.i;
+}
+
+void from_json(const json& j, CircularEnergyGenerator& obj) {
+    j.at("i").get_to(obj.i);
+}
+
 } // Namespace ns3

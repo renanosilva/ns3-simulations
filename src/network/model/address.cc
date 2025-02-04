@@ -302,4 +302,18 @@ operator>>(std::istream& is, Address& address)
     return is;
 }
 
+void to_json(json& j, const Address& a) {
+    j = nlohmann::json{
+        {"m_type", a.m_type}, 
+        {"m_len", a.m_len},
+        {"m_data", a.m_data}
+    };
+}
+
+void from_json(const json& j, Address& a) {
+    j.at("m_type").get_to(a.m_type);
+    j.at("m_len").get_to(a.m_len);
+    j.at("m_data").get_to(a.m_data);
+}
+
 } // namespace ns3

@@ -127,4 +127,20 @@ PacketLossCounter::NotifyReceived(uint32_t seqNum)
     }
 }
 
+void to_json(json& j, const PacketLossCounter& obj) {
+    j = json{
+        {"m_lost", obj.m_lost}, 
+        {"m_bitMapSize", obj.m_bitMapSize},
+        {"m_lastMaxSeqNum", obj.m_lastMaxSeqNum},
+        {"m_receiveBitMap", *obj.m_receiveBitMap}
+    };
+}
+
+void from_json(const json& j, PacketLossCounter& obj) {
+    j.at("m_lost").get_to(obj.m_lost);
+    j.at("m_bitMapSize").get_to(obj.m_bitMapSize);
+    j.at("m_lastMaxSeqNum").get_to(obj.m_lastMaxSeqNum);
+    j.at("m_receiveBitMap").get_to(*obj.m_receiveBitMap);
+}
+
 } // namespace ns3

@@ -28,6 +28,10 @@
 #include <ostream>
 #include <stdint.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -231,6 +235,12 @@ class Address
      * The input address buffer is expected to be in host byte order format.
      */
     void Deserialize(TagBuffer buffer);
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const Address& a);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, Address& a);
 
   private:
     /**

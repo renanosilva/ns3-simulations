@@ -71,6 +71,12 @@ class CheckpointStrategy : public Object
     /** Obtém os dados a serem armazenados no próximo log. */
     string getLogData();
 
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const CheckpointStrategy& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, CheckpointStrategy& obj);
+
   protected:
 
     /** Auxilia a manipular os arquivos de checkpoint e logs. */

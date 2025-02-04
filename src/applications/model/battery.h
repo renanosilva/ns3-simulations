@@ -27,6 +27,10 @@
 #include <ns3/simulator.h>
 #include <ns3/trace-source-accessor.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -48,6 +52,12 @@ class Battery : public Object
     
     void decrementEnergy(double amount); //descarrega a bateria, de acordo com o valor informado
     void rechargeEnergy(double amount); //recarrega a bateria, de acordo com o valor informado
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const Battery& b);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, Battery& b);
 
   private:
 

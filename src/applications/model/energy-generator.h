@@ -22,6 +22,10 @@
 #include "ns3/type-id.h"
 #include <ns3/double.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -40,6 +44,12 @@ class EnergyGenerator : public Object
 
     /** Obtém o valor de energia gerada. */
     virtual double getValue(); 
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const EnergyGenerator& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, EnergyGenerator& obj);
 
 };
 

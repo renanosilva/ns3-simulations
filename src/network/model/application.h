@@ -26,6 +26,9 @@
 #include "ns3/nstime.h"
 #include "ns3/object.h"
 #include "ns3/ptr.h"
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace ns3
 {
@@ -132,6 +135,18 @@ class Application : public Object
     typedef void (*StateTransitionCallback)(const std::string& oldState,
                                             const std::string& newState);
 
+    /** 
+     * Função para converter a classe em JSON. Irá escrever os atributos das classes filhas.
+     * NÃO ALTERAR A ASSINATURA DESTE MÉTODO!
+     */
+    virtual json to_json() const;
+
+    /** 
+     * Função para converter JSON nesta classe.
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     */
+    virtual void from_json(const json& j);
+
   private:
     /**
      * \brief Application specific startup code
@@ -160,6 +175,7 @@ class Application : public Object
     Time m_stopTime;      //!< The simulation time that the application will end
     EventId m_startEvent; //!< The event that will fire at m_startTime to start the application
     EventId m_stopEvent;  //!< The event that will fire at m_stopTime to end the application
+
 };
 
 } // namespace ns3

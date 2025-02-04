@@ -57,6 +57,18 @@ void CheckpointStrategy::writeCheckpoint(){
     
 }
 
+void to_json(json& j, const CheckpointStrategy& obj) {
+    j = json{
+        {"checkpointHelper", *obj.checkpointHelper}, 
+        {"logData", obj.logData}
+    };
+}
+
+void from_json(const json& j, CheckpointStrategy& obj) {
+    j.at("checkpointHelper").get_to(*obj.checkpointHelper);
+    j.at("logData").get_to(obj.logData);
+}
+
 void CheckpointStrategy::setLogData(string data){
     logData = data;
 }

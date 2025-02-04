@@ -21,6 +21,8 @@
 #include "packet-loss-counter.h"
 
 #include "ns3/address.h"
+#include "ns3/socket.h"
+#include "ns3/udp-socket.h"
 #include "ns3/application.h"
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
@@ -30,6 +32,8 @@
 #include "ns3/checkpoint-helper.h"
 #include "ns3/checkpoint-strategy.h"
 #include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace ns3
 {
@@ -91,6 +95,27 @@ class BatteryNodeApp : public Application
      */
     void SetPacketWindowSize(uint16_t size);
 
+    /** 
+     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     * */
+    json to_json() const;
+    
+    /** 
+     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+    */
+    void from_json(const json& j);
+
+    /** Converte o gerador de energia desta classe em JSON. */
+    json energyGeneratorToJson(json j) const;
+    
+    /** Converte a estratégia de checkpoint desta classe em JSON. */
+    json checkpointStrategyToJson(json j) const;
+
+    /** Converte o socket desta classe em JSON. */
+    json socketToJson(json j) const;
+
   private:
     void StartApplication() override;
     void StopApplication() override;
@@ -107,7 +132,7 @@ class BatteryNodeApp : public Application
     uint16_t m_port;       //!< Port on which we listen for incoming packets.
     uint8_t m_tos;         //!< The packets Type of Service
     Ptr<Socket> m_socket;  //!< IPv4 Socket
-    Ptr<Socket> m_socket6; //!< IPv6 Socket
+    //Ptr<Socket> m_socket6; //!< IPv6 Socket
     Address m_local;       //!< local multicast address
     uint64_t m_received;             //!< Number of received packets
     PacketLossCounter m_lossCounter; //!< Lost packet counter

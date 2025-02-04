@@ -66,6 +66,12 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     
     virtual void writeLog() override; 
 
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj);
+
   private:
 
     /** Intervalo de tempo no qual serão criados checkpoints. */

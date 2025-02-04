@@ -41,6 +41,12 @@ class CircularEnergyGenerator : public EnergyGenerator
 
     virtual double getValue() override; 
 
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const CircularEnergyGenerator& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, CircularEnergyGenerator& obj);
+
   private:
 
     /** Valores de energia a serem gerados */

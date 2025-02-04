@@ -27,6 +27,10 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -72,6 +76,12 @@ class PacketLossCounter
      * \param size The window size. Must be a multiple of 8.
      */
     void SetBitMapSize(uint16_t size);
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const PacketLossCounter& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, PacketLossCounter& obj);
 
   private:
     /**

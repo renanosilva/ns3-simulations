@@ -16,6 +16,7 @@
  */
 
 #include "sync-predefined-times-checkpoint.h"
+#include "ns3/battery-node-app.h"
 #include "ns3/simulator.h"
 
 namespace ns3
@@ -90,6 +91,21 @@ void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
     Simulator::Schedule(delay,
                                 &SyncPredefinedTimesCheckpoint::writeCheckpoint,
                                 this);
+}
+
+void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {
+    to_json(j, static_cast<const CheckpointStrategy&>(obj));
+    j["interval"] = obj.interval.GetTimeStep();
+    j["app.typeid.uid"] = obj.app->GetTypeId().GetUid();
+}
+
+void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj) {
+    double v = 0.;
+    j.at("interval").get_to(v);
+    Time t = Time(v);
+    
+    obj.interval = t;
+    obj.app->from_json(j);
 }
 
 } // Namespace ns3
