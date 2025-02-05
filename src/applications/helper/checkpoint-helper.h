@@ -94,6 +94,9 @@ class CheckpointHelper
      * */
     string readCheckpoint(int index);
 
+    /** Pula um checkpoint e registra esse fato, incrementando o contador de checkpoints. */
+    void skipCheckpoint();
+
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointHelper& obj);
 

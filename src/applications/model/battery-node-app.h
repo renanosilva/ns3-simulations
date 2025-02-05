@@ -31,6 +31,7 @@
 #include "ns3/energy-generator.h"
 #include "ns3/checkpoint-helper.h"
 #include "ns3/checkpoint-strategy.h"
+#include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -107,14 +108,12 @@ class BatteryNodeApp : public Application
     */
     void from_json(const json& j);
 
-    /** Converte o gerador de energia desta classe em JSON. */
-    json energyGeneratorToJson(json j) const;
-    
-    /** Converte a estratégia de checkpoint desta classe em JSON. */
-    json checkpointStrategyToJson(json j) const;
+    /** Diminui a energia da bateria referente à criação de um checkpoint */
+    void decreaseCheckpointEnergy(); 
 
-    /** Converte o socket desta classe em JSON. */
-    json socketToJson(json j) const;
+    bool isSleeping();
+    
+    bool isDepleted();
 
   private:
     void StartApplication() override;
@@ -171,8 +170,8 @@ class BatteryNodeApp : public Application
     void decreaseSendEnergy();
     
     /** Diminui a energia da bateria referente à conexão de um socket */
-    void decreaseConnectEnergy(); 
-    
+    void decreaseConnectEnergy();
+
     /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
     void decreaseEnergy(double amount);
     
@@ -183,8 +182,7 @@ class BatteryNodeApp : public Application
     void generateEnergy();
 
     Mode getCurrentMode();
-    bool isSleeping();
-    bool isDepleted();
+   
     Time getEnergyUpdateInterval();
 
 };

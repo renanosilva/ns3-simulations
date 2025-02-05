@@ -54,10 +54,10 @@ class Battery : public Object
     void rechargeEnergy(double amount); //recarrega a bateria, de acordo com o valor informado
 
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const Battery& b);
+    friend void to_json(json& j, const Battery& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, Battery& b);
+    friend void from_json(const json& j, Battery& obj);
 
   private:
 

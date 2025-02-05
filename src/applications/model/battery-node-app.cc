@@ -99,8 +99,8 @@ BatteryNodeApp::BatteryNodeApp()
     sleepEnergyConsumption = 1;
     currentMode = NORMAL;
 
-    energyGenerator = new FixedEnergyGenerator(40);
-    //energyGenerator = new CircularEnergyGenerator();
+    //energyGenerator = new FixedEnergyGenerator(100);
+    energyGenerator = new CircularEnergyGenerator();
 
     NS_LOG_INFO("Iniciando nó a bateria... Energia inicial: " << battery.getRemainingEnergy());
 
@@ -326,7 +326,7 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
             //NS_LOG_INFO("Tarefa incompleta por estar em modo SLEEP.");
             continue;
         } catch (NodeDepletedException& e) {
-            //NS_LOG_INFO("Tarefa incompleta por estar em modo SLEEP.");
+            //NS_LOG_INFO("Tarefa incompleta por estar em modo DEPLETED.");
             continue;
         } 
         
@@ -374,7 +374,7 @@ void BatteryNodeApp::checkModeChange(){
 
         throw NodeAsleepException("Bateria entrou em modo SLEEP.");
 
-    } else if (battery.getBatteryPercentage() > 10 && currentMode != Mode::NORMAL){
+    } else if (battery.getBatteryPercentage() > 20 && currentMode != Mode::NORMAL){
         currentMode = Mode::NORMAL;
 
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", nó entrou em modo NORMAL.");
@@ -390,6 +390,10 @@ void BatteryNodeApp::decreaseEnergy(double amount) {
     battery.decrementEnergy(amount);
 
     checkModeChange();
+}
+
+void BatteryNodeApp::decreaseCheckpointEnergy(){
+    decreaseEnergy(CREATE_CHECKPOINT_ENERGY);
 }
 
 void BatteryNodeApp::decreaseReadEnergy(){
@@ -445,47 +449,16 @@ json BatteryNodeApp::to_json() const {
     j["battery"] = battery;
     j["m_local"] = m_local;
     j["m_lossCounter"] = m_lossCounter;
-    j["energyUpdateInterval"] = energyUpdateInterval.GetTimeStep(); 
     j["currentMode"] = currentMode;
 
-    j = energyGeneratorToJson(j);
-    j = checkpointStrategyToJson(j);
-    j = socketToJson(j);
+    j = timeToJson(j, "energyUpdateInterval", energyUpdateInterval);
+    j = energyGeneratorToJson(j, energyGenerator);
+    j = checkpointStrategyToJson(j, checkpointStrategy);
 
     return j;
 }
 
-json BatteryNodeApp::energyGeneratorToJson(json j) const {
-    FixedEnergyGenerator* feg = dynamic_cast<FixedEnergyGenerator*>(energyGenerator);
-
-    if (feg) {
-        j["energyGenerator"] = *feg;
-    } else {
-        CircularEnergyGenerator* ceg = dynamic_cast<CircularEnergyGenerator*>(energyGenerator);
-
-        if (ceg){
-            j["energyGenerator"] = *ceg;
-        } else {
-            j["energyGenerator"] = *energyGenerator;
-        }
-    }
-
-    return j;
-}
-
-json BatteryNodeApp::checkpointStrategyToJson(json j) const {
-    SyncPredefinedTimesCheckpoint* sptc = dynamic_cast<SyncPredefinedTimesCheckpoint*>(checkpointStrategy);
-
-    if (sptc) {
-        j["checkpointStrategy"] = *sptc;
-    } else {
-        j["checkpointStrategy"] = *checkpointStrategy;
-    }
-
-    return j;
-}
-
-json BatteryNodeApp::socketToJson(json j) const {
+/*json BatteryNodeApp::socketToJson(json j) const {
     UdpSocket* us = dynamic_cast<UdpSocket*>(m_socket.operator->());
 
     if (us) {
@@ -495,7 +468,7 @@ json BatteryNodeApp::socketToJson(json j) const {
     }
 
     return j;
-}
+}*/
 
 void BatteryNodeApp::from_json(const json& j) {
     //Application::from_json(j);  // Desserializa os membros da classe base

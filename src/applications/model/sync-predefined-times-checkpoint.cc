@@ -18,6 +18,8 @@
 #include "sync-predefined-times-checkpoint.h"
 #include "ns3/battery-node-app.h"
 #include "ns3/simulator.h"
+#include "ns3/node-depleted-exception.h"
+#include "ns3/node-asleep-exception.h"
 
 namespace ns3
 {
@@ -75,10 +77,16 @@ void SyncPredefinedTimesCheckpoint::writeLog() {
 
 void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
 
-    checkpointHelper->writeCheckpoint(app);
+    if (mayCheckpoint()){
+        checkpointHelper->writeCheckpoint(app);
 
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
-        << checkpointHelper->getCheckpointBasename());
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
+            << checkpointHelper->getCheckpointBasename());
+
+        decreaseCheckpointEnergy();
+    } else {
+        checkpointHelper->skipCheckpoint();
+    }
 
     //Agendando próximo checkpoint
     double now = Simulator::Now().GetSeconds();
@@ -91,6 +99,32 @@ void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
     Simulator::Schedule(delay,
                                 &SyncPredefinedTimesCheckpoint::writeCheckpoint,
                                 this);
+}
+
+void SyncPredefinedTimesCheckpoint::decreaseCheckpointEnergy() {
+    BatteryNodeApp* bna = dynamic_cast<BatteryNodeApp*>(app);
+    
+    if (bna){
+        
+        try {
+            bna->decreaseCheckpointEnergy();
+        } catch (NodeAsleepException& e) {
+            //Nada a fazer
+        } catch (NodeDepletedException& e) {
+            //Nada a fazer
+        } 
+
+    }
+}
+
+bool SyncPredefinedTimesCheckpoint::mayCheckpoint(){
+    BatteryNodeApp* bna = dynamic_cast<BatteryNodeApp*>(app);
+    
+    if (bna && (bna->isDepleted() || bna->isSleeping())){
+        return false;
+    }
+
+    return true;
 }
 
 void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {

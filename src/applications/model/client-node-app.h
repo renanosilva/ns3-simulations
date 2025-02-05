@@ -24,6 +24,10 @@
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
 #include "ns3/checkpoint-strategy.h"
+#include "ns3/json-utils.h"
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace ns3
 {
@@ -65,6 +69,18 @@ class ClientNodeApp : public Application
      * \return the total bytes sent by this app
      */
     uint64_t GetTotalTx() const;
+
+    /** 
+     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     * */
+    json to_json() const;
+    
+    /** 
+     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+    */
+    void from_json(const json& j);
 
   private:
     

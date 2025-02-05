@@ -90,6 +90,10 @@ void CheckpointHelper::writeCheckpoint(Application *app){
 
 }  
 
+void CheckpointHelper::skipCheckpoint(){
+    counter++;
+}
+
 void CheckpointHelper::writeLog(string data){
     writeFile(getLogFilename(counter), data);
 }

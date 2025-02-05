@@ -34,6 +34,10 @@
 
 #include <stdint.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -990,10 +994,10 @@ class Socket : public Object
     virtual void Ipv6LeaveGroup();
 
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const Socket& obj);
+    //friend void to_json(json& j, const Socket& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, Socket& obj);
+    //friend void from_json(const json& j, Socket& obj);
 
   protected:
     /**

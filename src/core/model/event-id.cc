@@ -113,4 +113,20 @@ EventId::GetUid() const
     return m_uid;
 }
 
+void to_json(json& j, const EventId& obj) {
+    j = json{
+        {"m_context", obj.m_context}, 
+        {"m_eventImpl", *obj.m_eventImpl.operator->()},
+        {"m_ts", obj.m_ts},
+        {"m_uid", obj.m_uid}
+    };
+}
+
+void from_json(const json& j, EventId& obj) {
+    j.at("m_context").get_to(obj.m_context);
+    //j.at("m_eventImpl").get_to(obj.m_eventImpl.operator->());
+    j.at("m_ts").get_to(obj.m_ts);
+    j.at("m_uid").get_to(obj.m_uid);
+}
+
 } // namespace ns3

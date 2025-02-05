@@ -23,6 +23,10 @@
 
 #include <stdint.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 /**
  * \file
  * \ingroup events
@@ -66,6 +70,12 @@ class EventImpl : public SimpleRefCount<EventImpl>
      * Checked by the simulation engine before calling Invoke().
      */
     bool IsCancelled();
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const EventImpl& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, EventImpl& obj);
 
   protected:
     /**

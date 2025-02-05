@@ -25,6 +25,10 @@
 
 #include <stdint.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 /**
  * \file
  * \ingroup events
@@ -111,6 +115,12 @@ class EventId
      */
     NS_DEPRECATED_3_42("Use IsPending instead")
     bool IsRunning() const;
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const EventId& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, EventId& obj);
 
   public:
     /**

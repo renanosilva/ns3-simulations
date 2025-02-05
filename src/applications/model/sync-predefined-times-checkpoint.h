@@ -78,6 +78,12 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     Time interval;
 
     Application *app;
+
+    /** Diminui a quantidade de energia referente à criação de um checkpoint. */
+    void decreaseCheckpointEnergy();
+
+    /** Verifica se um novo checkpoint pode ser criado, dependendo de determinadas condições. */
+    bool mayCheckpoint();
 };
 
 } // namespace ns3

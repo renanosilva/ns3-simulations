@@ -317,6 +317,29 @@ ClientNodeApp::GetTotalTx() const
     return m_totalTx;
 }
 
+json ClientNodeApp::to_json() const {
+    
+    json j = Application::to_json();
+    j["m_count"] = m_count;
+    j["m_size"] = m_size;
+    j["m_sent"] = m_sent;
+    j["m_totalTx"] = m_totalTx;
+    j["m_peerAddress"] = m_peerAddress;
+    j["m_peerPort"] = m_peerPort;
+    j["m_tos"] = m_tos;
+    j["m_sendEvent"] = m_sendEvent;
+    
+    j = timeToJson(j, "m_interval", m_interval);
+    j = checkpointStrategyToJson(j, checkpointStrategy);
+
+    return j;
+}
+
+void ClientNodeApp::from_json(const json& j) {
+    //Application::from_json(j);  // Desserializa os membros da classe base
+    //j.at("idleEnergyConsumption").get_to(idleEnergyConsumption);  // Desserializa o membro da classe derivada
+}
+
 /*void ClientNodeApp::addCheckpointData(bool sent, uint32_t bytes, Address from, uint32_t seqNumber, uint64_t uid) {
     checkpointStrategy->addCheckpointData(std::to_string(Simulator::Now().GetSeconds()) + "|" +
                                                         (sent ? "sent" : "received") + "|" +

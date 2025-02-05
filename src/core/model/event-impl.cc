@@ -67,4 +67,14 @@ EventImpl::IsCancelled()
     return m_cancel;
 }
 
+void to_json(json& j, const EventImpl& obj) {
+    j = json{
+        {"m_cancel", obj.m_cancel}
+    };
+}
+
+void from_json(const json& j, EventImpl& obj) {
+    j.at("m_cancel").get_to(obj.m_cancel);
+}
+
 } // namespace ns3

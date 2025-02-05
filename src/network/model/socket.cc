@@ -958,7 +958,7 @@ SocketIpv6TclassTag::Print(std::ostream& os) const
     os << "IPV6_TCLASS = " << m_ipv6Tclass;
 }
 
-void to_json(json& j, const Socket& obj) {
+/*void to_json(json& j, const Socket& obj) {
     j = json{
         {"m_priority", obj.m_priority}, 
         {"m_manualIpTtl", obj.m_manualIpTtl},
@@ -970,7 +970,8 @@ void to_json(json& j, const Socket& obj) {
         {"m_ipv6RecvTclass", obj.m_ipv6RecvTclass},
         {"m_ipv6RecvHopLimit", obj.m_ipv6RecvHopLimit},
         {"m_ipv6Tclass", obj.m_ipv6Tclass},
-        {"m_ipv6HopLimit", obj.m_ipv6HopLimit}
+        {"m_ipv6HopLimit", obj.m_ipv6HopLimit},
+        {"m_connectionSucceeded", obj.m_connectionSucceeded}
     };
 }
 
@@ -986,6 +987,7 @@ void from_json(const json& j, Socket& obj) {
     j.at("m_ipv6RecvHopLimit").get_to(obj.m_ipv6RecvHopLimit);
     j.at("m_ipv6Tclass").get_to(obj.m_ipv6Tclass);
     j.at("m_ipv6HopLimit").get_to(obj.m_ipv6HopLimit);
-}
+    j.at("m_connectionSucceeded").get_to(obj.m_connectionSucceeded);
+}*/
 
 } // namespace ns3

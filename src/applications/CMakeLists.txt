@@ -36,6 +36,7 @@ build_lib(
     model/sync-predefined-times-checkpoint.cc
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
+    util/json-utils.cc
   HEADER_FILES
     helper/bulk-send-helper.h
     helper/on-off-helper.h
@@ -72,6 +73,7 @@ build_lib(
     model/sync-predefined-times-checkpoint.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h
+    util/json-utils.h
   LIBRARIES_TO_LINK ${libinternet}
   TEST_SOURCES
     test/three-gpp-http-client-server-test.cc
