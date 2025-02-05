@@ -94,7 +94,10 @@ class CheckpointHelper
      * */
     string readCheckpoint(int index);
 
-    /** Pula um checkpoint e registra esse fato, incrementando o contador de checkpoints. */
+    /** 
+     * Pula um checkpoint e registra esse fato, incrementando o contador de checkpoints. 
+     * Serve para que todos os nós possuam numerações de checkpoints equivalentes.
+     * */
     void skipCheckpoint();
 
     //Especifica como deve ser feita a conversão desta classe em JSON

@@ -90,6 +90,7 @@ BatteryNodeApp::GetTypeId()
 
 BatteryNodeApp::BatteryNodeApp()
     : m_received(0),
+      m_seq(-1),
       m_lossCounter(0)
 {
     NS_LOG_FUNCTION(this);
@@ -292,21 +293,34 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 
                 m_lossCounter.NotifyReceived(currentSequenceNumber);
                 m_received++;
+                m_seq++;
 
                 decreaseReadEnergy();
 
                 packet->RemoveAllPacketTags();
                 packet->RemoveAllByteTags();
 
-                NS_LOG_LOGIC("Echoing packet");
-                socket->SendTo(packet, 0, from);
+                NS_LOG_LOGIC("Responding packet");
+
+                uint64_t dataToSend = m_seq;
+
+                // Convertendo o dado para uint8_t* (ponteiro para bytes)
+                uint8_t* buffer = reinterpret_cast<uint8_t*>(&dataToSend);
+
+                Ptr<Packet> newPacket = Create<Packet>(buffer, sizeof(dataToSend) + seqTs.GetSerializedSize());
+                newPacket->AddHeader(seqTs);
+
+                socket->SendTo(newPacket, 0, from);
 
                 if (InetSocketAddress::IsMatchingType(from))
                 {
                     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " servidor enviou "
                                         << receivedSize << " bytes para "
                                         << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
-                                        << InetSocketAddress::ConvertFrom(from).GetPort());
+                                        << InetSocketAddress::ConvertFrom(from).GetPort()
+                                        << " (Número de Sequência: " << seqTs.GetSeq()
+                                        << ", UId: " << newPacket->GetUid() 
+                                        << ", last_seq: " << dataToSend << ")");
                 }
 
                 /*else if (Inet6SocketAddress::IsMatchingType(from))
@@ -444,6 +458,7 @@ json BatteryNodeApp::to_json() const {
     j["m_port"] = m_port;
     j["m_tos"] = m_tos;
     j["m_received"] = m_received;
+    j["m_seq"] = m_seq;
     j["idleEnergyConsumption"] = idleEnergyConsumption;
     j["sleepEnergyConsumption"] = sleepEnergyConsumption;
     j["battery"] = battery;

@@ -146,7 +146,7 @@ ClientNodeApp::StartApplication()
             m_socket->Connect(
                 InetSocketAddress(Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
         }
-        else if (Ipv6Address::IsMatchingType(m_peerAddress))
+        /*else if (Ipv6Address::IsMatchingType(m_peerAddress))
         {
             if (m_socket->Bind6() == -1)
             {
@@ -154,7 +154,7 @@ ClientNodeApp::StartApplication()
             }
             m_socket->Connect(
                 Inet6SocketAddress(Ipv6Address::ConvertFrom(m_peerAddress), m_peerPort));
-        }
+        }*/
         else if (InetSocketAddress::IsMatchingType(m_peerAddress))
         {
             if (m_socket->Bind() == -1)
@@ -164,14 +164,14 @@ ClientNodeApp::StartApplication()
             m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
             m_socket->Connect(m_peerAddress);
         }
-        else if (Inet6SocketAddress::IsMatchingType(m_peerAddress))
+        /*else if (Inet6SocketAddress::IsMatchingType(m_peerAddress))
         {
             if (m_socket->Bind6() == -1)
             {
                 NS_FATAL_ERROR("Failed to bind socket");
             }
             m_socket->Connect(m_peerAddress);
-        }
+        }*/
         else
         {
             NS_ASSERT_MSG(false, "Incompatible address type: " << m_peerAddress);
@@ -208,7 +208,7 @@ ClientNodeApp::Send()
     // Trace before adding header, for consistency with PacketSink
     m_txTrace(p);
     m_txTraceWithAddresses(p, from, to);
-
+    
     p->AddHeader(seqTs);
 
     if ((m_socket->Send(p)) >= 0)
@@ -289,10 +289,25 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
     {
         if (InetSocketAddress::IsMatchingType(from))
         {
+            SeqTsHeader seqTs;
+            packet->RemoveHeader(seqTs);
+            uint32_t currentSequenceNumber = seqTs.GetSeq();
+
+            //Obtendo dados do pacote
+            uint8_t buffer[sizeof(last_seq)];
+            packet->CopyData(buffer, sizeof(last_seq));
+
+            // Convertendo o buffer de volta para uint64_t
+            memcpy(&last_seq, buffer, sizeof(last_seq));
+
+
             NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " cliente recebeu "
                                    << packet->GetSize() << " bytes de "
                                    << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
-                                   << InetSocketAddress::ConvertFrom(from).GetPort());
+                                   << InetSocketAddress::ConvertFrom(from).GetPort()
+                                   << " (Número de Sequência: " << currentSequenceNumber
+                                   << ", UId: " << packet->GetUid() 
+                                   << ", last_seq: " << last_seq << ")");
             
             //addCheckpointData(false, packet->GetSize(), from, -1, -1);
         }
@@ -321,6 +336,7 @@ json ClientNodeApp::to_json() const {
     
     json j = Application::to_json();
     j["m_count"] = m_count;
+    j["last_seq"] = last_seq;
     j["m_size"] = m_size;
     j["m_sent"] = m_sent;
     j["m_totalTx"] = m_totalTx;

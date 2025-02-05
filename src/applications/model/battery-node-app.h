@@ -134,6 +134,7 @@ class BatteryNodeApp : public Application
     //Ptr<Socket> m_socket6; //!< IPv6 Socket
     Address m_local;       //!< local multicast address
     uint64_t m_received;             //!< Number of received packets
+    uint64_t m_seq;             //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
     PacketLossCounter m_lossCounter; //!< Lost packet counter
 
     /// Callbacks for tracing the packet Rx events
