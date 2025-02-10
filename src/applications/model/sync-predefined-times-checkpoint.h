@@ -43,12 +43,6 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
      */
     static TypeId GetTypeId();
 
-    /**
-     * \brief Get the type ID.
-     * \return the object TypeId
-     */
-    static Application* GetApp();
-
     /** 
      * Construtor. 
      * @param interval Define a periodicidade (em segundos) na qual serão criados checkpoints.
@@ -58,6 +52,9 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
      * */
     SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, Application *application);
 
+    /** Construtor padrão. */
+    SyncPredefinedTimesCheckpoint();
+
     ~SyncPredefinedTimesCheckpoint() override;
 
     virtual void startCheckpointing() override; 
@@ -65,6 +62,8 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     virtual void writeCheckpoint() override; 
     
     virtual void writeLog() override; 
+
+    virtual void startRollback() override; 
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj);
@@ -77,13 +76,16 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     /** Intervalo de tempo no qual serão criados checkpoints. */
     Time interval;
 
-    Application *app;
-
     /** Diminui a quantidade de energia referente à criação de um checkpoint. */
     void decreaseCheckpointEnergy();
 
     /** Verifica se um novo checkpoint pode ser criado, dependendo de determinadas condições. */
     bool mayCheckpoint();
+
+    /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
+    Time getDelayToNextCheckpoint();
+
+    void scheduleNextCheckpoint();
 };
 
 } // namespace ns3

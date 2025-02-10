@@ -53,9 +53,30 @@ json checkpointStrategyToJson(json j, CheckpointStrategy *cs) {
     return j;
 }
 
+CheckpointStrategy* jsonToCheckpointStrategy(json j, Application *application) {
+    if (j["strategy"] == "SyncPredefinedTimesCheckpoint"){
+        
+        CheckpointStrategy *cs = new SyncPredefinedTimesCheckpoint();
+        cs->setApp(application);
+        from_json(j, *cs);
+
+        return cs;
+    }
+
+    return nullptr;
+}
+
 json timeToJson(json j, string propertyName, Time t){
     j[propertyName] = t.GetTimeStep();
     return j;
+}
+
+Time jsonToTime(json j, string propertyName){
+    int64_t t;
+    j.at(propertyName).get_to(t);
+
+    Time tempo(t);
+    return tempo;
 }
 
 /*json BatteryNodeApp::socketToJson(json j) const {

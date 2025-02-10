@@ -119,12 +119,13 @@ string CheckpointHelper::getFileContent(string filename)
     return buffer.str();
 }
 
-string CheckpointHelper::readCheckpoint(int index)
-{
-    return getFileContent(getCheckpointFilename(index));
+json CheckpointHelper::readCheckpoint(int index)
+{   
+    string c = getFileContent(getCheckpointFilename(index));
+    return json::parse(c);
 }
 
-string CheckpointHelper::readLastCheckpoint()
+json CheckpointHelper::readLastCheckpoint()
 {
     string content = getFileContent(getCheckpointFilename(counter));
 
@@ -132,7 +133,7 @@ string CheckpointHelper::readLastCheckpoint()
         content = getFileContent(getCheckpointFilename(counter-1));
     }
 
-    return content;
+    return json::parse(content);
 }
 
 string CheckpointHelper::getCheckpointBasename(){

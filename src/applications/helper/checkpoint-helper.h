@@ -64,7 +64,7 @@ class CheckpointHelper
     void writeLog(string data);
 
     /** Lê o conteúdo do último checkpoint criado. */
-    string readLastCheckpoint();
+    json readLastCheckpoint();
 
     /** 
      * Retorna o nome do arquivo do iésimo checkpoint.
@@ -92,7 +92,7 @@ class CheckpointHelper
      * Lê o conteúdo de um checkpoint. 
      * @param index índice do checkpoint a ser lido.
      * */
-    string readCheckpoint(int index);
+    json readCheckpoint(int index);
 
     /** 
      * Pula um checkpoint e registra esse fato, incrementando o contador de checkpoints. 
@@ -105,6 +105,8 @@ class CheckpointHelper
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, CheckpointHelper& obj);
+
+    friend class BatteryNodeApp;
 
   private:
 

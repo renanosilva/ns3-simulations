@@ -51,6 +51,10 @@ SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, 
     app = application;
 }
 
+SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(){
+
+}
+
 SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
 {
     NS_LOG_FUNCTION(this);
@@ -88,17 +92,41 @@ void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
         checkpointHelper->skipCheckpoint();
     }
 
-    //Agendando próximo checkpoint
+    scheduleNextCheckpoint();
+}
+
+Time SyncPredefinedTimesCheckpoint::getDelayToNextCheckpoint(){
     double now = Simulator::Now().GetSeconds();
     double intervalSec = interval.GetSeconds();
     double mod = std::fmod(now, intervalSec);
     double nextCheckpointing = intervalSec - mod;
     Time delay = Time(to_string(nextCheckpointing) + "s");
 
+    return delay;
+}
+
+void SyncPredefinedTimesCheckpoint::scheduleNextCheckpoint(){
+    //Agendando próximo checkpoint
+    Time delay = getDelayToNextCheckpoint();
+
     //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
     Simulator::Schedule(delay,
                                 &SyncPredefinedTimesCheckpoint::writeCheckpoint,
                                 this);
+}
+
+void SyncPredefinedTimesCheckpoint::startRollback() {
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << 
+                    checkpointHelper->getCheckpointBasename() << 
+                    " iniciando procedimento de rollback.");
+    
+    //lendo último checkpoint
+    json j = checkpointHelper->readLastCheckpoint();
+
+    //iniciando recuperação das informações presentes no checkpoint
+    app->from_json(j);
+
+    scheduleNextCheckpoint();
 }
 
 void SyncPredefinedTimesCheckpoint::decreaseCheckpointEnergy() {
@@ -129,17 +157,22 @@ bool SyncPredefinedTimesCheckpoint::mayCheckpoint(){
 
 void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {
     to_json(j, static_cast<const CheckpointStrategy&>(obj));
+    j["strategy"] = "SyncPredefinedTimesCheckpoint";
     j["interval"] = obj.interval.GetTimeStep();
     j["app.typeid.uid"] = obj.app->GetTypeId().GetUid();
 }
 
 void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj) {
+    from_json(j, static_cast<CheckpointStrategy&>(obj));
+
     double v = 0.;
     j.at("interval").get_to(v);
     Time t = Time(v);
     
     obj.interval = t;
-    obj.app->from_json(j);
+    
+    //o atributo app é redefinido através da própria aplicação
+    //sendo assim, não é necessário redefini-lo aqui
 }
 
 } // Namespace ns3

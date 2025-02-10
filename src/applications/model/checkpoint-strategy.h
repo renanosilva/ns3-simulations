@@ -62,6 +62,12 @@ class CheckpointStrategy : public Object
      * */
     virtual void writeLog();
 
+    /** 
+     * Método abstrato. Utilizado para iniciar um processo de rollback, após a recuperação
+     * de um nó. A implementação irá depender da estratégia adotada. 
+     * */
+    virtual void startRollback();
+
     /** Especifica os dados a serem armazenados em log. */
     void setLogData(string data);
 
@@ -71,11 +77,15 @@ class CheckpointStrategy : public Object
     /** Obtém os dados a serem armazenados no próximo log. */
     string getLogData();
 
+    void setApp(Application *application);
+
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointStrategy& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, CheckpointStrategy& obj);
+
+    friend class BatteryNodeAp;
 
   protected:
 
@@ -84,6 +94,9 @@ class CheckpointStrategy : public Object
 
     /** Dados a serem armazenados no checkpoint. */
     string logData = "";
+
+    /** Aplicação na qual deverá ser feito o checkpoint. */
+    Application *app;
 
 };
 

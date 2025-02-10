@@ -57,6 +57,14 @@ void CheckpointStrategy::writeCheckpoint(){
     
 }
 
+void CheckpointStrategy::startRollback(){
+    
+}
+
+void CheckpointStrategy::setApp(Application *application){
+    app = application;
+}
+
 void to_json(json& j, const CheckpointStrategy& obj) {
     j = json{
         {"checkpointHelper", *obj.checkpointHelper}, 

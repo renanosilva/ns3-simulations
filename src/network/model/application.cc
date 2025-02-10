@@ -148,7 +148,7 @@ json Application::to_json() const {
 }
 
 void Application::from_json(const json& j) {
-    //TODO
+    /* até o momento não é necessário */
 }
 
 } // namespace ns3
