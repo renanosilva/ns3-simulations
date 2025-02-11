@@ -346,7 +346,7 @@ json ClientNodeApp::to_json() const {
     j["m_sendEvent"] = m_sendEvent;
     
     j = timeToJson(j, "m_interval", m_interval);
-    j = checkpointStrategyToJson(j, checkpointStrategy);
+    //j = checkpointStrategyToJson(j, checkpointStrategy);
 
     return j;
 }

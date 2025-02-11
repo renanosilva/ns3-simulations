@@ -32,9 +32,9 @@ namespace ns3
 json energyGeneratorToJson(json j, EnergyGenerator *eg);
 
 /** Converte um objeto estratégia de checkpoint em JSON. */
-json checkpointStrategyToJson(json j, CheckpointStrategy *cs);
+//json checkpointStrategyToJson(json j, CheckpointStrategy *cs);
 
-CheckpointStrategy* jsonToCheckpointStrategy(json j, Application *application);
+//CheckpointStrategy* jsonToCheckpointStrategy(json j);
 
 json timeToJson(json j, string propertyName, Time t);
 

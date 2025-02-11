@@ -90,23 +90,22 @@ BatteryNodeApp::GetTypeId()
 
 BatteryNodeApp::BatteryNodeApp()
     : m_received(0),
-      m_seq(-1),
-      m_lossCounter(0)
+    m_seq(-1),
+    m_lossCounter(0)
 {
+
     NS_LOG_FUNCTION(this);
+    NS_LOG_INFO("Iniciando " << getNodeName() << "... Energia inicial: " << battery.getRemainingEnergy());
 
     energyUpdateInterval = Seconds(1.0);
     idleEnergyConsumption = 10;
     sleepEnergyConsumption = 1;
     currentMode = NORMAL;
 
-    //energyGenerator = new FixedEnergyGenerator(100);
-    energyGenerator = new CircularEnergyGenerator();
+    addresses.clear();
 
-    NS_LOG_INFO("Iniciando nó a bateria... Energia inicial: " << battery.getRemainingEnergy());
-
-    checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), "battery-node-0", this);
-    checkpointStrategy->startCheckpointing();
+    defineCheckpointStrategy();
+    defineEnergyGenerator();
 
     //Agendando geração de energia
     Simulator::Schedule(energyUpdateInterval,
@@ -125,8 +124,20 @@ BatteryNodeApp::~BatteryNodeApp()
     m_socket = nullptr;
     //m_socket6 = nullptr;
 
+    addresses.clear();
+
     delete energyGenerator;
     delete checkpointStrategy;
+}
+
+void BatteryNodeApp::defineCheckpointStrategy() {
+    checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
+    checkpointStrategy->startCheckpointing();
+}
+
+void BatteryNodeApp::defineEnergyGenerator() {
+    //energyGenerator = new FixedEnergyGenerator(100);
+    energyGenerator = new CircularEnergyGenerator();
 }
 
 uint16_t
@@ -214,7 +225,7 @@ BatteryNodeApp::StartApplication()
     m_socket->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
     //m_socket6->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
 
-    NS_LOG_INFO("Nó servidor a bateria conectado.");
+    NS_LOG_INFO(getNodeName() << " conectado.");
     decreaseConnectEnergy();
 }
 
@@ -337,6 +348,8 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 
                 //addCheckpointData(true, receivedSize, from, -1, -1);
 
+                addAddress(from);
+
                 decreaseSendEnergy();
 
             }
@@ -396,27 +409,29 @@ void BatteryNodeApp::checkModeChange(){
         throw NodeAsleepException("Bateria entrou em modo SLEEP.");
 
     } else if (battery.getBatteryPercentage() > 20 && currentMode != Mode::NORMAL){
-        currentMode = Mode::NORMAL;
-        
-        NS_LOG_INFO("Socket: " << (m_socket ? true : false) << ", Porta: " << m_port <<
+        /*NS_LOG_INFO("Socket: " << (m_socket ? true : false) << ", Porta: " << m_port <<
                     ", TOS: " << m_tos << ", m_local: " << m_local.GetLength() << 
                     ", m_received: " << m_received << ", m_seq :" << m_seq <<
                     ", m_lossCounter: " << m_lossCounter.GetLost() <<
-                    ", checkpointStrategy: " << checkpointStrategy);
+                    ", checkpointStrategy: " << checkpointStrategy);*/
 
-        checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), "battery-node-0", this);
+        currentMode = Mode::NORMAL;
+        NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", nó entrou em modo NORMAL.");
+        
+        defineCheckpointStrategy();
         checkpointStrategy->startRollback();
 
         //Reiniciando aplicação...
         StartApplication();
 
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", nó entrou em modo NORMAL.");
+        //Enviando mensagem de rollback para os outros nós envolvidos
 
-        NS_LOG_INFO("Socket: " << (m_socket ? true : false) << ", Porta: " << m_port <<
+
+        /*NS_LOG_INFO("Socket: " << (m_socket ? true : false) << ", Porta: " << m_port <<
             ", TOS: " << m_tos << ", m_local: " << m_local.GetLength() << 
             ", m_received: " << m_received << ", m_seq :" << m_seq <<
             ", m_lossCounter: " << m_lossCounter.GetLost() <<
-            ", checkpointStrategy: " << checkpointStrategy);
+            ", checkpointStrategy: " << checkpointStrategy);*/
     }
 }
 
@@ -481,6 +496,9 @@ void BatteryNodeApp::resetNodeData() {
     m_socket->ShutdownRecv();
     m_socket->Close();
     m_socket = nullptr;
+
+    addresses.clear();
+
     m_port = 0;
     m_tos = 0;
     m_local = Address();
@@ -489,6 +507,16 @@ void BatteryNodeApp::resetNodeData() {
     m_lossCounter = PacketLossCounter(0);
 
     delete checkpointStrategy;
+}
+
+void BatteryNodeApp::addAddress(Address a){
+    auto it = find(addresses.begin(), addresses.end(), a);
+
+    if (it == addresses.end()) {
+        //Endereço não foi encontrado
+        //Adiciona endereço ao vetor de endereços
+        addresses.push_back(a);
+    }
 }
 
 json BatteryNodeApp::to_json() const {
@@ -500,8 +528,9 @@ json BatteryNodeApp::to_json() const {
     j["m_seq"] = m_seq;
     j["m_local"] = m_local;
     j["m_lossCounter"] = m_lossCounter;
+    j["addresses"] = addresses;
 
-    j = checkpointStrategyToJson(j, checkpointStrategy);
+    //j = checkpointStrategyToJson(j, checkpointStrategy);
 
     //j["sleepEnergyConsumption"] = sleepEnergyConsumption;
     //j["idleEnergyConsumption"] = idleEnergyConsumption;
@@ -520,11 +549,13 @@ void BatteryNodeApp::from_json(const json& j) {
     j.at("m_received").get_to(m_received); //ok
     j.at("m_seq").get_to(m_seq); //ok
     j.at("m_lossCounter").get_to(m_lossCounter); //ok
+    j.at("addresses").get_to(addresses);
 
-    checkpointStrategy = jsonToCheckpointStrategy(j, this);
+    //checkpointStrategy = jsonToCheckpointStrategy(j);
+}
 
-    //TODO
-    //socket
+string BatteryNodeApp::getNodeName(){
+    return "battery-node-0";
 }
 
 /*json BatteryNodeApp::socketToJson(json j) const {

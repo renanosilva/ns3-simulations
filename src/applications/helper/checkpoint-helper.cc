@@ -23,8 +23,10 @@
 #include <iostream>
 #include <fstream>
 #include <dirent.h>
+#include <vector>
 #include "ns3/simulator.h"
 #include "ns3/battery-node-app.h"
+#include <regex>
 
 using namespace std;
 
@@ -71,6 +73,30 @@ bool CheckpointHelper::cleanDirectory(const std::string &path){
         return false;
     }
     return true;
+}
+
+vector<string> CheckpointHelper::listFiles(const string& pasta, const string& padrao) {
+    
+    vector<string> arquivos;
+    DIR* dir = opendir(pasta.c_str());
+    
+    if (dir == nullptr) {
+        cerr << "Erro ao abrir o diretório!" << std::endl;
+        return arquivos;
+    }
+
+    struct dirent* entry;
+    
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type == DT_REG) { // Se for um arquivo regular
+            if (std::strstr(entry->d_name, padrao.c_str()) != nullptr) {
+                arquivos.push_back(entry->d_name);
+            }
+        }
+    }
+
+    closedir(dir);
+    return arquivos;
 }
 
 void CheckpointHelper::writeCheckpoint(string data){
@@ -127,10 +153,10 @@ json CheckpointHelper::readCheckpoint(int index)
 
 json CheckpointHelper::readLastCheckpoint()
 {
-    string content = getFileContent(getCheckpointFilename(counter));
+    string content = getFileContent(getCheckpointFilename(getLastCounter()));
 
     if (content.length() == 0){
-        content = getFileContent(getCheckpointFilename(counter-1));
+        content = getFileContent(getCheckpointFilename(getLastCounter()-1));
     }
 
     return json::parse(content);
@@ -142,6 +168,30 @@ string CheckpointHelper::getCheckpointBasename(){
 
 string CheckpointHelper::getLogBasename(){
     return checkpointBaseName + "-log";
+}
+
+int CheckpointHelper::getLastCounter(){
+    if (counter != 0){
+        cout << "\n" << counter << "\n";
+        return counter;
+    }
+
+    vector<string> nomes = listFiles(CHECKPOINTS_FOLDER, checkpointBaseName);
+    string nome = nomes[nomes.size() - 1]; //pegando o nome do último arquivo
+
+    //obtendo o contador do checkpoint presente no nome do arquivo do checkpoint
+
+    // Expressão regular para capturar o número antes de ".json"
+    regex re("^(.*)-node-(\\d+)-(\\d+)\\.json$");
+    smatch match;
+    
+    if (regex_search(nome, match, re)) {
+        // O número antes de ".json" será o terceiro grupo capturado
+        string c = match[3];
+        counter = stoi(c);
+    } 
+
+    return counter;
 }
 
 void to_json(json& j, const CheckpointHelper& obj) {

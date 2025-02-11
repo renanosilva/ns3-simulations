@@ -33,8 +33,10 @@
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
+#include <algorithm>
 
 using json = nlohmann::json;
+using namespace std;
 
 namespace ns3
 {
@@ -115,6 +117,8 @@ class BatteryNodeApp : public Application
     
     bool isDepleted();
 
+    string getNodeName();
+
   private:
     void StartApplication() override;
     void StopApplication() override;
@@ -128,11 +132,23 @@ class BatteryNodeApp : public Application
      */
     void HandleRead(Ptr<Socket> socket);
 
+    /** Adiciona um endereço ao vetor de addresses. Não permite elementos repetidos. */
+    void addAddress(Address a);
+
+    /** Remove todos os endereços armazenados no vector addresses.. */
+    void clearAddresses();
+
     /** 
      * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
-    algum erro 
+    algum erro.
     */
    void resetNodeData();
+
+   /** Define a estratégia de checkpointing a ser utilizada por este nó. */
+   void defineCheckpointStrategy();
+
+   /** Define o gerador de energia a ser utilizado por este nó. */
+   void defineEnergyGenerator();
 
    /** Diminui a energia da bateria referente ao seu funcionamento básico */
    void decreaseIdleEnergy(); 
@@ -204,6 +220,9 @@ class BatteryNodeApp : public Application
     uint64_t m_received;             //!< Number of received packets
     uint64_t m_seq;             //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
     PacketLossCounter m_lossCounter; //!< Lost packet counter
+
+    /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
+    vector<Address> addresses;
 
     /** Estratégia de checkpoint escolhida para este nó. */
     CheckpointStrategy *checkpointStrategy;

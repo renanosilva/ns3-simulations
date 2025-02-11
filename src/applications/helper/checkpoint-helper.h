@@ -119,6 +119,12 @@ class CheckpointHelper
     /** Obtém o conteúdo de um arquivo. */
     string getFileContent(string filename);
 
+    /** Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos. */
+    int getLastCounter();
+
+    /** Lista os arquivos de uma determinada pasta, de acordo com um padrão de busca. */
+    vector<string> listFiles(const string& pasta, const string& padrao);
+
     /** Escreve em um arquivo */
     void writeFile(string filename, nlohmann::json j);
 };

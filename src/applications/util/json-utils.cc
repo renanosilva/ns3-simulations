@@ -41,7 +41,7 @@ json energyGeneratorToJson(json j, EnergyGenerator *eg) {
     return j;
 }
 
-json checkpointStrategyToJson(json j, CheckpointStrategy *cs) {
+/*json checkpointStrategyToJson(json j, CheckpointStrategy *cs) {
     SyncPredefinedTimesCheckpoint* sptc = dynamic_cast<SyncPredefinedTimesCheckpoint*>(cs);
 
     if (sptc) {
@@ -51,20 +51,21 @@ json checkpointStrategyToJson(json j, CheckpointStrategy *cs) {
     }
 
     return j;
-}
+}*/
 
-CheckpointStrategy* jsonToCheckpointStrategy(json j, Application *application) {
+/*CheckpointStrategy* jsonToCheckpointStrategy(json j) {
     if (j["strategy"] == "SyncPredefinedTimesCheckpoint"){
         
         CheckpointStrategy *cs = new SyncPredefinedTimesCheckpoint();
-        cs->setApp(application);
+        //cs->setApp(application);
+        
         from_json(j, *cs);
 
         return cs;
     }
 
     return nullptr;
-}
+}*/
 
 json timeToJson(json j, string propertyName, Time t){
     j[propertyName] = t.GetTimeStep();
