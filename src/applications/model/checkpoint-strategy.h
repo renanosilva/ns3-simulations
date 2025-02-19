@@ -21,10 +21,17 @@
 #include "ns3/object.h"
 #include "ns3/type-id.h"
 #include <ns3/double.h>
+#include "ns3/checkpoint-app.h"
 #include "ns3/checkpoint-helper.h"
+#include <string>
+
+using namespace std;
 
 namespace ns3
 {
+
+class CheckpointApp;
+class CheckpointHelper;
 
 /** Classe base para as classes que implementam estratégias de checkpointing. */
 class CheckpointStrategy : public Object
@@ -66,7 +73,18 @@ class CheckpointStrategy : public Object
      * Método abstrato. Utilizado para iniciar um processo de rollback, após a recuperação
      * de um nó. A implementação irá depender da estratégia adotada. 
      * */
-    virtual void startRollback();
+    virtual void startRollbackToLastCheckpoint();
+
+    /** 
+     * Utilizado para iniciar um processo de rollback, após a recuperação
+     * de um nó. O nó faz o rollback para o checkpoint identificado como
+     * parâmetro.
+     * Método abstrato. A implementação irá depender da estratégia adotada. 
+     * */
+    virtual void startRollback(int checkpointId);
+
+    /** Obtém o identificador do último checkpoint criado. */
+    int getLastCheckpointId();
 
     /** Especifica os dados a serem armazenados em log. */
     void setLogData(string data);
@@ -77,7 +95,7 @@ class CheckpointStrategy : public Object
     /** Obtém os dados a serem armazenados no próximo log. */
     string getLogData();
 
-    void setApp(Application *application);
+    void setApp(CheckpointApp *application);
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointStrategy& obj);
@@ -85,7 +103,7 @@ class CheckpointStrategy : public Object
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, CheckpointStrategy& obj);
 
-    friend class BatteryNodeAp;
+    //friend class BatteryNodeAp; 
 
   protected:
 
@@ -96,7 +114,7 @@ class CheckpointStrategy : public Object
     string logData = "";
 
     /** Aplicação na qual deverá ser feito o checkpoint. */
-    Application *app;
+    CheckpointApp *app;
 
 };
 

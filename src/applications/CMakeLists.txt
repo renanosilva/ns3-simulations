@@ -9,6 +9,7 @@ build_lib(
     helper/udp-echo-helper.cc
     helper/node-app-helper.cc
     helper/checkpoint-helper.cc
+    helper/udp-helper.cc
     model/application-packet-probe.cc
     model/bulk-send-application.cc
     model/onoff-application.cc
@@ -34,6 +35,7 @@ build_lib(
     model/circular-energy-generator.cc
     model/checkpoint-strategy.cc
     model/sync-predefined-times-checkpoint.cc
+    model/checkpoint-app.cc
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
     util/json-utils.cc
@@ -46,6 +48,7 @@ build_lib(
     helper/udp-echo-helper.h
     helper/node-app-helper.h
     helper/checkpoint-helper.h
+    helper/udp-helper.h
     model/application-packet-probe.h
     model/bulk-send-application.h
     model/onoff-application.h
@@ -71,6 +74,7 @@ build_lib(
     model/circular-energy-generator.h
     model/checkpoint-strategy.h
     model/sync-predefined-times-checkpoint.h
+    model/checkpoint-app.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h
     util/json-utils.h

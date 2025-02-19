@@ -20,6 +20,7 @@
 
 #include "packet-loss-counter.h"
 
+#include "ns3/checkpoint-app.h"
 #include "ns3/address.h"
 #include "ns3/socket.h"
 #include "ns3/udp-socket.h"
@@ -29,8 +30,6 @@
 #include "ns3/traced-callback.h"
 #include "ns3/battery.h"
 #include "ns3/energy-generator.h"
-#include "ns3/checkpoint-helper.h"
-#include "ns3/checkpoint-strategy.h"
 #include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
 #include <algorithm>
@@ -58,9 +57,9 @@ class Packet;
 
 /**
  * \ingroup sensor
- * \brief Aplicação referente a um nó sensor.
+ * \brief Aplicação referente a um nó que funcion a bateria.
  */
-class BatteryNodeApp : public Application
+class BatteryNodeApp : public CheckpointApp
 {
   public:
 
@@ -98,6 +97,8 @@ class BatteryNodeApp : public Application
      */
     void SetPacketWindowSize(uint16_t size);
 
+    string getNodeName() override;
+
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
@@ -117,7 +118,32 @@ class BatteryNodeApp : public Application
     
     bool isDepleted();
 
-    string getNodeName();
+    /** 
+     * Método chamado imediatamente antes da criação de um checkpoint
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void beforeCheckpoint() override;
+
+    /** 
+     * Método chamado imediatamente após a criação de um checkpoint
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void afterCheckpoint() override;
+
+    /** 
+     * Método abstrato. Método chamado imediatamente antes da execução de um rollback
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void beforeRollback() override;
+
+    /** 
+     * Método abstrato. Método chamado imediatamente após a execução de um rollback
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void afterRollback() override;
+
+  protected:
+    void defineCheckpointStrategy() override;
 
   private:
     void StartApplication() override;
@@ -135,17 +161,17 @@ class BatteryNodeApp : public Application
     /** Adiciona um endereço ao vetor de addresses. Não permite elementos repetidos. */
     void addAddress(Address a);
 
-    /** Remove todos os endereços armazenados no vector addresses.. */
-    void clearAddresses();
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
+     * Método chamado quando este nó realiza seu próprio rollback.
+     */
+    void notifyNodesAboutRollback();
 
     /** 
      * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
     algum erro.
     */
    void resetNodeData();
-
-   /** Define a estratégia de checkpointing a ser utilizada por este nó. */
-   void defineCheckpointStrategy();
 
    /** Define o gerador de energia a ser utilizado por este nó. */
    void defineEnergyGenerator();
@@ -205,6 +231,13 @@ class BatteryNodeApp : public Application
 
     /** Gerador de energia da bateria do nó */
     EnergyGenerator *energyGenerator;
+
+    /**
+     * Indica se um procedimento de rollback está em progresso. Quando um rollback
+     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
+     * que a comunicação possa ser restabelecida.
+     */
+    bool rollbackInProgress;
   
     ////////////////////////////////////////////////
     //////       ATRIBUTOS DE APLICAÇÃO       //////
@@ -224,8 +257,6 @@ class BatteryNodeApp : public Application
     /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
     vector<Address> addresses;
 
-    /** Estratégia de checkpoint escolhida para este nó. */
-    CheckpointStrategy *checkpointStrategy;
 };
 
 } // namespace ns3

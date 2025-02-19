@@ -23,7 +23,7 @@
 #define CHECKPOINT_HELPER_H
 
 #include <ns3/string.h>
-#include "ns3/application.h"
+#include "ns3/checkpoint-app.h"
 #include <nlohmann/json.hpp>
 
 using namespace std;
@@ -31,6 +31,8 @@ using json = nlohmann::json;
 
 namespace ns3
 {
+
+class CheckpointApp;
 
 /**
  * \ingroup checkpoint
@@ -58,7 +60,7 @@ class CheckpointHelper
     void writeCheckpoint(string data);
 
     /** Cria um novo checkpoint, transformando um objeto em JSON. */
-    void writeCheckpoint(Application *app);
+    void writeCheckpoint(CheckpointApp *app);
 
     /** Cria um novo log */
     void writeLog(string data);
@@ -100,6 +102,12 @@ class CheckpointHelper
      * */
     void skipCheckpoint();
 
+    /** 
+     * Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos, caso seja necessário. 
+     * Caso tenha sido feito algum rollback, retorna o índice do último checkpoint a ser usado.
+     * */
+    int getLastCheckpointId();
+
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointHelper& obj);
 
@@ -116,11 +124,14 @@ class CheckpointHelper
     /** Remove todos os checkpoints existentes. */
     bool cleanDirectory(const std::string &path);
 
+    /** 
+     * Dado um vetor de strings (com o padrão de nomenclatura dos arquivos de checkpoint), retorna
+     * o maior ID de checkpoint.
+     */
+    int findMaxCounterFromFilenames(const vector<std::string>& filenames);
+
     /** Obtém o conteúdo de um arquivo. */
     string getFileContent(string filename);
-
-    /** Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos. */
-    int getLastCounter();
 
     /** Lista os arquivos de uma determinada pasta, de acordo com um padrão de busca. */
     vector<string> listFiles(const string& pasta, const string& padrao);

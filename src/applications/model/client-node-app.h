@@ -24,6 +24,7 @@
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
 #include "ns3/checkpoint-strategy.h"
+#include "ns3/checkpoint-app.h"
 #include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
 
@@ -40,7 +41,7 @@ class Packet;
  * \brief An Udp client. Sends UDP packet carrying sequence number and time stamp
  *  in their payloads.
  */
-class ClientNodeApp : public Application
+class ClientNodeApp : public CheckpointApp
 {
   public:
     /**
@@ -71,6 +72,20 @@ class ClientNodeApp : public Application
     uint64_t GetTotalTx() const;
 
     /** 
+     * Método abstrato. Método chamado imediatamente antes da execução de um rollback
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void beforeRollback() override;
+
+    /** 
+     * Método abstrato. Método chamado imediatamente após a execução de um rollback
+     * para realizar algum processamento, caso seja necessário.
+     * */
+    void afterRollback() override;
+
+    string getNodeName() override;
+
+    /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
      * */
@@ -81,6 +96,9 @@ class ClientNodeApp : public Application
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
+  
+  protected:
+    void defineCheckpointStrategy() override;
 
   private:
     
@@ -101,6 +119,27 @@ class ClientNodeApp : public Application
      */
     void HandleRead(Ptr<Socket> socket);
 
+    void logMessageReceived(Ptr<Packet> packet, Address from, uint32_t currentSequenceNumber, string command, int data);
+
+    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
+    void notifyNodesAboutRollbackConcluded();
+
+    /** 
+     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
+     * algum erro.
+    */
+    void resetNodeData();
+
+    ////////////////////////////////////////////////
+    //////          ATRIBUTOS NATIVOS         //////
+    ////////////////////////////////////////////////
+
+    /* 
+      Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
+      como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
+      de uma aplicação. Esses atributos não são incluídos em checkpoints.
+    */
+
     /// Traced Callback: transmitted packets.
     TracedCallback<Ptr<const Packet>> m_txTrace;
 
@@ -113,6 +152,12 @@ class ClientNodeApp : public Application
     /// Callbacks for tracing the packet Rx events, includes source and destination addresses
     TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
 
+    ////////////////////////////////////////////////
+    //////       ATRIBUTOS DE APLICAÇÃO       //////
+    ////////////////////////////////////////////////
+
+    //Somente atributos de aplicação serão armazenados em checkpoints
+
     uint32_t m_count; //!< Maximum number of packets the application will send
     Time m_interval;  //!< Packet inter-send time
     uint32_t m_size;  //!< Size of the sent packet (including the SeqTsHeader)
@@ -120,21 +165,19 @@ class ClientNodeApp : public Application
     uint32_t m_sent;       //!< Counter for sent packets
     uint64_t last_seq;     //!< Last sequence number received from the server
     uint64_t m_totalTx;    //!< Total bytes sent
-    Ptr<Socket> m_socket;  //!< Socket
     Address m_peerAddress; //!< Remote peer address
     uint16_t m_peerPort;   //!< Remote peer port
     uint8_t m_tos;         //!< The packets Type of Service
+
+    Ptr<Socket> m_socket;  //!< Socket
     EventId m_sendEvent;   //!< Event to send the next packet
 
-    /* Estratégia de checkpoint escolhida para este nó. */
-    CheckpointStrategy *checkpointStrategy;
-
-#ifdef NS3_LOG_ENABLE
+/*#ifdef NS3_LOG_ENABLE
     std::string m_peerAddressString; //!< Remote peer address string
-#endif                               // NS3_LOG_ENABLE
+#endif                               // NS3_LOG_ENABLE*/
 
 };
 
 } // namespace ns3
 
-#endif /* UDP_ECHO_CLIENT_H */
+#endif /* CLIENT_NODE_APP_H */

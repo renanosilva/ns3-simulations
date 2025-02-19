@@ -42,10 +42,13 @@ int
 main(int argc, char* argv[])
 {
     //Habilitando mensagens de log
-	LogComponentEnable("BatteryServerApp", LOG_LEVEL_INFO);
+	LogComponentEnable("Application", LOG_LEVEL_INFO);
+    LogComponentEnable("CheckpointApp", LOG_LEVEL_INFO);
+    LogComponentEnable("BatteryServerApp", LOG_LEVEL_INFO);
     LogComponentEnable("ClientApp", LOG_LEVEL_INFO);
     LogComponentEnable("Battery", LOG_LEVEL_INFO);
     LogComponentEnable("CheckpointStrategy", LOG_LEVEL_INFO);
+    LogComponentEnable("CheckpointHelper", LOG_LEVEL_INFO);
     LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_LEVEL_INFO);
 
     //Habilitando a impressão de pacotes

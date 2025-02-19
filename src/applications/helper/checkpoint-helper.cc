@@ -33,6 +33,8 @@ using namespace std;
 namespace ns3
 {
 
+NS_LOG_COMPONENT_DEFINE("CheckpointHelper");
+
 /** Pasta onde se encontram os checkpoints dos nós. */
 static const string CHECKPOINTS_FOLDER = "checkpoints/";
 
@@ -107,7 +109,7 @@ void CheckpointHelper::writeCheckpoint(string data){
     counter++;
 }
 
-void CheckpointHelper::writeCheckpoint(Application *app){
+void CheckpointHelper::writeCheckpoint(CheckpointApp *app){
     //nlohmann::json j = to_json(app);
     json j = app->to_json();
 
@@ -153,11 +155,11 @@ json CheckpointHelper::readCheckpoint(int index)
 
 json CheckpointHelper::readLastCheckpoint()
 {
-    string content = getFileContent(getCheckpointFilename(getLastCounter()));
+    string content = getFileContent(getCheckpointFilename(getLastCheckpointId()));
 
-    if (content.length() == 0){
-        content = getFileContent(getCheckpointFilename(getLastCounter()-1));
-    }
+    /*if (content.length() == 0){
+        content = getFileContent(getCheckpointFilename(getLastCheckpointId()-1));
+    }*/
 
     return json::parse(content);
 }
@@ -170,13 +172,26 @@ string CheckpointHelper::getLogBasename(){
     return checkpointBaseName + "-log";
 }
 
-int CheckpointHelper::getLastCounter(){
+int CheckpointHelper::getLastCheckpointId(){
     if (counter != 0){
-        cout << "\n" << counter << "\n";
-        return counter;
+        return counter - 1;
     }
 
+    //obtendo o último checkpoint criado a partir dos nomes dos arquivos dos checkpoints
     vector<string> nomes = listFiles(CHECKPOINTS_FOLDER, checkpointBaseName);
+
+    if (nomes.empty())
+        return -1;
+
+    counter = findMaxCounterFromFilenames(nomes);
+
+    //Incrementa o contador, pois o próximo checkpoint será criado nessa nova posição
+    counter++;
+
+    //retorna o valor do último checkpoint válido
+    return counter - 1;
+    
+    /*
     string nome = nomes[nomes.size() - 1]; //pegando o nome do último arquivo
 
     //obtendo o contador do checkpoint presente no nome do arquivo do checkpoint
@@ -189,9 +204,50 @@ int CheckpointHelper::getLastCounter(){
         // O número antes de ".json" será o terceiro grupo capturado
         string c = match[3];
         counter = stoi(c);
-    } 
+    }
 
-    return counter;
+    */
+}
+
+int CheckpointHelper::findMaxCounterFromFilenames(const vector<std::string>& filenames) {
+    
+    string maxStr;
+    int maxNumber = -1;
+
+    for (const auto& filename : filenames) {
+        size_t lastDash = filename.rfind('-'); // Último '-'
+        size_t dotJson = filename.rfind(".json"); // Posição de ".json"
+        
+        if (lastDash != std::string::npos && dotJson != std::string::npos) {
+            int num = std::stoi(filename.substr(lastDash + 1, dotJson - lastDash - 1));
+            if (num > maxNumber) {
+                maxNumber = num;
+                maxStr = filename;
+            }
+        }
+    }
+
+    return maxNumber;
+    
+    /*regex pattern("(\\d+)(?=\\.json$)"); // Captura o último número antes de ".json"
+    string maxStr;
+    int maxNumber = -1;
+
+    for (const auto& filename : filenames) {
+        std::smatch match;
+        if (std::regex_search(filename, match, pattern)) {
+            int num = std::stoi(match.str());
+            if (num > maxNumber) {
+                maxNumber = num;
+                maxStr = filename;
+            }
+        }
+    }
+
+    NS_LOG_INFO("\n\nMAX NUMBER: " << maxNumber);
+    NS_LOG_INFO("MAX STR: " << maxStr << "\n\n");
+
+    return maxNumber; // Retorna a string com o maior número*/
 }
 
 void to_json(json& j, const CheckpointHelper& obj) {

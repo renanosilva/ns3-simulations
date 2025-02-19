@@ -50,7 +50,7 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, Application *application);
+    SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, CheckpointApp *application);
 
     /** Construtor padrão. */
     SyncPredefinedTimesCheckpoint();
@@ -63,7 +63,9 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     
     virtual void writeLog() override; 
 
-    virtual void startRollback() override; 
+    virtual void startRollbackToLastCheckpoint() override; 
+
+    virtual void startRollback(int checkpointId) override; 
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj);
@@ -75,6 +77,8 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
 
     /** Intervalo de tempo no qual serão criados checkpoints. */
     Time interval;
+
+    EventId agendamento;
 
     /** Diminui a quantidade de energia referente à criação de um checkpoint. */
     void decreaseCheckpointEnergy();

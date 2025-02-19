@@ -43,26 +43,28 @@ SyncPredefinedTimesCheckpoint::GetTypeId()
     return tid;
 }
 
-SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, Application *application){
+SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, CheckpointApp *application){
     NS_LOG_FUNCTION(this);
 
     interval = timeInterval;
     checkpointHelper = new CheckpointHelper(nodeName);
     app = application;
+    agendamento = EventId();
 }
 
 SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(){
-
+    
 }
 
 SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
 {
     NS_LOG_FUNCTION(this);
+    Simulator::Cancel(agendamento);
 }
 
 void SyncPredefinedTimesCheckpoint::startCheckpointing() {
     //Agendando criação de checkpoints
-    Simulator::Schedule(interval,
+    agendamento = Simulator::Schedule(interval,
                                 &SyncPredefinedTimesCheckpoint::writeCheckpoint,
                                 this);
 }
@@ -82,12 +84,17 @@ void SyncPredefinedTimesCheckpoint::writeLog() {
 void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
 
     if (mayCheckpoint()){
+        app->beforeCheckpoint();
+
         checkpointHelper->writeCheckpoint(app);
 
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
             << checkpointHelper->getCheckpointBasename());
 
         decreaseCheckpointEnergy();
+
+        app->afterCheckpoint();
+        
     } else {
         checkpointHelper->skipCheckpoint();
     }
@@ -110,21 +117,31 @@ void SyncPredefinedTimesCheckpoint::scheduleNextCheckpoint(){
     Time delay = getDelayToNextCheckpoint();
 
     //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
-    Simulator::Schedule(delay,
+    agendamento = Simulator::Schedule(delay,
                                 &SyncPredefinedTimesCheckpoint::writeCheckpoint,
                                 this);
 }
 
-void SyncPredefinedTimesCheckpoint::startRollback() {
+void SyncPredefinedTimesCheckpoint::startRollbackToLastCheckpoint() {
+    startRollback(checkpointHelper->getLastCheckpointId());
+}
+
+void SyncPredefinedTimesCheckpoint::startRollback(int checkpointId) {
+    app->beforeRollback();
+    
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << 
                     checkpointHelper->getCheckpointBasename() << 
                     " iniciando procedimento de rollback.");
     
     //lendo último checkpoint
-    json j = checkpointHelper->readLastCheckpoint();
+    json j = checkpointHelper->readCheckpoint(checkpointId);
+
+    //std::cout << j.dump(4) << std::endl;
 
     //iniciando recuperação das informações presentes no checkpoint
     app->from_json(j);
+
+    app->afterRollback();
 
     scheduleNextCheckpoint();
 }

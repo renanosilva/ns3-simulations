@@ -57,11 +57,19 @@ void CheckpointStrategy::writeCheckpoint(){
     
 }
 
-void CheckpointStrategy::startRollback(){
+void CheckpointStrategy::startRollbackToLastCheckpoint(){
     
 }
 
-void CheckpointStrategy::setApp(Application *application){
+void CheckpointStrategy::startRollback(int checkpointId){
+    
+}
+
+int CheckpointStrategy::getLastCheckpointId(){
+    return checkpointHelper->getLastCheckpointId();
+}
+
+void CheckpointStrategy::setApp(CheckpointApp *application){
     app = application;
 }
 
