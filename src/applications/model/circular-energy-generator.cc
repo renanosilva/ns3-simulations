@@ -27,36 +27,54 @@ NS_OBJECT_ENSURE_REGISTERED(CircularEnergyGenerator);
 TypeId
 CircularEnergyGenerator::GetTypeId()
 {
+    NS_LOG_FUNCTION("CircularEnergyGenerator::GetTypeId");
+
     static TypeId tid =
         TypeId("ns3::CircularEnergyGenerator")
             .SetParent<EnergyGenerator>()
-            .SetGroupName("Sensor");
+            .SetGroupName("EnergyGenerator")
+            .AddConstructor<CircularEnergyGenerator>();
 
+    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 CircularEnergyGenerator::CircularEnergyGenerator(){
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 CircularEnergyGenerator::~CircularEnergyGenerator()
 {
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 double CircularEnergyGenerator::getValue() {
+    NS_LOG_FUNCTION(this << i);
+
     double v = values[i % std::size(values)];
     i++;
+
+    NS_LOG_FUNCTION("Fim do método");
     return v;
 }
 
 void to_json(json& j, const CircularEnergyGenerator& obj) {
+    NS_LOG_FUNCTION("CircularEnergyGenerator::to_json");
+    
     to_json(j, static_cast<const EnergyGenerator&>(obj));
     j["i"] = obj.i;
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, CircularEnergyGenerator& obj) {
+    NS_LOG_FUNCTION("CircularEnergyGenerator::from_json");
+
     j.at("i").get_to(obj.i);
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 } // Namespace ns3

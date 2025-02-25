@@ -130,6 +130,11 @@ class ClientNodeApp : public CheckpointApp
     */
     void resetNodeData();
 
+    /** 
+     * Imprime os dados dos atributos desta classe (para fins de debug).
+    */
+    void printNodeData();
+
     ////////////////////////////////////////////////
     //////          ATRIBUTOS NATIVOS         //////
     ////////////////////////////////////////////////
@@ -165,6 +170,8 @@ class ClientNodeApp : public CheckpointApp
     uint32_t m_sent;       //!< Counter for sent packets
     uint64_t last_seq;     //!< Last sequence number received from the server
     uint64_t m_totalTx;    //!< Total bytes sent
+    Address m_address;     //!< This node's address
+    uint16_t m_port;       //!< This node's port
     Address m_peerAddress; //!< Remote peer address
     uint16_t m_peerPort;   //!< Remote peer port
     uint8_t m_tos;         //!< The packets Type of Service

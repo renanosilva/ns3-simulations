@@ -125,7 +125,7 @@ class CheckpointApp : public Application
     */
 
     /** Estratégia de checkpoint escolhida para este nó. */
-    CheckpointStrategy *checkpointStrategy;
+    Ptr<CheckpointStrategy> checkpointStrategy;
 
     ////////////////////////////////////////////////
     //////       ATRIBUTOS DE APLICAÇÃO       //////

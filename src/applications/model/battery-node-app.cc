@@ -38,6 +38,7 @@
 #include "ns3/uinteger.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
+#include "ns3/enum.h"
 
 namespace ns3
 {
@@ -50,13 +51,18 @@ static const double CONNECT_ENERGY = 100.; //Energia gasta para conectar um sock
 static const double SEND_ENERGY = 100.; //Energia gasta para enviar um pacote
 static const double RECEIVE_ENERGY = 100.; //Energia gasta para receber um pacote
 static const double CREATE_CHECKPOINT_ENERGY = 100.; //Energia gasta para criar um checkpoint
+static const double IDLE_ENERGY = 10.; //Energia gasta para se manter ligado (funcionamento básico)
+static const double SLEEP_ENERGY = 1.; //Energia gasta para se manter em modo sleep (funcionamento básico)
+static const Time ENERGY_UPDATE_INTERVAL = Seconds(1.0); //Intervalo de atualização de energia da bateria
 
 TypeId
 BatteryNodeApp::GetTypeId()
 {
+    NS_LOG_FUNCTION("BatteryNodeApp::GetTypeId()");
+
     static TypeId tid =
         TypeId("ns3::BatteryNodeApp")
-            .SetParent<Application>()
+            .SetParent<CheckpointApp>()
             .SetGroupName("Applications")
             .AddConstructor<BatteryNodeApp>()
             .AddAttribute("Port",
@@ -85,6 +91,9 @@ BatteryNodeApp::GetTypeId()
                             "A packet has been received",
                             MakeTraceSourceAccessor(&BatteryNodeApp::m_rxTraceWithAddresses),
                             "ns3::Packet::TwoAddressTracedCallback");
+    
+    NS_LOG_FUNCTION("Fim do método");
+
     return tid;
 }
 
@@ -97,12 +106,12 @@ BatteryNodeApp::BatteryNodeApp()
     NS_LOG_FUNCTION(this);
     NS_LOG_INFO("Iniciando " << getNodeName() << "... Energia inicial: " << battery.getRemainingEnergy());
 
-    energyUpdateInterval = Seconds(1.0);
-    idleEnergyConsumption = 10;
-    sleepEnergyConsumption = 1;
+    energyUpdateInterval = ENERGY_UPDATE_INTERVAL;
+    idleEnergyConsumption = IDLE_ENERGY;
+    sleepEnergyConsumption = SLEEP_ENERGY;
     currentMode = NORMAL;
     rollbackInProgress = false;
-
+    m_local = Address();
     addresses.clear();
 
     defineCheckpointStrategy();
@@ -117,6 +126,8 @@ BatteryNodeApp::BatteryNodeApp()
     Simulator::Schedule(energyUpdateInterval,
                                 &BatteryNodeApp::decreaseCurrentModeEnergy,
                                 this);
+    
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 BatteryNodeApp::~BatteryNodeApp()
@@ -126,18 +137,30 @@ BatteryNodeApp::~BatteryNodeApp()
 
     addresses.clear();
 
-    delete energyGenerator;
-    delete checkpointStrategy;
+    //delete energyGenerator;
+    //delete checkpointStrategy;
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::defineCheckpointStrategy() {
-    checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
+    NS_LOG_FUNCTION(this);
+    
+    //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
+    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), getNodeName(), this);
     checkpointStrategy->startCheckpointing();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::defineEnergyGenerator() {
+    NS_LOG_FUNCTION(this);
+    
     //energyGenerator = new FixedEnergyGenerator(100);
-    energyGenerator = new CircularEnergyGenerator();
+    //energyGenerator = new CircularEnergyGenerator();
+    energyGenerator = Create<CircularEnergyGenerator>();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 uint16_t
@@ -152,6 +175,7 @@ BatteryNodeApp::SetPacketWindowSize(uint16_t size)
 {
     NS_LOG_FUNCTION(this << size);
     m_lossCounter.SetBitMapSize(size);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 uint32_t
@@ -177,6 +201,7 @@ BatteryNodeApp::StartApplication()
     {
         TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
         m_socket = Socket::CreateSocket(GetNode(), tid);
+        
         InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
         if (m_socket->Bind(local) == -1)
         {
@@ -227,6 +252,8 @@ BatteryNodeApp::StartApplication()
 
     NS_LOG_INFO(getNodeName() << " conectado.");
     decreaseConnectEnergy();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
@@ -244,14 +271,13 @@ BatteryNodeApp::StopApplication()
         m_socket6->Close();
         m_socket6->SetRecvCallback(MakeNullCallback<void, Ptr<Socket>>());
     }*/
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
 BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 {
-    /*if (!m_socket)
-        return;*/
-    
     NS_LOG_FUNCTION(this << socket);
 
     Ptr<Packet> packet;
@@ -396,32 +422,40 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
             }
         } catch (NodeAsleepException& e) {
             //NS_LOG_INFO("Tarefa incompleta por estar em modo SLEEP.");
-            continue;
+            break;
         } catch (NodeDepletedException& e) {
             //NS_LOG_INFO("Tarefa incompleta por estar em modo DEPLETED.");
-            continue;
-        } 
+            break;
+        }
         
     }
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 Mode BatteryNodeApp::getCurrentMode(){
+    NS_LOG_FUNCTION(this);
     return currentMode;
 }
 
 bool BatteryNodeApp::isSleeping(){
+    NS_LOG_FUNCTION(this);
     return currentMode == SLEEP;
 }
 
 bool BatteryNodeApp::isDepleted(){
+    NS_LOG_FUNCTION(this);
     return currentMode == DEPLETED;
 }
 
 Time BatteryNodeApp::getEnergyUpdateInterval(){
+    NS_LOG_FUNCTION(this);
     return energyUpdateInterval;
 }
 
 void BatteryNodeApp::generateEnergy(){
+    NS_LOG_FUNCTION(this);
+    
     battery.rechargeEnergy(energyGenerator->getValue());
 
     checkModeChange();
@@ -430,9 +464,12 @@ void BatteryNodeApp::generateEnergy(){
                                 &BatteryNodeApp::generateEnergy,
                                 this);
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::checkModeChange(){
+    NS_LOG_FUNCTION(this);
+    
     if (battery.getBatteryPercentage() == 0 && currentMode != Mode::DEPLETED){
         currentMode = Mode::DEPLETED;
 
@@ -444,9 +481,10 @@ void BatteryNodeApp::checkModeChange(){
     } else if (battery.getBatteryPercentage() <= 10 && currentMode == Mode::NORMAL){
         currentMode = Mode::SLEEP;
 
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo SLEEP.");
+
         resetNodeData();
 
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo SLEEP.");
         throw NodeAsleepException("Bateria entrou em modo SLEEP.");
 
     } else if (battery.getBatteryPercentage() > 20 && currentMode != Mode::NORMAL){
@@ -469,37 +507,50 @@ void BatteryNodeApp::checkModeChange(){
             ", m_lossCounter: " << m_lossCounter.GetLost() <<
             ", checkpointStrategy: " << checkpointStrategy);*/
     }
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::beforeCheckpoint(){
-    
+    NS_LOG_FUNCTION(this);
 }
 
 void BatteryNodeApp::afterCheckpoint(){
-
+    NS_LOG_FUNCTION(this);
+    
     //Removendo endereços com os quais este nó se comunicou no ciclo anterior
     addresses.clear();
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::beforeRollback(){
+    NS_LOG_FUNCTION(this);
+    
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
                                     << " entrou no modo de bloqueio de comunicação.");
     rollbackInProgress = true;
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::afterRollback(){
-    
+    NS_LOG_FUNCTION(this);
+
     //Reiniciando aplicação...
     StartApplication();
+
+    printNodeData();
 
     //Enviando mensagem de rollback para os outros nós envolvidos
     notifyNodesAboutRollback();
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::notifyNodesAboutRollback(){
-    
+    NS_LOG_FUNCTION(this);
+
     /* Cabeçalho do pacote a ser enviado */
 
     SeqTsHeader seqTs;
@@ -527,13 +578,19 @@ void BatteryNodeApp::notifyNodesAboutRollback(){
             NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
                             << " enviou para "
                             << InetSocketAddress::ConvertFrom(a).GetIpv4() 
+                            << " porta "
+                            << InetSocketAddress::ConvertFrom(a).GetPort()
                             << " o seguinte comando: " << data);
         }
     
     }
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseEnergy(double amount) {
+    NS_LOG_FUNCTION(this);
+    
     NS_ASSERT_MSG(
             (currentMode == Mode::SLEEP && amount == sleepEnergyConsumption) ||
             (currentMode == Mode::NORMAL), 
@@ -542,25 +599,37 @@ void BatteryNodeApp::decreaseEnergy(double amount) {
     battery.decrementEnergy(amount);
 
     checkModeChange();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseCheckpointEnergy(){
+    NS_LOG_FUNCTION(this);
     decreaseEnergy(CREATE_CHECKPOINT_ENERGY);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseReadEnergy(){
+    NS_LOG_FUNCTION(this);
     decreaseEnergy(RECEIVE_ENERGY);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseSendEnergy(){
+    NS_LOG_FUNCTION(this);
     decreaseEnergy(SEND_ENERGY);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseConnectEnergy(){
+    NS_LOG_FUNCTION(this);
     decreaseEnergy(CONNECT_ENERGY);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseIdleEnergy(){
+    NS_LOG_FUNCTION(this);
+
     try {
         decreaseEnergy(idleEnergyConsumption);
     } catch (NodeAsleepException& e) {
@@ -568,17 +637,25 @@ void BatteryNodeApp::decreaseIdleEnergy(){
     } catch (NodeDepletedException& e) {
         //Nada a fazer
     } 
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseSleepEnergy(){
+    NS_LOG_FUNCTION(this);
+    
     try {
         decreaseEnergy(sleepEnergyConsumption);
     } catch (NodeDepletedException& e) {
         //Nada a fazer
-    } 
+    }
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseCurrentModeEnergy(){
+    NS_LOG_FUNCTION(this);
+    
     if (currentMode == Mode::NORMAL){
         decreaseIdleEnergy();
     } else if (currentMode == Mode::SLEEP){
@@ -588,10 +665,15 @@ void BatteryNodeApp::decreaseCurrentModeEnergy(){
     Simulator::Schedule(energyUpdateInterval,
                                 &BatteryNodeApp::decreaseCurrentModeEnergy,
                                 this);
+    
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::resetNodeData() {
-    
+    NS_LOG_FUNCTION(this);
+
+    printNodeData();
+
     StopApplication();
     m_socket = nullptr;
 
@@ -608,10 +690,15 @@ void BatteryNodeApp::resetNodeData() {
     m_lossCounter = PacketLossCounter(0);
     rollbackInProgress = false;
 
-    delete checkpointStrategy;
+    checkpointStrategy = nullptr;
+    //delete checkpointStrategy;
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::addAddress(Address a){
+    NS_LOG_FUNCTION(this);
+    
     auto it = find(addresses.begin(), addresses.end(), a);
 
     if (it == addresses.end()) {
@@ -619,10 +706,40 @@ void BatteryNodeApp::addAddress(Address a){
         //Adiciona endereço ao vetor de endereços
         addresses.push_back(a);
     }
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void BatteryNodeApp::printNodeData(){
+    NS_LOG_FUNCTION(this);
+
+    NS_LOG_INFO("\nDados de " << getNodeName() << ":" );
+    NS_LOG_INFO(
+        "m_rxTrace.IsEmpty() = " << m_rxTrace.IsEmpty()
+        << ", m_rxTraceWithAddresses.IsEmpty() = " << m_rxTraceWithAddresses.IsEmpty()
+        << ", battery.getBatteryPercentage() = " << battery.getBatteryPercentage()
+        << ", currentMode = " << currentMode
+        << ", idleEnergyConsumption = " << idleEnergyConsumption
+        << ", sleepEnergyConsumption = " << sleepEnergyConsumption
+        << ", energyUpdateInterval = " << energyUpdateInterval.As(Time::S)
+        << ", energyGenerator->GetTypeId() = " << energyGenerator->GetTypeId()
+        << ", rollbackInProgress = " << rollbackInProgress
+        << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
+        << ", m_port = " << m_port
+        << ", m_tos = " << to_string(static_cast<int>(m_tos))
+        << ", m_local.IsInvalid() = " << m_local.IsInvalid()
+        << ", m_received = " << m_received
+        << ", m_seq = " << m_seq
+        << ", m_lossCounter = " << m_lossCounter.GetLost()
+        << ", addresses.size() = " << addresses.size()
+        << "\n ");
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 json BatteryNodeApp::to_json() const {
-    
+    NS_LOG_FUNCTION(this);
+
     json j = Application::to_json();
     j["m_port"] = m_port;
     j["m_tos"] = m_tos;
@@ -641,10 +758,14 @@ json BatteryNodeApp::to_json() const {
     //j = timeToJson(j, "energyUpdateInterval", energyUpdateInterval);
     //j = energyGeneratorToJson(j, energyGenerator);
 
+    NS_LOG_FUNCTION("Fim do método");
+
     return j;
 }
 
 void BatteryNodeApp::from_json(const json& j) {
+    NS_LOG_FUNCTION(this);
+    
     CheckpointApp::from_json(j);
 
     if (j.contains("m_port") && !j["m_port"].is_null()) {
@@ -689,9 +810,12 @@ void BatteryNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\naddresses está ausente ou é nulo! \n");
     }
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 string BatteryNodeApp::getNodeName(){
+    NS_LOG_FUNCTION(this);
+
     return "battery-node-0";
 }
 

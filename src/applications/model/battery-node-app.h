@@ -207,6 +207,11 @@ class BatteryNodeApp : public CheckpointApp
   
    Time getEnergyUpdateInterval();
 
+   /** 
+     * Imprime os dados dos atributos desta classe (para fins de debug).
+    */
+   void printNodeData();
+
     ////////////////////////////////////////////////
     //////          ATRIBUTOS NATIVOS         //////
     ////////////////////////////////////////////////
@@ -230,7 +235,7 @@ class BatteryNodeApp : public CheckpointApp
     Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
 
     /** Gerador de energia da bateria do nó */
-    EnergyGenerator *energyGenerator;
+    Ptr<EnergyGenerator> energyGenerator;
 
     /**
      * Indica se um procedimento de rollback está em progresso. Quando um rollback

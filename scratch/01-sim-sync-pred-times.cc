@@ -42,14 +42,36 @@ int
 main(int argc, char* argv[])
 {
     //Habilitando mensagens de log
-	LogComponentEnable("Application", LOG_LEVEL_INFO);
-    LogComponentEnable("CheckpointApp", LOG_LEVEL_INFO);
-    LogComponentEnable("BatteryServerApp", LOG_LEVEL_INFO);
-    LogComponentEnable("ClientApp", LOG_LEVEL_INFO);
-    LogComponentEnable("Battery", LOG_LEVEL_INFO);
-    LogComponentEnable("CheckpointStrategy", LOG_LEVEL_INFO);
-    LogComponentEnable("CheckpointHelper", LOG_LEVEL_INFO);
-    LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_LEVEL_INFO);
+	
+    /*
+    LogComponentEnable("Application", LOG_INFO);
+    LogComponentEnable("CheckpointApp", LOG_INFO);
+    LogComponentEnable("BatteryServerApp", LOG_INFO);
+    LogComponentEnable("ClientApp", LOG_INFO);
+    LogComponentEnable("Battery", LOG_INFO);
+    LogComponentEnable("CheckpointStrategy", LOG_INFO);
+    LogComponentEnable("CheckpointHelper", LOG_INFO);
+    LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_INFO);
+    
+    LogComponentEnable("Application", LOG_FUNCTION);
+    LogComponentEnable("CheckpointApp", LOG_FUNCTION);
+    LogComponentEnable("BatteryServerApp", LOG_FUNCTION);
+    LogComponentEnable("ClientApp", LOG_FUNCTION);
+    LogComponentEnable("Battery", LOG_FUNCTION);
+    LogComponentEnable("CheckpointStrategy", LOG_FUNCTION);
+    LogComponentEnable("CheckpointHelper", LOG_FUNCTION);
+    LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_FUNCTION);*/
+    
+    LogComponentEnable("Application", LOG_LEVEL_ALL);
+    LogComponentEnable("CheckpointApp", LOG_LEVEL_ALL);
+    LogComponentEnable("BatteryServerApp", LOG_LEVEL_ALL);
+    LogComponentEnable("ClientApp", LOG_LEVEL_ALL);
+    LogComponentEnable("Battery", LOG_LEVEL_ALL);
+    LogComponentEnable("CheckpointStrategy", LOG_LEVEL_ALL);
+    LogComponentEnable("CheckpointHelper", LOG_LEVEL_ALL);
+    LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_LEVEL_ALL);
+    LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
+    LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
 
     //Habilitando a impressão de pacotes
     ns3::PacketMetadata::Enable();

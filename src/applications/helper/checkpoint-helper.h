@@ -22,9 +22,13 @@
 #ifndef CHECKPOINT_HELPER_H
 #define CHECKPOINT_HELPER_H
 
+#include "ns3/object.h"
+#include "ns3/ptr.h"
 #include <ns3/string.h>
 #include "ns3/checkpoint-app.h"
 #include <nlohmann/json.hpp>
+#include "ns3/names.h"
+#include "ns3/uinteger.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -38,7 +42,7 @@ class CheckpointApp;
  * \ingroup checkpoint
  * \brief Classe que auxilia no processo de gerenciamento de checkpoints.
  */
-class CheckpointHelper
+class CheckpointHelper : public Object
 {
   public:
 
@@ -53,6 +57,12 @@ class CheckpointHelper
      */
     CheckpointHelper(string checkpointBaseName);
 
+    /**
+     * \brief Get the type ID.
+     * \return the object TypeId
+     */
+    static TypeId GetTypeId();
+
     /** Remove todos os checkpoints existentes. */
     void removeAllCheckpointsAndLogs();
 
@@ -60,7 +70,7 @@ class CheckpointHelper
     void writeCheckpoint(string data);
 
     /** Cria um novo checkpoint, transformando um objeto em JSON. */
-    void writeCheckpoint(CheckpointApp *app);
+    void writeCheckpoint(Ptr<CheckpointApp> app);
 
     /** Cria um novo log */
     void writeLog(string data);

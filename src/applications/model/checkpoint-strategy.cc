@@ -28,21 +28,26 @@ NS_OBJECT_ENSURE_REGISTERED(CheckpointStrategy);
 TypeId
 CheckpointStrategy::GetTypeId()
 {
+    NS_LOG_FUNCTION(CheckpointStrategy::GetTypeId());
     static TypeId tid =
         TypeId("ns3::CheckpointStrategy")
             .AddConstructor<CheckpointStrategy>()
             .SetParent<Object>()
             .SetGroupName("Sensor");
+
+    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 CheckpointStrategy::CheckpointStrategy(){
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 CheckpointStrategy::~CheckpointStrategy()
 {
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void CheckpointStrategy::startCheckpointing(){
@@ -66,34 +71,48 @@ void CheckpointStrategy::startRollback(int checkpointId){
 }
 
 int CheckpointStrategy::getLastCheckpointId(){
+    NS_LOG_FUNCTION(this);
     return checkpointHelper->getLastCheckpointId();
 }
 
-void CheckpointStrategy::setApp(CheckpointApp *application){
+void CheckpointStrategy::setApp(Ptr<CheckpointApp> application){
+    NS_LOG_FUNCTION(this);
     app = application;
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void to_json(json& j, const CheckpointStrategy& obj) {
+    NS_LOG_FUNCTION("CheckpointStrategy::to_json");
+    
     j = json{
         {"checkpointHelper", *obj.checkpointHelper}, 
         {"logData", obj.logData}
     };
+    
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, CheckpointStrategy& obj) {
+    NS_LOG_FUNCTION("CheckpointStrategy::from_json");
+    
     j.at("checkpointHelper").get_to(*obj.checkpointHelper);
     j.at("logData").get_to(obj.logData);
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void CheckpointStrategy::setLogData(string data){
+    NS_LOG_FUNCTION(this);
     logData = data;
 }
 
 void CheckpointStrategy::addLogData(string data){
+    NS_LOG_FUNCTION(this);
     logData += data;
 }
 
 string CheckpointStrategy::getLogData(){
+    NS_LOG_FUNCTION(this);
     return logData;
 }
 

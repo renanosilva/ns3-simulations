@@ -19,6 +19,7 @@
 #define CHECKPOINT_STRATEGY_H
 
 #include "ns3/object.h"
+#include "ns3/ptr.h"
 #include "ns3/type-id.h"
 #include <ns3/double.h>
 #include "ns3/checkpoint-app.h"
@@ -95,7 +96,7 @@ class CheckpointStrategy : public Object
     /** Obtém os dados a serem armazenados no próximo log. */
     string getLogData();
 
-    void setApp(CheckpointApp *application);
+    void setApp(Ptr<CheckpointApp> application);
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointStrategy& obj);
@@ -108,13 +109,13 @@ class CheckpointStrategy : public Object
   protected:
 
     /** Auxilia a manipular os arquivos de checkpoint e logs. */
-    CheckpointHelper *checkpointHelper;
+    Ptr<CheckpointHelper> checkpointHelper;
 
     /** Dados a serem armazenados no checkpoint. */
     string logData = "";
 
     /** Aplicação na qual deverá ser feito o checkpoint. */
-    CheckpointApp *app;
+    Ptr<CheckpointApp> app;
 
 };
 

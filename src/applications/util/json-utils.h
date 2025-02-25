@@ -18,6 +18,7 @@
 #ifndef JSON_UTILS_H
 #define JSON_UTILS_H
 
+#include "ns3/ptr.h"
 #include "ns3/energy-generator.h"
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/nstime.h"
@@ -29,7 +30,7 @@ namespace ns3
 {
 
 /** Converte um objeto gerador de energia em JSON. */
-json energyGeneratorToJson(json j, EnergyGenerator *eg);
+json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg);
 
 /** Converte um objeto estratégia de checkpoint em JSON. */
 //json checkpointStrategyToJson(json j, CheckpointStrategy *cs);

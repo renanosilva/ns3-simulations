@@ -40,6 +40,7 @@ class FixedEnergyGenerator : public EnergyGenerator
      */
     static TypeId GetTypeId();
 
+    FixedEnergyGenerator();
     FixedEnergyGenerator(double fixedValue);
     ~FixedEnergyGenerator() override;
 

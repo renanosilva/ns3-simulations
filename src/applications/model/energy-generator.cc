@@ -28,21 +28,27 @@ NS_OBJECT_ENSURE_REGISTERED(EnergyGenerator);
 TypeId
 EnergyGenerator::GetTypeId()
 {
+    NS_LOG_FUNCTION("EnergyGenerator::GetTypeId()");
+
     static TypeId tid =
         TypeId("ns3::EnergyGenerator")
             .AddConstructor<EnergyGenerator>()
             .SetParent<Object>()
             .SetGroupName("Sensor");
+    
+    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 EnergyGenerator::EnergyGenerator(){
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 EnergyGenerator::~EnergyGenerator()
 {
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 double EnergyGenerator::getValue(){
@@ -50,9 +56,13 @@ double EnergyGenerator::getValue(){
 }
 
 void to_json(json& j, const EnergyGenerator& obj) {
+    NS_LOG_FUNCTION("EnergyGenerator::to_json");
+    
     j = json{
         //até o momento não é necessário converter nada
     };
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, EnergyGenerator& obj) {

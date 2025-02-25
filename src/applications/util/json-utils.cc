@@ -23,13 +23,15 @@
 namespace ns3
 {
 
-json energyGeneratorToJson(json j, EnergyGenerator *eg) {
-    FixedEnergyGenerator* feg = dynamic_cast<FixedEnergyGenerator*>(eg);
+json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg) {
+    //FixedEnergyGenerator* feg = dynamic_cast<FixedEnergyGenerator*>(eg);
+    Ptr<FixedEnergyGenerator> feg = DynamicCast<FixedEnergyGenerator>(eg);
 
     if (feg) {
         j["energyGenerator"] = *feg;
     } else {
-        CircularEnergyGenerator* ceg = dynamic_cast<CircularEnergyGenerator*>(eg);
+        //CircularEnergyGenerator* ceg = dynamic_cast<CircularEnergyGenerator*>(eg);
+        Ptr<CircularEnergyGenerator> ceg = DynamicCast<CircularEnergyGenerator>(eg);
 
         if (ceg){
             j["energyGenerator"] = *ceg;

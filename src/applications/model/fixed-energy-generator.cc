@@ -30,13 +30,20 @@ FixedEnergyGenerator::GetTypeId()
     static TypeId tid =
         TypeId("ns3::FixedEnergyGenerator")
             .SetParent<EnergyGenerator>()
-            .SetGroupName("Sensor")
+            .SetGroupName("EnergyGenerator")
+            .AddConstructor<FixedEnergyGenerator>()
             .AddAttribute("value",
                           "Valor fixo de energia a ser gerada",
                           DoubleValue(40), //valor inicial
                           MakeDoubleAccessor(&FixedEnergyGenerator::value),
                           MakeDoubleChecker<double>());
     return tid;
+}
+
+FixedEnergyGenerator::FixedEnergyGenerator(){
+    NS_LOG_FUNCTION(this);
+    
+    value = 0;
 }
 
 FixedEnergyGenerator::FixedEnergyGenerator(double fixedValue){

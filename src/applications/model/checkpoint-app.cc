@@ -21,7 +21,6 @@ namespace ns3
 {
 
 NS_LOG_COMPONENT_DEFINE("CheckpointApp");
-
 NS_OBJECT_ENSURE_REGISTERED(CheckpointApp);
 
 const string CheckpointApp::REQUEST_TO_START_ROLLBACK_COMMAND = "REQUEST_TO_START_ROLLBACK";
@@ -31,23 +30,29 @@ const string CheckpointApp::ROLLBACK_FINISHED = "ROLLBACK_FINISHED";
 TypeId
 CheckpointApp::GetTypeId()
 {
+    NS_LOG_FUNCTION("CheckpointApp::GetTypeId()");
+
     static TypeId tid =
         TypeId("ns3::CheckpointApp")
             .SetParent<Application>()
             .SetGroupName("Applications")
             .AddConstructor<CheckpointApp>();
+    
+    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 CheckpointApp::CheckpointApp()
 {
-    
+    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 CheckpointApp::~CheckpointApp()
 {
     NS_LOG_FUNCTION(this);
-    delete checkpointStrategy;
+    NS_LOG_FUNCTION("Fim do método");
+    //delete checkpointStrategy;
 }
 
 void CheckpointApp::defineCheckpointStrategy() {
@@ -83,13 +88,18 @@ void CheckpointApp::afterRollback(){
 }
 
 json CheckpointApp::to_json() const {
+    NS_LOG_FUNCTION(this);
     
     json j = Application::to_json();
+    
+    NS_LOG_FUNCTION("Fim do método");
     return j;
 }
 
 void CheckpointApp::from_json(const json& j) {
+    NS_LOG_FUNCTION(this);
     Application::from_json(j);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 string CheckpointApp::getNodeName(){

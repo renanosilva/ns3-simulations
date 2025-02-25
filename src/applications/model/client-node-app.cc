@@ -31,6 +31,8 @@
 #include "ns3/socket-factory.h"
 #include "ns3/socket.h"
 #include "ns3/uinteger.h"
+#include "ns3/ipv4.h"
+#include "ns3/ipv4-address.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -39,15 +41,16 @@ namespace ns3
 {
 
 NS_LOG_COMPONENT_DEFINE("ClientApp");
-
 NS_OBJECT_ENSURE_REGISTERED(ClientNodeApp);
 
 TypeId
 ClientNodeApp::GetTypeId()
 {
+    NS_LOG_FUNCTION("ClientNodeApp::GetTypeId()");
+
     static TypeId tid =
         TypeId("ns3::ClientNodeApp")
-            .SetParent<Application>()
+            .SetParent<CheckpointApp>()
             .SetGroupName("Applications")
             .AddConstructor<ClientNodeApp>()
             .AddAttribute(
@@ -71,6 +74,16 @@ ClientNodeApp::GetTypeId()
                           UintegerValue(0),
                           MakeUintegerAccessor(&ClientNodeApp::m_peerPort),
                           MakeUintegerChecker<uint16_t>())
+            .AddAttribute("Address",
+                            "The node's address",
+                            AddressValue(Ipv4Address::GetAny()),
+                            MakeAddressAccessor(&ClientNodeApp::m_address),
+                            MakeAddressChecker())
+            .AddAttribute("Port",
+                            "The node's port",
+                            UintegerValue(0),
+                            MakeUintegerAccessor(&ClientNodeApp::m_port),
+                            MakeUintegerChecker<uint16_t>())
             .AddAttribute("Tos",
                           "The Type of Service used to send IPv4 packets. "
                           "All 8 bits of the TOS byte are set (including ECN bits).",
@@ -91,24 +104,33 @@ ClientNodeApp::GetTypeId()
                             "A new packet is created and is sent",
                             MakeTraceSourceAccessor(&ClientNodeApp::m_txTraceWithAddresses),
                             "ns3::Packet::TwoAddressTracedCallback");
+
+    NS_LOG_FUNCTION("Fim do método");
+
     return tid;
 }
 
 ClientNodeApp::ClientNodeApp()
 {
     NS_LOG_FUNCTION(this);
+    
     m_sent = 0;
     m_totalTx = 0;
     m_socket = nullptr;
     m_sendEvent = EventId();
 
-    checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), "client-node-0", this);
-    checkpointStrategy->startCheckpointing();
+    m_address = Ipv4Address::GetAny();
+    m_port = 0;
+
+    defineCheckpointStrategy();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 ClientNodeApp::~ClientNodeApp()
 {
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
@@ -117,6 +139,7 @@ ClientNodeApp::SetRemote(Address ip, uint16_t port)
     NS_LOG_FUNCTION(this << ip << port);
     m_peerAddress = ip;
     m_peerPort = port;
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
@@ -124,6 +147,7 @@ ClientNodeApp::SetRemote(Address addr)
 {
     NS_LOG_FUNCTION(this << addr);
     m_peerAddress = addr;
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
@@ -136,23 +160,50 @@ ClientNodeApp::StartApplication()
         TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
         m_socket = Socket::CreateSocket(GetNode(), tid);
         NS_ABORT_MSG_IF(m_peerAddress.IsInvalid(), "'RemoteAddress' attribute not properly set");
+        
         if (Ipv4Address::IsMatchingType(m_peerAddress))
         {
-            if (m_socket->Bind() == -1)
+            // Se for a primeira execução, o ns-3 irá escolher o IP
+            if (m_address == Ipv4Address::GetAny())
             {
-                NS_FATAL_ERROR("Failed to bind socket");
+                //NS_LOG_INFO("PRIMEIRO START");
+                
+                //m_socket->Bind(InetSocketAddress(Ipv4Address::GetAny(), m_port));
+                m_socket->Bind();
+                
+                // Após o Bind(), recuperar o IP atribuído pelo ns-3
+                Address a;
+                m_socket->GetSockName(a);  // Obtém o endereço local do socket
+                InetSocketAddress localAddr = InetSocketAddress::ConvertFrom(a);
+                m_port = localAddr.GetPort();   // Obtém a porta local
+                //m_address = localAddr.GetIpv4();  // Obtém o IP local
+
+                m_address = GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
             }
-            m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
-            m_socket->Connect(
-                InetSocketAddress(Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
+            else
+            {
+                //NS_LOG_INFO("OUTRO START");
+
+                // Nas execuções subsequentes, usar o IP previamente atribuído
+                m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
+            }
+
+            m_socket->SetIpTos(m_tos);
+            m_socket->Connect(InetSocketAddress(Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
         }
         else if (InetSocketAddress::IsMatchingType(m_peerAddress))
         {
-            if (m_socket->Bind() == -1)
+            if (m_address == Ipv4Address::GetAny())
             {
-                NS_FATAL_ERROR("Failed to bind socket");
+                m_socket->Bind(InetSocketAddress(Ipv4Address::GetAny(), m_port));
+                m_address = GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
             }
-            m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
+            else
+            {
+                m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
+            }
+
+            m_socket->SetIpTos(m_tos);
             m_socket->Connect(m_peerAddress);
         }
         else
@@ -166,13 +217,19 @@ ClientNodeApp::StartApplication()
     m_sendEvent = Simulator::Schedule(Seconds(0.0), &ClientNodeApp::Send, this);
 
     NS_LOG_INFO("Cliente iniciado.");
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
 ClientNodeApp::StopApplication()
 {
     NS_LOG_FUNCTION(this);
+    
     Simulator::Cancel(m_sendEvent);
+    m_socket->ShutdownRecv();
+    m_socket->Close();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
@@ -243,12 +300,14 @@ ClientNodeApp::Send()
         m_sendEvent = Simulator::Schedule(m_interval, &ClientNodeApp::Send, this);
     }
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void
 ClientNodeApp::HandleRead(Ptr<Socket> socket)
 {
     NS_LOG_FUNCTION(this << socket);
+
     Ptr<Packet> packet;
     Address from;
     Address localAddress;
@@ -280,6 +339,10 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
 
             logMessageReceived(packet, from, currentSequenceNumber, command, data);
 
+            if (command == NORMAL_PAYLOAD){
+                last_seq = data;
+            }
+
             if (command == REQUEST_TO_START_ROLLBACK_COMMAND){
                 resetNodeData();
                 defineCheckpointStrategy();
@@ -293,9 +356,13 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
         m_rxTrace(packet);
         m_rxTraceWithAddresses(packet, from, localAddress);
     }
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
+    NS_LOG_FUNCTION(this);
+    
     /* Cabeçalho do pacote a ser enviado */
 
     SeqTsHeader seqTs;
@@ -319,10 +386,14 @@ void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
                     << " enviou para "
                     << Ipv4Address::ConvertFrom(m_peerAddress)
+                    << " porta " << m_peerPort
                     << " o seguinte comando: " << data);
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::logMessageReceived(Ptr<Packet> packet, Address from, uint32_t currentSequenceNumber, string command, int data){
+    NS_LOG_FUNCTION(this << packet << from << currentSequenceNumber << command << data);
 
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " cliente recebeu "
                                    << packet->GetSize() << " bytes de "
@@ -334,14 +405,20 @@ void ClientNodeApp::logMessageReceived(Ptr<Packet> packet, Address from, uint32_
                                    << (command == NORMAL_PAYLOAD ? ", last_seq: " + to_string(data) 
                                                                     : ", Dado: " + to_string(data))
                                    << ")");
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::resetNodeData() {
-    m_socket->ShutdownRecv();
-    m_socket->Close();
+    NS_LOG_FUNCTION(this);
+
+    printNodeData();
+    
+    StopApplication();
+    
     m_socket = nullptr;
 
-    m_sendEvent.Cancel();
+    //m_sendEvent.Cancel();
     m_sendEvent = EventId();
 
     m_count = 0;
@@ -354,39 +431,55 @@ void ClientNodeApp::resetNodeData() {
     m_peerPort = 0;
     m_tos = 0;
 
-    delete checkpointStrategy;
+    checkpointStrategy = nullptr;
+    //delete checkpointStrategy;
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::defineCheckpointStrategy() {
-    checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
+    NS_LOG_FUNCTION(this);
+    
+    //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
+    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), getNodeName(), this);
     checkpointStrategy->startCheckpointing();
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::beforeRollback(){
-    
+    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::afterRollback(){
-    
+    NS_LOG_FUNCTION(this);
+
     //Reiniciando aplicação...
     StartApplication();
 
+    printNodeData();
+
     notifyNodesAboutRollbackConcluded();
 
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 string ClientNodeApp::getNodeName(){
+    NS_LOG_FUNCTION(this);
     return "client-node-0";
 }
 
 uint64_t
 ClientNodeApp::GetTotalTx() const
 {
+    NS_LOG_FUNCTION(this);
     return m_totalTx;
 }
 
 json ClientNodeApp::to_json() const {
-    
+    NS_LOG_FUNCTION(this);
+
     json j = Application::to_json();
     j["m_count"] = m_count;
     j = timeToJson(j, "m_interval", m_interval);
@@ -394,6 +487,8 @@ json ClientNodeApp::to_json() const {
     j["m_sent"] = m_sent;
     j["last_seq"] = last_seq;
     j["m_totalTx"] = m_totalTx;
+    j["m_address"] = m_address;
+    j["m_port"] = m_port;
     j["m_peerAddress"] = m_peerAddress;
     j["m_peerPort"] = m_peerPort;
     j["m_tos"] = m_tos;
@@ -401,10 +496,14 @@ json ClientNodeApp::to_json() const {
     //j["m_sendEvent"] = m_sendEvent;
     //j = checkpointStrategyToJson(j, checkpointStrategy);
 
+    NS_LOG_FUNCTION("Fim do método");
+
     return j;
 }
 
 void ClientNodeApp::from_json(const json& j) {
+    NS_LOG_FUNCTION(this);
+    
     CheckpointApp::from_json(j);
 
     if (j.contains("m_count") && !j["m_count"].is_null()) {
@@ -443,10 +542,22 @@ void ClientNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\nm_totalTx está ausente ou é nulo! \n");
     }
 
+    if (j.contains("m_address") && !j["m_address"].is_null()) {
+        j.at("m_address").get_to(m_address);
+    } else {
+        NS_LOG_INFO("\nm_address está ausente ou é nulo! \n");
+    }
+
     if (j.contains("m_peerAddress") && !j["m_peerAddress"].is_null()) {
         j.at("m_peerAddress").get_to(m_peerAddress);
     } else {
         NS_LOG_INFO("\nm_peerAddress está ausente ou é nulo! \n");
+    }
+
+    if (j.contains("m_port") && !j["m_port"].is_null()) {
+        j.at("m_port").get_to(m_port);
+    } else {
+        NS_LOG_INFO("\nm_port está ausente ou é nulo! \n");
     }
 
     if (j.contains("m_peerPort") && !j["m_peerPort"].is_null()) {
@@ -461,7 +572,36 @@ void ClientNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\nm_tos está ausente ou é nulo! \n");
     }
 
+    NS_LOG_FUNCTION("Fim do método");
+
     //j.at("idleEnergyConsumption").get_to(idleEnergyConsumption);  // Desserializa o membro da classe derivada
+}
+
+void ClientNodeApp::printNodeData(){
+    NS_LOG_FUNCTION(this);
+
+    NS_LOG_INFO("\nDados de " << getNodeName() << ":" );
+    NS_LOG_INFO(
+        "m_txTrace.IsEmpty() = " << m_txTrace.IsEmpty()
+        << ", m_rxTrace.IsEmpty() = " << m_rxTrace.IsEmpty()
+        << ", m_txTraceWithAddresses.IsEmpty() = " << m_txTraceWithAddresses.IsEmpty()
+        << ", m_rxTraceWithAddresses.IsEmpty() = " << m_rxTraceWithAddresses.IsEmpty()
+        << ", m_count = " << m_count
+        << ", m_interval = " << m_interval.As(Time::S)
+        << ", m_size = " << m_size
+        << ", m_sent = " << m_sent
+        << ", last_seq = " << last_seq
+        << ", m_totalTx = " << m_totalTx
+        << ", m_address = " << Ipv4Address::ConvertFrom(m_address)
+        << ", m_port = " << m_port
+        << ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
+        << ", m_peerPort = " << m_peerPort
+        << ", m_tos = " << to_string(static_cast<int>(m_tos))
+        << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
+        << ", m_sendEvent = " << m_sendEvent.GetTs()
+        << "\n ");
+
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 /*void ClientNodeApp::addCheckpointData(bool sent, uint32_t bytes, Address from, uint32_t seqNumber, uint64_t uid) {

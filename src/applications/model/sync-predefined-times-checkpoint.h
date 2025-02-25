@@ -19,6 +19,8 @@
 #define SYNC_PREDEFINED_TIMES_CHECKPOINT_H
 
 #include "ns3/object.h"
+#include "ns3/core-module.h"
+#include "ns3/ptr.h"
 #include "ns3/type-id.h"
 #include "ns3/event-id.h"
 #include "ns3/nstime.h"
@@ -50,7 +52,7 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, CheckpointApp *application);
+    SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, Ptr<CheckpointApp> application);
 
     /** Construtor padrão. */
     SyncPredefinedTimesCheckpoint();
