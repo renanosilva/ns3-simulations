@@ -129,7 +129,7 @@ class CheckpointHelper : public Object
   private:
 
     string checkpointBaseName;       //nome de base do arquivo referente ao checkpoint
-    int counter = 0;                 //contador que identifica quantos checkpoints já foram criados
+    int counter = 0;                 //contador que identifica o ID do próximo checkpoint a ser criado
 
     /** Remove todos os checkpoints existentes. */
     bool cleanDirectory(const std::string &path);

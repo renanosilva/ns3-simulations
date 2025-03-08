@@ -20,6 +20,7 @@
 
 #include "ns3/application.h"
 #include "ns3/checkpoint-strategy.h"
+#include "ns3/ptr.h"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
@@ -101,6 +102,14 @@ class CheckpointApp : public Application
      * para realizar algum processamento, caso seja necessário.
      * */
     virtual void afterRollback();
+
+    /**
+     * Método abstrato. Serve para indicar em quais condições uma aplicação pode criar
+     * um checkpoint ou não.
+     * Por padrão, uma aplicação sempre pode criar checkpoints.
+     * Caso não deseje dessa forma, a aplicação deve sobrescrever este método. 
+     */
+    virtual bool mayCheckpoint();
 
     //friend class CheckpointStrategy;
 

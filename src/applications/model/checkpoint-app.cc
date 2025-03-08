@@ -59,6 +59,10 @@ void CheckpointApp::defineCheckpointStrategy() {
     
 }
 
+bool CheckpointApp::mayCheckpoint(){
+    return true;
+}
+
 void
 CheckpointApp::StartApplication()
 {

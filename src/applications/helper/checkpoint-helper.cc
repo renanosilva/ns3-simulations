@@ -133,8 +133,6 @@ vector<string> CheckpointHelper::listFiles(const string& pasta, const string& pa
     return arquivos;
 }
 
-//perguntar ao chatgpt se esse código tem algum problema com gerenciamento de memória
-
 void CheckpointHelper::writeCheckpoint(string data){
     NS_LOG_FUNCTION(this);
     
@@ -143,6 +141,7 @@ void CheckpointHelper::writeCheckpoint(string data){
 
     writeFile(getCheckpointFilename(counter), j);
     counter++;
+    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT CRIADO E CONTADOR INCREMENTADO: " << counter << "\n");
     
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -155,6 +154,7 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app){
 
     writeFile(getCheckpointFilename(counter), j);
     counter++;
+    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT CRIADO E CONTADOR DE CHECKPOINT INCREMENTADO: " << counter << "\n");
 
     NS_LOG_FUNCTION("Fim do método");
 }  
@@ -162,6 +162,7 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app){
 void CheckpointHelper::skipCheckpoint(){
     NS_LOG_FUNCTION(this);
     counter++;
+    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT PULADO E CONTADOR INCREMENTADO: " << counter << "\n");
     NS_LOG_FUNCTION("Fim do método");
 }
 
@@ -247,6 +248,7 @@ int CheckpointHelper::getLastCheckpointId(){
 
     //Incrementa o contador, pois o próximo checkpoint será criado nessa nova posição
     counter++;
+    NS_LOG_INFO("\n" << checkpointBaseName << " - CONTADOR DE CHECKPOINT RESTAURADO: " << counter << "\n");
 
     NS_LOG_FUNCTION("Fim do método");
 

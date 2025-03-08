@@ -59,7 +59,9 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
 
     ~SyncPredefinedTimesCheckpoint() override;
 
-    virtual void startCheckpointing() override; 
+    virtual void startCheckpointing() override;
+    
+    virtual void stopCheckpointing() override;
 
     virtual void writeCheckpoint() override; 
     
@@ -84,9 +86,6 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
 
     /** Diminui a quantidade de energia referente à criação de um checkpoint. */
     void decreaseCheckpointEnergy();
-
-    /** Verifica se um novo checkpoint pode ser criado, dependendo de determinadas condições. */
-    bool mayCheckpoint();
 
     /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
     Time getDelayToNextCheckpoint();

@@ -266,7 +266,7 @@ ClientNodeApp::Send()
     m_txTraceWithAddresses(p, from, to);
 
     p->AddHeader(seqTs);
-
+    
     if ((m_socket->Send(p)) >= 0)
     {
         ++m_sent;
@@ -412,13 +412,14 @@ void ClientNodeApp::logMessageReceived(Ptr<Packet> packet, Address from, uint32_
 void ClientNodeApp::resetNodeData() {
     NS_LOG_FUNCTION(this);
 
+    NS_LOG_INFO("\nAntes do rollback...");
     printNodeData();
     
     StopApplication();
-    
     m_socket = nullptr;
+    checkpointStrategy = nullptr;
 
-    //m_sendEvent.Cancel();
+    // m_sendEvent.Cancel();
     m_sendEvent = EventId();
 
     m_count = 0;
@@ -430,9 +431,6 @@ void ClientNodeApp::resetNodeData() {
     m_peerAddress = Address();
     m_peerPort = 0;
     m_tos = 0;
-
-    checkpointStrategy = nullptr;
-    //delete checkpointStrategy;
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -458,6 +456,7 @@ void ClientNodeApp::afterRollback(){
     //Reiniciando aplicação...
     StartApplication();
 
+    NS_LOG_INFO("\nApós o rollback...");
     printNodeData();
 
     notifyNodesAboutRollbackConcluded();
@@ -580,7 +579,7 @@ void ClientNodeApp::from_json(const json& j) {
 void ClientNodeApp::printNodeData(){
     NS_LOG_FUNCTION(this);
 
-    NS_LOG_INFO("\nDados de " << getNodeName() << ":" );
+    NS_LOG_INFO("Dados de " << getNodeName() << ":" );
     NS_LOG_INFO(
         "m_txTrace.IsEmpty() = " << m_txTrace.IsEmpty()
         << ", m_rxTrace.IsEmpty() = " << m_rxTrace.IsEmpty()

@@ -54,6 +54,10 @@ void CheckpointStrategy::startCheckpointing(){
     
 }
 
+void CheckpointStrategy::stopCheckpointing(){
+    
+}
+
 void CheckpointStrategy::writeLog(){
     
 }

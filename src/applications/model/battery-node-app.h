@@ -75,19 +75,19 @@ class BatteryNodeApp : public CheckpointApp
      * \brief Returns the number of lost packets
      * \return the number of lost packets
      */
-    uint32_t GetLost() const;
+    // uint32_t GetLost() const;
 
     /**
      * \brief Returns the number of received packets
      * \return the number of received packets
      */
-    uint64_t GetReceived() const;
+    // uint64_t GetReceived() const;
 
     /**
      * \brief Returns the size of the window used for checking loss.
      * \return the size of the window used for checking loss.
      */
-    uint16_t GetPacketWindowSize() const;
+    // uint16_t GetPacketWindowSize() const;
 
     /**
      * \brief Set the size of the window used for checking loss. This value should
@@ -95,7 +95,7 @@ class BatteryNodeApp : public CheckpointApp
      * \param size the size of the window used for checking loss. This value should
      *  be a multiple of 8
      */
-    void SetPacketWindowSize(uint16_t size);
+    // void SetPacketWindowSize(uint16_t size);
 
     string getNodeName() override;
 
@@ -141,6 +141,11 @@ class BatteryNodeApp : public CheckpointApp
      * para realizar algum processamento, caso seja necessário.
      * */
     void afterRollback() override;
+
+    /** 
+     * Indica em quais condições esta aplicação pode criar checkpoints ou não.
+     * */
+    bool mayCheckpoint() override;
 
   protected:
     void defineCheckpointStrategy() override;
@@ -255,9 +260,10 @@ class BatteryNodeApp : public CheckpointApp
     uint16_t m_port;       //!< Port on which we listen for incoming packets.
     uint8_t m_tos;         //!< The packets Type of Service
     Address m_local;       //!< local multicast address
-    uint64_t m_received;             //!< Number of received packets
-    uint64_t m_seq;             //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
-    PacketLossCounter m_lossCounter; //!< Lost packet counter
+    uint64_t m_received;   //!< Number of received packets
+    uint64_t m_seq;        //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
+    
+    // PacketLossCounter m_lossCounter; //!< Lost packet counter
 
     /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
     vector<Address> addresses;

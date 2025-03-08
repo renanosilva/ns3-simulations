@@ -54,6 +54,12 @@ class CheckpointStrategy : public Object
     virtual void startCheckpointing();
 
     /** 
+     * Método abstrato. Utilizado para parar o processo de criação de checkpoints de forma segura. 
+     * A implementação irá depender da estratégia adotada. 
+     * */
+    virtual void stopCheckpointing();
+
+    /** 
      * Método abstrato. Utilizado para criação de checkpoints de fato. 
      * Serão armazenados no checkpoint os estados dos objetos de interesse.
      * A implementação irá depender da estratégia adotada.
