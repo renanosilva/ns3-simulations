@@ -80,7 +80,7 @@ main(int argc, char* argv[])
     double distanceToRx = 10.0; // meters
     UintegerValue maxPackets = UintegerValue(0); //número máximo de pacotes que podem ser enviados na simulação (0 = ilimitado).
     TimeValue interval = TimeValue(Seconds(1.0)); //tempo que deve ser aguardado entre envio de pacotes
-    UintegerValue packetSize = UintegerValue(1024);
+    //UintegerValue packetSize = UintegerValue(1024);
 
     std::string phyMode("DsssRate1Mbps");
     bool verbose = false;
@@ -162,15 +162,15 @@ main(int argc, char* argv[])
     ch.removeAllCheckpointsAndLogs();
 
     //Cria uma aplicação de servidor a bateria, de forma a gerar tráfego de dados. 9 é a porta.
-    BatteryNodeAppHelper batteryServerApp(9); 
+    BatteryNodeAppHelper batteryServerApp(9, "battery-node-0");
 
     ApplicationContainer serverApps = batteryServerApp.Install(batteryServerNode); //define o nó 1 como servidor
     serverApps.Start(Seconds(1.0)); //o servidor será iniciado com 1s de simulação
 
-    ClientNodeAppHelper clientApp(i.GetAddress(1), 9); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+    ClientNodeAppHelper clientApp(i.GetAddress(1), 9, "client-node-0"); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
     clientApp.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
     clientApp.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
-    clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
+    //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
 
     ApplicationContainer clientApps = clientApp.Install(clientNode); //instala a aplicação cliente no nó 0
     clientApps.Start(Seconds(2.0)); //inicia o cliente com 2s de simulação

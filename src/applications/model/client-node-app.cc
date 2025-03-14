@@ -33,6 +33,7 @@
 #include "ns3/uinteger.h"
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-address.h"
+#include "ns3/core-module.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -84,18 +85,23 @@ ClientNodeApp::GetTypeId()
                             UintegerValue(0),
                             MakeUintegerAccessor(&ClientNodeApp::m_port),
                             MakeUintegerChecker<uint16_t>())
-            .AddAttribute("Tos",
+            /*.AddAttribute("Tos",
                           "The Type of Service used to send IPv4 packets. "
                           "All 8 bits of the TOS byte are set (including ECN bits).",
                           UintegerValue(0),
                           MakeUintegerAccessor(&ClientNodeApp::m_tos),
-                          MakeUintegerChecker<uint8_t>())
-            .AddAttribute("PacketSize",
+                          MakeUintegerChecker<uint8_t>())*/
+            .AddAttribute("NodeName",
+                            "This node's name. ",
+                            StringValue(""),
+                            MakeStringAccessor(&ClientNodeApp::nodeName),
+                            MakeStringChecker())
+            /*.AddAttribute("PacketSize",
                           "Size of packets generated. The minimum packet size is 12 bytes which is "
                           "the size of the header carrying the sequence number and the time stamp.",
                           UintegerValue(1024),
                           MakeUintegerAccessor(&ClientNodeApp::m_size),
-                          MakeUintegerChecker<uint32_t>(12, 65507))
+                          MakeUintegerChecker<uint32_t>(12, 65507))*/
             .AddTraceSource("Tx",
                             "A new packet is created and is sent",
                             MakeTraceSourceAccessor(&ClientNodeApp::m_txTrace),
@@ -121,8 +127,6 @@ ClientNodeApp::ClientNodeApp()
 
     m_address = Ipv4Address::GetAny();
     m_port = 0;
-
-    defineCheckpointStrategy();
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -155,6 +159,9 @@ ClientNodeApp::StartApplication()
 {
     NS_LOG_FUNCTION(this);
 
+    if (!checkpointStrategy)
+        configureCheckpointStrategy();
+
     if (!m_socket)
     {
         TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
@@ -166,8 +173,6 @@ ClientNodeApp::StartApplication()
             // Se for a primeira execução, o ns-3 irá escolher o IP
             if (m_address == Ipv4Address::GetAny())
             {
-                //NS_LOG_INFO("PRIMEIRO START");
-                
                 //m_socket->Bind(InetSocketAddress(Ipv4Address::GetAny(), m_port));
                 m_socket->Bind();
                 
@@ -182,13 +187,11 @@ ClientNodeApp::StartApplication()
             }
             else
             {
-                //NS_LOG_INFO("OUTRO START");
-
                 // Nas execuções subsequentes, usar o IP previamente atribuído
                 m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
             }
 
-            m_socket->SetIpTos(m_tos);
+            //m_socket->SetIpTos(m_tos);
             m_socket->Connect(InetSocketAddress(Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
         }
         else if (InetSocketAddress::IsMatchingType(m_peerAddress))
@@ -203,7 +206,7 @@ ClientNodeApp::StartApplication()
                 m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
             }
 
-            m_socket->SetIpTos(m_tos);
+            //m_socket->SetIpTos(m_tos);
             m_socket->Connect(m_peerAddress);
         }
         else
@@ -216,7 +219,7 @@ ClientNodeApp::StartApplication()
     m_socket->SetAllowBroadcast(true);
     m_sendEvent = Simulator::Schedule(Seconds(0.0), &ClientNodeApp::Send, this);
 
-    NS_LOG_INFO("Cliente iniciado.");
+    NS_LOG_INFO(getNodeName() << " iniciado.");
     NS_LOG_FUNCTION("Fim do método");
 }
 
@@ -247,7 +250,7 @@ ClientNodeApp::Send()
 
     SeqTsHeader seqTs;
     seqTs.SetSeq(m_sent);
-    NS_ABORT_IF(m_size < seqTs.GetSerializedSize());
+    //NS_ABORT_IF(m_size < seqTs.GetSerializedSize());
 
     /* Payload (corpo) do pacote */
 
@@ -276,23 +279,20 @@ ClientNodeApp::Send()
 
     if (Ipv4Address::IsMatchingType(m_peerAddress))
     {
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " cliente enviou " << m_size
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " enviou " << p->GetSize()
                                << " bytes para " << Ipv4Address::ConvertFrom(m_peerAddress)
                                << " porta " << m_peerPort
                                << " (Número de Sequência: " << seqTs.GetSeq()
                                << ", UId: " << p->GetUid() << ")");
-        
-        //addCheckpointData(true, m_size, from, seqTs.GetSeq(), p->GetUid());
 
     }
     else if (InetSocketAddress::IsMatchingType(m_peerAddress))
     {
         NS_LOG_INFO(
-            "Aos " << Simulator::Now().As(Time::S) << " cliente enviou " << m_size << " bytes para "
+            "Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " enviou " << p->GetSize() << " bytes para "
                        << InetSocketAddress::ConvertFrom(m_peerAddress).GetIpv4() << " porta "
                        << InetSocketAddress::ConvertFrom(m_peerAddress).GetPort());
         
-        //addCheckpointData(true, m_size, m_peerAddress, seqTs.GetSeq(), p->GetUid());
     }
 
     if (m_sent < m_count || m_count == 0)
@@ -315,6 +315,8 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
     {
         if (InetSocketAddress::IsMatchingType(from))
         {
+            uint32_t receivedSize = packet->GetSize();
+            
             SeqTsHeader seqTs;
             packet->RemoveHeader(seqTs);
             uint32_t currentSequenceNumber = seqTs.GetSeq();
@@ -337,7 +339,7 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
             int data;
             iss >> command >> data;
 
-            logMessageReceived(packet, from, currentSequenceNumber, command, data);
+            logMessageReceived(packet, receivedSize, from, currentSequenceNumber, command, data);
 
             if (command == NORMAL_PAYLOAD){
                 last_seq = data;
@@ -345,11 +347,10 @@ ClientNodeApp::HandleRead(Ptr<Socket> socket)
 
             if (command == REQUEST_TO_START_ROLLBACK_COMMAND){
                 resetNodeData();
-                defineCheckpointStrategy();
+                configureCheckpointStrategy();
                 checkpointStrategy->startRollback(data);
             }
             
-            //addCheckpointData(false, packet->GetSize(), from, -1, -1);
         }
         
         socket->GetSockName(localAddress);
@@ -372,7 +373,7 @@ void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
 
     // Serializar dados: comando (string) + número inteiro (int)
     ostringstream oss;
-    oss << ROLLBACK_FINISHED << " " << checkpointStrategy->getLastCheckpointId();
+    oss << ROLLBACK_FINISHED;
 
     string data = oss.str();
 
@@ -392,11 +393,11 @@ void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void ClientNodeApp::logMessageReceived(Ptr<Packet> packet, Address from, uint32_t currentSequenceNumber, string command, int data){
+void ClientNodeApp::logMessageReceived(Ptr<Packet> packet, uint32_t receivedSize, Address from, uint32_t currentSequenceNumber, string command, int data){
     NS_LOG_FUNCTION(this << packet << from << currentSequenceNumber << command << data);
 
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " cliente recebeu "
-                                   << packet->GetSize() << " bytes de "
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " recebeu "
+                                   << receivedSize << " bytes de "
                                    << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
                                    << InetSocketAddress::ConvertFrom(from).GetPort()
                                    << " (Número de Sequência: " << currentSequenceNumber
@@ -424,34 +425,48 @@ void ClientNodeApp::resetNodeData() {
 
     m_count = 0;
     m_interval = Time(); 
-    m_size = 0; 
+    //m_size = 0; 
     m_sent = 0;
     last_seq = 0;
     m_totalTx = 0;
     m_peerAddress = Address();
     m_peerPort = 0;
-    m_tos = 0;
+    //m_tos = 0;
 
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void ClientNodeApp::defineCheckpointStrategy() {
+void ClientNodeApp::configureCheckpointStrategy() {
     NS_LOG_FUNCTION(this);
     
     //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
-    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), getNodeName(), this);
+    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), this);
     checkpointStrategy->startCheckpointing();
 
     NS_LOG_FUNCTION("Fim do método");
 }
 
+bool ClientNodeApp::mayCheckpoint(){
+    NS_LOG_FUNCTION(this);
+    
+    if (rollbackInProgress){
+        return false;
+    } else {
+        return true;
+    }
+}
+
 void ClientNodeApp::beforeRollback(){
     NS_LOG_FUNCTION(this);
+    rollbackInProgress = true;
     NS_LOG_FUNCTION("Fim do método");
 }
 
 void ClientNodeApp::afterRollback(){
     NS_LOG_FUNCTION(this);
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+            << " concluiu o procedimento de rollback.");
 
     //Reiniciando aplicação...
     StartApplication();
@@ -460,13 +475,9 @@ void ClientNodeApp::afterRollback(){
     printNodeData();
 
     notifyNodesAboutRollbackConcluded();
+    rollbackInProgress = false;
 
     NS_LOG_FUNCTION("Fim do método");
-}
-
-string ClientNodeApp::getNodeName(){
-    NS_LOG_FUNCTION(this);
-    return "client-node-0";
 }
 
 uint64_t
@@ -479,19 +490,18 @@ ClientNodeApp::GetTotalTx() const
 json ClientNodeApp::to_json() const {
     NS_LOG_FUNCTION(this);
 
-    json j = Application::to_json();
+    json j = CheckpointApp::to_json();
     j["m_count"] = m_count;
     j = timeToJson(j, "m_interval", m_interval);
-    j["m_size"] = m_size;
-    j["m_sent"] = m_sent;
     j["last_seq"] = last_seq;
     j["m_totalTx"] = m_totalTx;
     j["m_address"] = m_address;
     j["m_port"] = m_port;
     j["m_peerAddress"] = m_peerAddress;
     j["m_peerPort"] = m_peerPort;
-    j["m_tos"] = m_tos;
     
+    //j["m_tos"] = m_tos;
+    //j["m_size"] = m_size;
     //j["m_sendEvent"] = m_sendEvent;
     //j = checkpointStrategyToJson(j, checkpointStrategy);
 
@@ -517,11 +527,11 @@ void ClientNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\nm_interval está ausente ou é nulo! \n");
     }
 
-    if (j.contains("m_size") && !j["m_size"].is_null()) {
+    /*if (j.contains("m_size") && !j["m_size"].is_null()) {
         j.at("m_size").get_to(m_size);
     } else {
         NS_LOG_INFO("\nm_size está ausente ou é nulo! \n");
-    }
+    }*/
 
     if (j.contains("m_sent") && !j["m_sent"].is_null()) {
         j.at("m_sent").get_to(m_sent);
@@ -565,15 +575,13 @@ void ClientNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\nm_peerPort está ausente ou é nulo! \n");
     }
 
-    if (j.contains("m_tos") && !j["m_tos"].is_null()) {
+    /*if (j.contains("m_tos") && !j["m_tos"].is_null()) {
         j.at("m_tos").get_to(m_tos);
     } else {
         NS_LOG_INFO("\nm_tos está ausente ou é nulo! \n");
-    }
+    }*/
 
     NS_LOG_FUNCTION("Fim do método");
-
-    //j.at("idleEnergyConsumption").get_to(idleEnergyConsumption);  // Desserializa o membro da classe derivada
 }
 
 void ClientNodeApp::printNodeData(){
@@ -587,7 +595,7 @@ void ClientNodeApp::printNodeData(){
         << ", m_rxTraceWithAddresses.IsEmpty() = " << m_rxTraceWithAddresses.IsEmpty()
         << ", m_count = " << m_count
         << ", m_interval = " << m_interval.As(Time::S)
-        << ", m_size = " << m_size
+        //<< ", m_size = " << m_size
         << ", m_sent = " << m_sent
         << ", last_seq = " << last_seq
         << ", m_totalTx = " << m_totalTx
@@ -595,9 +603,10 @@ void ClientNodeApp::printNodeData(){
         << ", m_port = " << m_port
         << ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
         << ", m_peerPort = " << m_peerPort
-        << ", m_tos = " << to_string(static_cast<int>(m_tos))
+        //<< ", m_tos = " << to_string(static_cast<int>(m_tos))
         << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
         << ", m_sendEvent = " << m_sendEvent.GetTs()
+        << ", rollbackInProgress = " << rollbackInProgress
         << "\n ");
 
     NS_LOG_FUNCTION("Fim do método");

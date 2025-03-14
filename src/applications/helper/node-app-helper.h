@@ -23,6 +23,9 @@
 #include <ns3/application-helper.h>
 
 #include <stdint.h>
+#include <string>
+
+using namespace std;
 
 namespace ns3
 {
@@ -40,7 +43,7 @@ class BatteryNodeAppHelper : public ApplicationHelper
      *
      * \param port The port the server will wait on for incoming packets
      */
-    BatteryNodeAppHelper(uint16_t port);
+    BatteryNodeAppHelper(uint16_t port, string nodeName);
 };
 
 /**
@@ -57,7 +60,7 @@ class ClientNodeAppHelper : public ApplicationHelper
      * \param ip The IP address of the remote sensor
      * \param port The port number of the remote sensor
      */
-    ClientNodeAppHelper(const Address& ip, uint16_t port);
+    ClientNodeAppHelper(const Address& ip, uint16_t port, string nodeName);
 
     /**
      * Create ClientHelper which will make life easier for people trying
@@ -67,7 +70,7 @@ class ClientNodeAppHelper : public ApplicationHelper
      *
      * \param addr The address of the remote sensor
      */
-    ClientNodeAppHelper(const Address& addr);
+    ClientNodeAppHelper(const Address& addr, string nodeName);
 
 };
 

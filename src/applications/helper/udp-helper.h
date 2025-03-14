@@ -43,18 +43,9 @@ class UdpHelper
 
 public:
 
-    // Construtor
-    UdpHelper(Ptr<Node> node, uint16_t port);
-
-    /** Envia um pacote UDP para o endereço IP e porta de destino */
-    void SendPacket(Ipv4Address destAddr, uint16_t destPort, const std::string &data);
-
-    // Função de callback para receber pacotes
-    static void ReceivePacket(Ptr<Socket> socket);
 
 private:
 
-    Ptr<Node> m_node;              // Nó que possui o socket
     Ptr<Socket> m_socket;          // Socket UDP
     uint16_t m_port;               // Porta UDP
 

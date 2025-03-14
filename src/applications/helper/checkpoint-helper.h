@@ -67,13 +67,14 @@ class CheckpointHelper : public Object
     void removeAllCheckpointsAndLogs();
 
     /** Cria um novo checkpoint */
-    void writeCheckpoint(string data);
+    void writeCheckpoint(string data, int checkpointId);
 
-    /** Cria um novo checkpoint, transformando um objeto em JSON. */
-    void writeCheckpoint(Ptr<CheckpointApp> app);
-
-    /** Cria um novo log */
-    void writeLog(string data);
+    /** 
+     * Cria um novo checkpoint, transformando um objeto em JSON. 
+     * @param app Aplicação do nó que irá criar o checkpoint
+     * @param CheckpointId ID do checkpoint a ser criado
+    */
+    void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId);
 
     /** Lê o conteúdo do último checkpoint criado. */
     json readLastCheckpoint();
@@ -107,12 +108,6 @@ class CheckpointHelper : public Object
     json readCheckpoint(int index);
 
     /** 
-     * Pula um checkpoint e registra esse fato, incrementando o contador de checkpoints. 
-     * Serve para que todos os nós possuam numerações de checkpoints equivalentes.
-     * */
-    void skipCheckpoint();
-
-    /** 
      * Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos, caso seja necessário. 
      * Caso tenha sido feito algum rollback, retorna o índice do último checkpoint a ser usado.
      * */
@@ -129,7 +124,7 @@ class CheckpointHelper : public Object
   private:
 
     string checkpointBaseName;       //nome de base do arquivo referente ao checkpoint
-    int counter = 0;                 //contador que identifica o ID do próximo checkpoint a ser criado
+    int lastCheckpointId = 0;        //contador que identifica o ID do último checkpoint criado
 
     /** Remove todos os checkpoints existentes. */
     bool cleanDirectory(const std::string &path);
@@ -138,7 +133,7 @@ class CheckpointHelper : public Object
      * Dado um vetor de strings (com o padrão de nomenclatura dos arquivos de checkpoint), retorna
      * o maior ID de checkpoint.
      */
-    int findMaxCounterFromFilenames(const vector<std::string>& filenames);
+    int findMaxIdFromFilenames(const vector<std::string>& filenames);
 
     /** Obtém o conteúdo de um arquivo. */
     string getFileContent(string filename);

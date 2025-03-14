@@ -97,8 +97,6 @@ class BatteryNodeApp : public CheckpointApp
      */
     // void SetPacketWindowSize(uint16_t size);
 
-    string getNodeName() override;
-
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
@@ -110,9 +108,6 @@ class BatteryNodeApp : public CheckpointApp
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
-
-    /** Diminui a energia da bateria referente à criação de um checkpoint */
-    void decreaseCheckpointEnergy(); 
 
     bool isSleeping();
     
@@ -148,7 +143,7 @@ class BatteryNodeApp : public CheckpointApp
     bool mayCheckpoint() override;
 
   protected:
-    void defineCheckpointStrategy() override;
+    void configureCheckpointStrategy() override;
 
   private:
     void StartApplication() override;
@@ -179,7 +174,7 @@ class BatteryNodeApp : public CheckpointApp
    void resetNodeData();
 
    /** Define o gerador de energia a ser utilizado por este nó. */
-   void defineEnergyGenerator();
+   void configureEnergyGenerator();
 
    /** Diminui a energia da bateria referente ao seu funcionamento básico */
    void decreaseIdleEnergy(); 
@@ -198,6 +193,12 @@ class BatteryNodeApp : public CheckpointApp
    
    /** Diminui a energia da bateria referente à conexão de um socket */
    void decreaseConnectEnergy();
+
+   /** Diminui a energia da bateria referente à criação de um checkpoint */
+   void decreaseCheckpointEnergy();
+
+   /** Diminui a energia da bateria referente ao processo de rollback */
+   void decreaseRollbackEnergy();
 
    /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
    void decreaseEnergy(double amount);
@@ -224,7 +225,7 @@ class BatteryNodeApp : public CheckpointApp
     /* 
       Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
       como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
-      de uma aplicação. Esses atributos não são incluídos em checkpoints.
+      de uma aplicação. São atributos que não são incluídos em checkpoints.
     */
 
     /// Callbacks for tracing the packet Rx events
@@ -256,17 +257,16 @@ class BatteryNodeApp : public CheckpointApp
     //Somente atributos de aplicação serão armazenados em checkpoints
 
     Ptr<Socket> m_socket;  //!< IPv4 Socket
-    //Ptr<Socket> m_socket6; //!< IPv6 Socket
     uint16_t m_port;       //!< Port on which we listen for incoming packets.
-    uint8_t m_tos;         //!< The packets Type of Service
     Address m_local;       //!< local multicast address
     uint64_t m_received;   //!< Number of received packets
     uint64_t m_seq;        //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
     
-    // PacketLossCounter m_lossCounter; //!< Lost packet counter
-
     /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
     vector<Address> addresses;
+
+    //uint8_t m_tos;         //!< The packets Type of Service
+    // PacketLossCounter m_lossCounter; //!< Lost packet counter
 
 };
 

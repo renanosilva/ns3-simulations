@@ -60,9 +60,9 @@ TypeId CheckpointHelper::GetTypeId() {
                       StringValue(""),
                       MakeStringAccessor(&CheckpointHelper::checkpointBaseName),
                       MakeStringChecker())
-        .AddAttribute("Counter", "Contador de checkpoints criados.",
+        .AddAttribute("LastCheckpointId", "Contador que identifica o ID do último checkpoint criado.",
                       UintegerValue(0),  // Alterado para UintegerValue
-                      MakeUintegerAccessor(&CheckpointHelper::counter),
+                      MakeUintegerAccessor(&CheckpointHelper::lastCheckpointId),
                       MakeUintegerChecker<int>());
     
     NS_LOG_FUNCTION("Fim do método");
@@ -133,44 +133,44 @@ vector<string> CheckpointHelper::listFiles(const string& pasta, const string& pa
     return arquivos;
 }
 
-void CheckpointHelper::writeCheckpoint(string data){
+void CheckpointHelper::writeCheckpoint(string data, int checkpointId){
     NS_LOG_FUNCTION(this);
     
     nlohmann::json j;
     j.push_back(data);
 
-    writeFile(getCheckpointFilename(counter), j);
-    counter++;
-    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT CRIADO E CONTADOR INCREMENTADO: " << counter << "\n");
+    writeFile(getCheckpointFilename(checkpointId), j);
+    lastCheckpointId = checkpointId;
     
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app){
+void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId){
     NS_LOG_FUNCTION(this);
 
     //nlohmann::json j = to_json(app);
     json j = app->to_json();
 
-    writeFile(getCheckpointFilename(counter), j);
-    counter++;
-    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT CRIADO E CONTADOR DE CHECKPOINT INCREMENTADO: " << counter << "\n");
-
+    writeFile(getCheckpointFilename(checkpointId), j);
+    lastCheckpointId = checkpointId;
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
     NS_LOG_FUNCTION("Fim do método");
 }  
 
-void CheckpointHelper::skipCheckpoint(){
+/*void CheckpointHelper::skipCheckpoint(){
     NS_LOG_FUNCTION(this);
     counter++;
     NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT PULADO E CONTADOR INCREMENTADO: " << counter << "\n");
     NS_LOG_FUNCTION("Fim do método");
-}
+}*/
 
-void CheckpointHelper::writeLog(string data){
+/*void CheckpointHelper::writeLog(string data){
     NS_LOG_FUNCTION(this);
     writeFile(getLogFilename(counter), data);
     NS_LOG_FUNCTION("Fim do método");
-}
+}*/
 
 void CheckpointHelper::writeFile(string filename, nlohmann::json j){
     NS_LOG_FUNCTION(this);
@@ -234,8 +234,8 @@ string CheckpointHelper::getLogBasename(){
 int CheckpointHelper::getLastCheckpointId(){
     NS_LOG_FUNCTION(this);
 
-    if (counter != 0){
-        return counter - 1;
+    if (lastCheckpointId != 0){
+        return lastCheckpointId;
     }
 
     //obtendo o último checkpoint criado a partir dos nomes dos arquivos dos checkpoints
@@ -244,16 +244,13 @@ int CheckpointHelper::getLastCheckpointId(){
     if (nomes.empty())
         return -1;
 
-    counter = findMaxCounterFromFilenames(nomes);
+    lastCheckpointId = findMaxIdFromFilenames(nomes);
 
-    //Incrementa o contador, pois o próximo checkpoint será criado nessa nova posição
-    counter++;
-    NS_LOG_INFO("\n" << checkpointBaseName << " - CONTADOR DE CHECKPOINT RESTAURADO: " << counter << "\n");
-
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CONTADOR DE CHECKPOINT RESTAURADO: " << lastCheckpointId << "\n");
     NS_LOG_FUNCTION("Fim do método");
 
     //retorna o valor do último checkpoint válido
-    return counter - 1;
+    return lastCheckpointId;
     
     /*
     string nome = nomes[nomes.size() - 1]; //pegando o nome do último arquivo
@@ -273,7 +270,7 @@ int CheckpointHelper::getLastCheckpointId(){
     */
 }
 
-int CheckpointHelper::findMaxCounterFromFilenames(const vector<std::string>& filenames) {
+int CheckpointHelper::findMaxIdFromFilenames(const vector<std::string>& filenames) {
     NS_LOG_FUNCTION(this);
 
     string maxStr;
@@ -322,7 +319,7 @@ void to_json(json& j, const CheckpointHelper& obj) {
 
     j = json{
         {"checkpointBaseName", obj.checkpointBaseName}, 
-        {"counter", obj.counter}
+        {"lastCheckpointId", obj.lastCheckpointId}
     };
 
     NS_LOG_FUNCTION("Fim do método");
@@ -332,7 +329,7 @@ void from_json(const json& j, CheckpointHelper& obj) {
     NS_LOG_FUNCTION("CheckpointHelper::from_json");
 
     j.at("checkpointBaseName").get_to(obj.checkpointBaseName);
-    j.at("counter").get_to(obj.counter);
+    j.at("lastCheckpointId").get_to(obj.lastCheckpointId);
 
     NS_LOG_FUNCTION("Fim do método");
 }

@@ -55,7 +55,7 @@ CheckpointApp::~CheckpointApp()
     //delete checkpointStrategy;
 }
 
-void CheckpointApp::defineCheckpointStrategy() {
+void CheckpointApp::configureCheckpointStrategy() {
     
 }
 
@@ -95,6 +95,7 @@ json CheckpointApp::to_json() const {
     NS_LOG_FUNCTION(this);
     
     json j = Application::to_json();
+    j["nodeName"] = nodeName;
     
     NS_LOG_FUNCTION("Fim do método");
     return j;
@@ -102,12 +103,16 @@ json CheckpointApp::to_json() const {
 
 void CheckpointApp::from_json(const json& j) {
     NS_LOG_FUNCTION(this);
+
     Application::from_json(j);
+    j.at("nodeName").get_to(nodeName); 
+
     NS_LOG_FUNCTION("Fim do método");
 }
 
 string CheckpointApp::getNodeName(){
-    return "";
+    NS_LOG_FUNCTION(this);
+    return nodeName;
 }
 
 } // Namespace ns3

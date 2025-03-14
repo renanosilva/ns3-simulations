@@ -27,23 +27,26 @@
 namespace ns3
 {
 
-BatteryNodeAppHelper::BatteryNodeAppHelper(uint16_t port)
+BatteryNodeAppHelper::BatteryNodeAppHelper(uint16_t port, string nodeName)
     : ApplicationHelper(BatteryNodeApp::GetTypeId())
 {
     SetAttribute("Port", UintegerValue(port));
+    SetAttribute("NodeName", StringValue(nodeName));
 }
 
-ClientNodeAppHelper::ClientNodeAppHelper(const Address& address, uint16_t port)
+ClientNodeAppHelper::ClientNodeAppHelper(const Address& address, uint16_t port, string nodeName)
     : ApplicationHelper(ClientNodeApp::GetTypeId())
 {
     SetAttribute("RemoteAddress", AddressValue(address));
     SetAttribute("RemotePort", UintegerValue(port));
+    SetAttribute("NodeName", StringValue(nodeName));
 }
 
-ClientNodeAppHelper::ClientNodeAppHelper(const Address& address)
+ClientNodeAppHelper::ClientNodeAppHelper(const Address& address, string nodeName)
     : ApplicationHelper(ClientNodeApp::GetTypeId())
 {
     SetAttribute("RemoteAddress", AddressValue(address));
+    SetAttribute("NodeName", StringValue(nodeName));
 }
 
 } // namespace ns3

@@ -52,7 +52,7 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    SyncPredefinedTimesCheckpoint(Time timeInterval, string nodeName, Ptr<CheckpointApp> application);
+    SyncPredefinedTimesCheckpoint(Time timeInterval, Ptr<CheckpointApp> application);
 
     /** Construtor padrão. */
     SyncPredefinedTimesCheckpoint();
@@ -85,7 +85,7 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     EventId agendamento;
 
     /** Diminui a quantidade de energia referente à criação de um checkpoint. */
-    void decreaseCheckpointEnergy();
+    //void decreaseCheckpointEnergy();
 
     /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
     Time getDelayToNextCheckpoint();

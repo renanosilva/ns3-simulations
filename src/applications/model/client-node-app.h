@@ -72,6 +72,11 @@ class ClientNodeApp : public CheckpointApp
     uint64_t GetTotalTx() const;
 
     /** 
+     * Indica em quais condições esta aplicação pode criar checkpoints ou não.
+     * */
+    bool mayCheckpoint() override;
+
+    /** 
      * Método abstrato. Método chamado imediatamente antes da execução de um rollback
      * para realizar algum processamento, caso seja necessário.
      * */
@@ -82,8 +87,6 @@ class ClientNodeApp : public CheckpointApp
      * para realizar algum processamento, caso seja necessário.
      * */
     void afterRollback() override;
-
-    string getNodeName() override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
@@ -98,7 +101,7 @@ class ClientNodeApp : public CheckpointApp
     void from_json(const json& j);
   
   protected:
-    void defineCheckpointStrategy() override;
+    void configureCheckpointStrategy() override;
 
   private:
     
@@ -119,7 +122,8 @@ class ClientNodeApp : public CheckpointApp
      */
     void HandleRead(Ptr<Socket> socket);
 
-    void logMessageReceived(Ptr<Packet> packet, Address from, uint32_t currentSequenceNumber, string command, int data);
+    void logMessageReceived(Ptr<Packet> packet, uint32_t receivedSize, Address from, 
+                            uint32_t currentSequenceNumber, string command, int data);
 
     /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
     void notifyNodesAboutRollbackConcluded();
@@ -142,7 +146,7 @@ class ClientNodeApp : public CheckpointApp
     /* 
       Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
       como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
-      de uma aplicação. Esses atributos não são incluídos em checkpoints.
+      de uma aplicação. São atributos que não são incluídos em checkpoints.
     */
 
     /// Traced Callback: transmitted packets.
@@ -157,6 +161,11 @@ class ClientNodeApp : public CheckpointApp
     /// Callbacks for tracing the packet Rx events, includes source and destination addresses
     TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
 
+    Ptr<Socket> m_socket;  //!< Socket
+    EventId m_sendEvent;   //!< Event to send the next packet
+
+    bool rollbackInProgress; //Indica se existe um procedimento de rollback em andamento
+
     ////////////////////////////////////////////////
     //////       ATRIBUTOS DE APLICAÇÃO       //////
     ////////////////////////////////////////////////
@@ -165,8 +174,6 @@ class ClientNodeApp : public CheckpointApp
 
     uint32_t m_count; //!< Maximum number of packets the application will send
     Time m_interval;  //!< Packet inter-send time
-    uint32_t m_size;  //!< Size of the sent packet (including the SeqTsHeader)
-
     uint32_t m_sent;       //!< Counter for sent packets
     uint64_t last_seq;     //!< Last sequence number received from the server
     uint64_t m_totalTx;    //!< Total bytes sent
@@ -174,10 +181,8 @@ class ClientNodeApp : public CheckpointApp
     uint16_t m_port;       //!< This node's port
     Address m_peerAddress; //!< Remote peer address
     uint16_t m_peerPort;   //!< Remote peer port
-    uint8_t m_tos;         //!< The packets Type of Service
-
-    Ptr<Socket> m_socket;  //!< Socket
-    EventId m_sendEvent;   //!< Event to send the next packet
+    //uint32_t m_size;  //!< Size of the sent packet (including the SeqTsHeader)
+    //uint8_t m_tos;         //!< The packets Type of Service
 
 /*#ifdef NS3_LOG_ENABLE
     std::string m_peerAddressString; //!< Remote peer address string

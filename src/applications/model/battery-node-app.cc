@@ -47,10 +47,11 @@ NS_LOG_COMPONENT_DEFINE("BatteryServerApp");
 
 NS_OBJECT_ENSURE_REGISTERED(BatteryNodeApp);
 
-static const double CONNECT_ENERGY = 100.; //Energia gasta para conectar um socket
+static const double CONNECT_ENERGY = 50.; //Energia gasta para conectar um socket
 static const double SEND_ENERGY = 100.; //Energia gasta para enviar um pacote
 static const double RECEIVE_ENERGY = 100.; //Energia gasta para receber um pacote
-static const double CREATE_CHECKPOINT_ENERGY = 100.; //Energia gasta para criar um checkpoint
+static const double CREATE_CHECKPOINT_ENERGY = 50.; //Energia gasta para criar um checkpoint
+static const double ROLLBACK_ENERGY = 50.; //Energia gasta para realizar um rollback
 static const double IDLE_ENERGY = 10.; //Energia gasta para se manter ligado (funcionamento básico)
 static const double SLEEP_ENERGY = 1.; //Energia gasta para se manter em modo sleep (funcionamento básico)
 static const Time ENERGY_UPDATE_INTERVAL = Seconds(1.0); //Intervalo de atualização de energia da bateria
@@ -70,12 +71,17 @@ BatteryNodeApp::GetTypeId()
                           UintegerValue(9),
                           MakeUintegerAccessor(&BatteryNodeApp::m_port),
                           MakeUintegerChecker<uint16_t>())
-            .AddAttribute("Tos",
+            /*.AddAttribute("Tos",
                           "The Type of Service used to send IPv4 packets. "
                           "All 8 bits of the TOS byte are set (including ECN bits).",
                           UintegerValue(0),
                           MakeUintegerAccessor(&BatteryNodeApp::m_tos),
-                          MakeUintegerChecker<uint8_t>())
+                          MakeUintegerChecker<uint8_t>())*/
+            .AddAttribute("NodeName",
+                            "This node's name. ",
+                            StringValue(""),
+                            MakeStringAccessor(&BatteryNodeApp::nodeName),
+                            MakeStringChecker())
             // .AddAttribute("PacketWindowSize",
             //               "The size of the window used to compute the packet loss. This value "
             //               "should be a multiple of 8.",
@@ -114,8 +120,7 @@ BatteryNodeApp::BatteryNodeApp()
     m_local = Address();
     addresses.clear();
 
-    defineCheckpointStrategy();
-    defineEnergyGenerator();
+    configureEnergyGenerator();
 
     //Agendando geração de energia
     Simulator::Schedule(energyUpdateInterval,
@@ -133,27 +138,24 @@ BatteryNodeApp::BatteryNodeApp()
 BatteryNodeApp::~BatteryNodeApp()
 {
     NS_LOG_FUNCTION(this);
+    
     m_socket = nullptr;
-
     addresses.clear();
-
-    //delete energyGenerator;
-    //delete checkpointStrategy;
 
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void BatteryNodeApp::defineCheckpointStrategy() {
+void BatteryNodeApp::configureCheckpointStrategy() {
     NS_LOG_FUNCTION(this);
     
     //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
-    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), getNodeName(), this);
+    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), this);
     checkpointStrategy->startCheckpointing();
 
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void BatteryNodeApp::defineEnergyGenerator() {
+void BatteryNodeApp::configureEnergyGenerator() {
     NS_LOG_FUNCTION(this);
     
     //energyGenerator = new FixedEnergyGenerator(100);
@@ -196,6 +198,9 @@ void
 BatteryNodeApp::StartApplication()
 {
     NS_LOG_FUNCTION(this);
+
+    if (!checkpointStrategy)
+        configureCheckpointStrategy();
 
     if (!m_socket)
     {
@@ -246,9 +251,9 @@ BatteryNodeApp::StartApplication()
         }
     }*/
 
-    m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
     m_socket->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
     //m_socket6->SetRecvCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
+    //m_socket->SetIpTos(m_tos); // Affects only IPv4 sockets.
 
     NS_LOG_INFO(getNodeName() << " conectado.");
     decreaseConnectEnergy();
@@ -315,7 +320,7 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
                 }
 
                 if (rollbackInProgress && command == ROLLBACK_FINISHED){
-                    NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+                    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
                                     << " saiu do modo de bloqueio de comunicação.");
                     
                     rollbackInProgress = false;
@@ -323,7 +328,7 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
                     break;
                 }
 
-                NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << " servidor recebeu "
+                NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " recebeu "
                                     << receivedSize << " bytes de "
                                     << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
                                     << InetSocketAddress::ConvertFrom(from).GetPort()
@@ -397,8 +402,8 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 
                 if (InetSocketAddress::IsMatchingType(from))
                 {
-                    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " servidor enviou "
-                                        << receivedSize << " bytes para "
+                    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " enviou "
+                                        << newPacket->GetSize() << " bytes para "
                                         << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
                                         << InetSocketAddress::ConvertFrom(from).GetPort()
                                         << " (Número de Sequência: " << seqTs.GetSeq()
@@ -422,10 +427,10 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 
             }
         } catch (NodeAsleepException& e) {
-            //NS_LOG_INFO("Tarefa incompleta por estar em modo SLEEP.");
+            NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
             break;
         } catch (NodeDepletedException& e) {
-            //NS_LOG_INFO("Tarefa incompleta por estar em modo DEPLETED.");
+            NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
             break;
         }
         
@@ -433,109 +438,6 @@ BatteryNodeApp::HandleRead(Ptr<Socket> socket)
 
     NS_LOG_FUNCTION("Fim do método");
 }
-
-/*void
-BatteryNodeApp::HandleRead(Ptr<Socket> socket)
-{
-    NS_LOG_FUNCTION(this << socket);
-
-    Ptr<Packet> packet;
-    Address from;
-    Address localAddress;
-    while ((packet = socket->RecvFrom(from)) && !isSleeping() && !isDepleted())
-    {
-        try {
-            socket->GetSockName(localAddress);
-            m_rxTrace(packet);
-            m_rxTraceWithAddresses(packet, from, localAddress);
-
-            uint32_t receivedSize = packet->GetSize();
-            SeqTsHeader seqTs;
-            packet->RemoveHeader(seqTs);
-            uint32_t currentSequenceNumber = seqTs.GetSeq();
-
-            // Obtendo payload do pacote com segurança
-            std::vector<uint8_t> buffer(receivedSize);
-            packet->CopyData(buffer.data(), receivedSize);
-            std::string receivedData(buffer.begin(), buffer.end());
-
-            std::istringstream iss(receivedData);
-            std::string command;
-            int data;
-            if (!(iss >> command >> data)) {
-                NS_LOG_ERROR("Erro ao processar payload: " << receivedData);
-                return;
-            }
-
-            if (rollbackInProgress && command != ROLLBACK_FINISHED) {
-                continue;
-            }
-
-            if (rollbackInProgress && command == ROLLBACK_FINISHED) {
-                NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                            << " saiu do modo de bloqueio de comunicação.");
-                rollbackInProgress = false;
-                decreaseReadEnergy();
-                continue;
-            }
-
-            if (InetSocketAddress::IsMatchingType(from)) {
-                NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << " servidor recebeu "
-                                << receivedSize << " bytes de "
-                                << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
-                                << InetSocketAddress::ConvertFrom(from).GetPort()
-                                << " (Número de Sequência: " << currentSequenceNumber
-                                << ", UId: " << packet->GetUid()
-                                << (command == NORMAL_PAYLOAD ? "" : ", Comando: " + command)
-                                << (command == NORMAL_PAYLOAD && data > 0 ? ", last_seq: " + std::to_string(data) : "")
-                                << (command != NORMAL_PAYLOAD ? ", Dado: " + std::to_string(data) : "") 
-                                << ")");
-            }
-
-            m_lossCounter.NotifyReceived(currentSequenceNumber);
-            m_received++;
-            m_seq++;
-
-            decreaseReadEnergy();
-
-            packet->RemoveAllPacketTags();
-            packet->RemoveAllByteTags();
-
-            NS_LOG_LOGIC("Responding packet");
-
-            // Serializar dados: comando (string) + número inteiro (int)
-            std::ostringstream oss;
-            oss << NORMAL_PAYLOAD << " " << m_seq;
-            std::string dataToSend = oss.str();
-
-            std::vector<uint8_t> dataBuffer(dataToSend.begin(), dataToSend.end());
-            Ptr<Packet> newPacket = Create<Packet>(dataBuffer.data(), dataBuffer.size());
-            newPacket->AddHeader(seqTs);
-
-            socket->SendTo(newPacket, 0, from);
-
-            if (InetSocketAddress::IsMatchingType(from)) {
-                NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " servidor enviou "
-                                    << receivedSize << " bytes para "
-                                    << InetSocketAddress::ConvertFrom(from).GetIpv4() << " porta "
-                                    << InetSocketAddress::ConvertFrom(from).GetPort()
-                                    << " (Número de Sequência: " << seqTs.GetSeq()
-                                    << ", UId: " << newPacket->GetUid() 
-                                    << ", last_seq: " << m_seq << ")");
-            }
-
-            addAddress(from);
-            decreaseSendEnergy();
-
-        } catch (NodeAsleepException& e) {
-            break;
-        } catch (NodeDepletedException& e) {
-            break;
-        }
-    }
-
-    NS_LOG_FUNCTION("Fim do método");
-}*/
 
 Mode BatteryNodeApp::getCurrentMode(){
     NS_LOG_FUNCTION(this);
@@ -593,10 +495,9 @@ void BatteryNodeApp::checkModeChange(){
 
     } else if (battery.getBatteryPercentage() > 20 && currentMode != Mode::NORMAL){
         currentMode = Mode::NORMAL;
-        defineCheckpointStrategy();
-
         NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo NORMAL.");
 
+        configureCheckpointStrategy();
         checkpointStrategy->startRollbackToLastCheckpoint();
     }
 
@@ -612,6 +513,8 @@ void BatteryNodeApp::afterCheckpoint(){
     
     //Removendo endereços com os quais este nó se comunicou no ciclo anterior
     addresses.clear();
+
+    decreaseCheckpointEnergy();
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -629,14 +532,26 @@ void BatteryNodeApp::beforeRollback(){
 void BatteryNodeApp::afterRollback(){
     NS_LOG_FUNCTION(this);
 
-    //Reiniciando aplicação...
-    StartApplication();
+    try {
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+            << " concluiu o procedimento de rollback.");
+    
+        decreaseRollbackEnergy();
 
-    NS_LOG_INFO("\nDepois do rollback...");
-    printNodeData();
+        //Reiniciando aplicação...
+        StartApplication();
 
-    //Enviando mensagem de rollback para os outros nós envolvidos
-    notifyNodesAboutRollback();
+        NS_LOG_INFO("\nDepois do rollback...");
+        printNodeData();
+
+        //Enviando mensagem de rollback para os outros nós envolvidos
+        notifyNodesAboutRollback();
+    
+    } catch (NodeAsleepException& e) {
+        //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
+    } catch (NodeDepletedException& e) {
+        //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
+    } 
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -676,6 +591,7 @@ void BatteryNodeApp::notifyNodesAboutRollback(){
                             << " o seguinte comando: " << data);
         }
     
+        decreaseSendEnergy();
     }
 
     NS_LOG_FUNCTION("Fim do método");
@@ -699,6 +615,12 @@ void BatteryNodeApp::decreaseEnergy(double amount) {
 void BatteryNodeApp::decreaseCheckpointEnergy(){
     NS_LOG_FUNCTION(this);
     decreaseEnergy(CREATE_CHECKPOINT_ENERGY);
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void BatteryNodeApp::decreaseRollbackEnergy(){
+    NS_LOG_FUNCTION(this);
+    decreaseEnergy(ROLLBACK_ENERGY);
     NS_LOG_FUNCTION("Fim do método");
 }
 
@@ -773,14 +695,12 @@ void BatteryNodeApp::resetNodeData() {
     addresses.clear();
 
     m_port = 0;
-    m_tos = 0;
+    //m_tos = 0;
     m_local = Address();
     m_received = 0;
     m_seq = -1;
     rollbackInProgress = false;
 
-    NS_LOG_INFO("\nDestruindo CheckpointStrategy... Ref count: " << checkpointStrategy->GetReferenceCount());
-    //checkpointStrategy->stopCheckpointing();
     checkpointStrategy = nullptr;
     
     // m_socket->ShutdownRecv();
@@ -816,16 +736,17 @@ void BatteryNodeApp::printNodeData(){
         << ", idleEnergyConsumption = " << idleEnergyConsumption
         << ", sleepEnergyConsumption = " << sleepEnergyConsumption
         << ", energyUpdateInterval = " << energyUpdateInterval.As(Time::S)
-        << ", energyGenerator->getValue() = " << energyGenerator->getValue()
+        << ", energyGenerator->GetTypeId() = " << energyGenerator->GetTypeId()
         << ", rollbackInProgress = " << rollbackInProgress
         << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
         << ", m_port = " << m_port
-        << ", m_tos = " << to_string(static_cast<int>(m_tos))
+        //<< ", m_tos = " << to_string(static_cast<int>(m_tos))
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
         << ", m_received = " << m_received
         << ", m_seq = " << m_seq
         // << ", m_lossCounter = " << m_lossCounter.GetLost()
         << ", addresses.size() = " << addresses.size()
+        << ", rollbackInProgress = " << rollbackInProgress
         << "\n ");
 
     NS_LOG_FUNCTION("Fim do método");
@@ -834,9 +755,9 @@ void BatteryNodeApp::printNodeData(){
 json BatteryNodeApp::to_json() const {
     NS_LOG_FUNCTION(this);
 
-    json j = Application::to_json();
+    json j = CheckpointApp::to_json();
     j["m_port"] = m_port;
-    j["m_tos"] = m_tos;
+    //j["m_tos"] = m_tos;
     j["m_received"] = m_received;
     j["m_seq"] = m_seq;
     j["m_local"] = m_local;
@@ -868,11 +789,11 @@ void BatteryNodeApp::from_json(const json& j) {
         NS_LOG_INFO("\nm_port está ausente ou é nulo! \n");
     }
 
-    if (j.contains("m_tos") && !j["m_tos"].is_null()) {
+    /*if (j.contains("m_tos") && !j["m_tos"].is_null()) {
         j.at("m_tos").get_to(m_tos); 
     } else {
         NS_LOG_INFO("\nm_tos está ausente ou é nulo! \n");
-    }
+    }*/
 
     if (j.contains("m_local") && !j["m_local"].is_null()) {
         j.at("m_local").get_to(m_local); 
@@ -907,16 +828,10 @@ void BatteryNodeApp::from_json(const json& j) {
     NS_LOG_FUNCTION("Fim do método");
 }
 
-string BatteryNodeApp::getNodeName(){
-    NS_LOG_FUNCTION(this);
-
-    return "battery-node-0";
-}
-
 bool BatteryNodeApp::mayCheckpoint(){
     NS_LOG_FUNCTION(this);
     
-    if (isDepleted() || isSleeping()){
+    if (isDepleted() || isSleeping() || rollbackInProgress){
         return false;
     } else {
         return true;

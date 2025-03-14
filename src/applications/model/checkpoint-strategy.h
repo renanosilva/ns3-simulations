@@ -117,7 +117,10 @@ class CheckpointStrategy : public Object
     /** Auxilia a manipular os arquivos de checkpoint e logs. */
     Ptr<CheckpointHelper> checkpointHelper;
 
-    /** Dados a serem armazenados no checkpoint. */
+    /** 
+     * Dados a serem armazenados em log, de forma a complementar os dados do 
+     * checkpoint, se necessário. 
+     * */
     string logData = "";
 
     /** Aplicação na qual deverá ser feito o checkpoint. */

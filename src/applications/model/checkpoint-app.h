@@ -65,7 +65,7 @@ class CheckpointApp : public Application
     CheckpointApp();
     ~CheckpointApp() override;
 
-    virtual string getNodeName();
+    string getNodeName();
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
@@ -121,7 +121,7 @@ class CheckpointApp : public Application
   protected:
 
     /** Define a estratégia de checkpointing a ser utilizada por este nó. */
-    virtual void defineCheckpointStrategy();
+    virtual void configureCheckpointStrategy();
 
     ////////////////////////////////////////////////
     //////          ATRIBUTOS NATIVOS         //////
@@ -141,7 +141,7 @@ class CheckpointApp : public Application
     ////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
-    //Até o momento não há atributos de aplicação
+    string nodeName;       //nome deste nó
     
 };
 
