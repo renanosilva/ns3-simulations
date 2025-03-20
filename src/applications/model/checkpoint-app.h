@@ -46,17 +46,6 @@ class CheckpointApp : public Application
 {
   public:
 
-    /** 
-     * Comando que indica que um pacote enviado é um pacote normal de aplicação. 
-     * Isso quer dizer que não se trata de um comando referente a checkpointing. */
-    static const string NORMAL_PAYLOAD;
-
-    /** Comando que um nó envia para outro quando necessita que este último realize um rollback. */
-    static const string REQUEST_TO_START_ROLLBACK_COMMAND;
-
-    /** Comando que um nó envia para outro para indicar que terminou seu rollback. */
-    static const string ROLLBACK_FINISHED;
-
     /**
      * \brief Get the type ID.
      * \return the object TypeId

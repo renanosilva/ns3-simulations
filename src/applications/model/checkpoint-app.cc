@@ -23,10 +23,6 @@ namespace ns3
 NS_LOG_COMPONENT_DEFINE("CheckpointApp");
 NS_OBJECT_ENSURE_REGISTERED(CheckpointApp);
 
-const string CheckpointApp::REQUEST_TO_START_ROLLBACK_COMMAND = "REQUEST_TO_START_ROLLBACK";
-const string CheckpointApp::NORMAL_PAYLOAD = "NORMAL_PAYLOAD";
-const string CheckpointApp::ROLLBACK_FINISHED = "ROLLBACK_FINISHED";
-
 TypeId
 CheckpointApp::GetTypeId()
 {

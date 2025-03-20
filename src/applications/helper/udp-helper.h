@@ -30,24 +30,160 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/ipv4-address-helper.h"
 #include "ns3/packet.h"
+#include "ns3/event-id.h"
+#include "ns3/ptr.h"
+#include "ns3/message-data.h"
+#include <nlohmann/json.hpp>
+#include <string>
+
+using json = nlohmann::json;
+using namespace std;
 
 namespace ns3
 {
+
+class MessageData;
+
+/** Payload referente a uma requisição para que outros nós iniciem procedimentos de rollback. */
+const static string REQUEST_TO_START_ROLLBACK_COMMAND = "REQUEST_TO_START_ROLLBACK_COMMAND";
+
+/** Payload referente a uma requisição de valor de um nó para outro. */
+const static string REQUEST_VALUE = "REQUEST_VALUE";
+
+/** Payload referente a uma resposta a uma requisição de valor feita por um nó. */
+const static string RESPONSE_VALUE = "RESPONSE_VALUE";
+
+/** Payload referente a um aviso de rollback concluído. */
+const static string ROLLBACK_FINISHED_COMMAND = "ROLLBACK_FINISHED_COMMAND";
 
 /**
  * \ingroup helper
  * \brief Classe que auxilia no processo de gerenciamento de sockets e pacotes UDP.
  */
-class UdpHelper
+class UDPHelper : public Object
 {
 
 public:
 
+    /**
+     * \brief Get the type ID.
+     * \return the object TypeId
+     */
+    static TypeId GetTypeId();
+
+    UDPHelper();
+
+    ~UDPHelper() override;
+
+    /** 
+     * Estabelece uma conexão via socket com um nó específico.
+     * 
+     * @node Nó que está se conectando.
+     * @nodeName Nome do nó que está se conectando.
+     * @peerAddress Endereço do nó ao qual se deseja conectar.
+     * @peerPort Porta do nó ao qual se deseja conectar.
+    */
+    void connect(Ptr<Node> node, string nodeName, Address peerAddress, uint16_t peerPort);
+
+    /** 
+     * Atribui um endereço IP ao nó e fica aguardando mensagens de outros nós em uma porta específica.
+     * 
+     * @node Nó que está se conectando.
+     * @nodeName Nome do nó que está se conectando.
+     * @port Porta através da qual as mensagens serão recebidas.
+    */
+   void connect(Ptr<Node> node, string nodeName, uint16_t port);
+
+    /** Encerra a conexão via socket.*/
+    void terminateConnection();
+
+    /** 
+     * Envia um pacote para um nó.
+     * 
+     * @param command comando que indica o tipo de mensagem.
+     * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
+     * @param destination Opcional. Indica para qual endereço o pacote será enviado. Caso não seja
+     * informado, será enviado para o endereço previamente conectado através do socket.
+     * */
+    Ptr<MessageData> send(string command, int d, Address destination = Address());
+
+    /** Imprime os dados da classe para fins de debug. */
+    void printData();
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const UDPHelper& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, UDPHelper& obj);
+
+    /**************  GETTERS  ***************/
+
+    ns3::Address getAddress() const;
+    uint16_t getPort() const;
+    ns3::Address getPeerAddress() const;
+    uint16_t getPeerPort() const;
+    uint64_t getTotalBytesSent() const;
+    uint32_t getSentMessagesCounter() const;
+    uint32_t getReceivedMessagesCounter() const;
+    string getNodeName() const;
+    bool isDisconnected() const;
+
+    /**************  SETTERS  ***************/
+
+    /** 
+     * Atribui um método de callback, a ser chamado quando um pacote for recebido 
+     * no socket que está sendo usado. 
+     * */
+    void setReceiveCallback(Callback<void, Ptr<MessageData>> callback);
+
+    void setAddress(const ns3::Address& address);
+    void setPort(uint16_t port);
+    void setPeerAddress(const ns3::Address& peerAddress);
+    void setPeerPort(uint16_t peerPort);
+    void setNodeName(const std::string& name);
 
 private:
 
-    Ptr<Socket> m_socket;          // Socket UDP
-    uint16_t m_port;               // Porta UDP
+    void HandleRead(Ptr<Socket> socket);
+
+    ////////////////////////////////////////////////
+    //////          ATRIBUTOS NATIVOS         //////
+    ////////////////////////////////////////////////
+
+    /* 
+      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
+      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
+      (que nunca mudam) de uma aplicação.
+    */
+
+    /// Traced Callback: transmitted packets.
+    TracedCallback<Ptr<const Packet>> m_txTrace;
+
+    /// Callbacks for tracing the packet Rx events
+    TracedCallback<Ptr<const Packet>> m_rxTrace;
+
+    /// Callbacks for tracing the packet Tx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_txTraceWithAddresses;
+
+    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
+
+    Ptr<Socket> m_socket;                             //!< Socket
+    Callback<void, Ptr<MessageData>> receiveCallback; //Callback a ser chamado ao receber uma mensagem
+
+    ////////////////////////////////////////////////
+    //////       ATRIBUTOS DE APLICAÇÃO       //////
+    ////////////////////////////////////////////////
+
+    Address m_address;     //!< The node's address
+    uint16_t m_port;       //!< The node's port
+    Address m_local;       //!< local multicast address
+    Address m_peerAddress; //!< Remote peer address
+    uint16_t m_peerPort;   //!< Remote peer port
+    uint64_t m_totalTx;    //!< Total bytes sent
+    uint32_t m_sent;       //!< Counter for sent messages
+    uint32_t m_received;   //!< Contador de mensagens recebidas (não necessariamente processadas)
+    string m_nodeName;     //nome do nó que está usando este helper
 
 };
 

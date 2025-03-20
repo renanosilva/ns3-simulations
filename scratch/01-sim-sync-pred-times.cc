@@ -42,29 +42,35 @@ int
 main(int argc, char* argv[])
 {
     //Habilitando mensagens de log
-	
     
     LogComponentEnable("Application", LOG_INFO);
     LogComponentEnable("CheckpointApp", LOG_INFO);
-    LogComponentEnable("BatteryServerApp", LOG_INFO);
+    LogComponentEnable("BatteryNodeApp", LOG_INFO);
     LogComponentEnable("ClientApp", LOG_INFO);
     LogComponentEnable("Battery", LOG_INFO);
     LogComponentEnable("CheckpointStrategy", LOG_INFO);
     LogComponentEnable("CheckpointHelper", LOG_INFO);
     LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_INFO);
+    LogComponentEnable("EnergyGenerator", LOG_INFO);
+    LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
+    LogComponentEnable("UDPHelper", LOG_INFO);
+    LogComponentEnable("LogUtils", LOG_INFO);
     
     // LogComponentEnable("Application", LOG_FUNCTION);
     // LogComponentEnable("CheckpointApp", LOG_FUNCTION);
-    // LogComponentEnable("BatteryServerApp", LOG_FUNCTION);
+    // LogComponentEnable("BatteryNodeApp", LOG_FUNCTION);
     // LogComponentEnable("ClientApp", LOG_FUNCTION);
     // LogComponentEnable("Battery", LOG_FUNCTION);
     // LogComponentEnable("CheckpointStrategy", LOG_FUNCTION);
     // LogComponentEnable("CheckpointHelper", LOG_FUNCTION);
     // LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_FUNCTION);
+    // LogComponentEnable("EnergyGenerator", LOG_FUNCTION);
+    // LogComponentEnable("CircularEnergyGenerator", LOG_FUNCTION);
+    // LogComponentEnable("UDPHelper", LOG_FUNCTION);
     
     // LogComponentEnable("Application", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointApp", LOG_LEVEL_ALL);
-    // LogComponentEnable("BatteryServerApp", LOG_LEVEL_ALL);
+    // LogComponentEnable("BatteryNodeApp", LOG_LEVEL_ALL);
     // LogComponentEnable("ClientApp", LOG_LEVEL_ALL);
     // LogComponentEnable("Battery", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointStrategy", LOG_LEVEL_ALL);
@@ -72,6 +78,8 @@ main(int argc, char* argv[])
     // LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_LEVEL_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
+    // LogComponentEnable("UDPHelper", LOG_LEVEL_ALL);
+    // LogComponentEnable("LogUtils", LOG_LEVEL_ALL);
 
     //Habilitando a impressão de pacotes
     ns3::PacketMetadata::Enable();
@@ -162,17 +170,17 @@ main(int argc, char* argv[])
     ch.removeAllCheckpointsAndLogs();
 
     //Cria uma aplicação de servidor a bateria, de forma a gerar tráfego de dados. 9 é a porta.
-    BatteryNodeAppHelper batteryServerApp(9, "battery-node-0");
+    BatteryNodeAppHelper batteryServerAppHelper(9, "battery-node-0");
 
-    ApplicationContainer serverApps = batteryServerApp.Install(batteryServerNode); //define o nó 1 como servidor
+    ApplicationContainer serverApps = batteryServerAppHelper.Install(batteryServerNode); //define o nó 1 como servidor
     serverApps.Start(Seconds(1.0)); //o servidor será iniciado com 1s de simulação
 
-    ClientNodeAppHelper clientApp(i.GetAddress(1), 9, "client-node-0"); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
-    clientApp.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
-    clientApp.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
+    ClientNodeAppHelper clientAppHelper(i.GetAddress(1), 9, "client-node-0"); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+    clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
+    clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
     //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
 
-    ApplicationContainer clientApps = clientApp.Install(clientNode); //instala a aplicação cliente no nó 0
+    ApplicationContainer clientApps = clientAppHelper.Install(clientNode); //instala a aplicação cliente no nó 0
     clientApps.Start(Seconds(2.0)); //inicia o cliente com 2s de simulação
 
     /** simulation setup **/

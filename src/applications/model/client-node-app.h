@@ -26,6 +26,7 @@
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/checkpoint-app.h"
 #include "ns3/json-utils.h"
+#include "ns3/udp-helper.h"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -120,10 +121,7 @@ class ClientNodeApp : public CheckpointApp
      *
      * \param socket the socket the packet was received to.
      */
-    void HandleRead(Ptr<Socket> socket);
-
-    void logMessageReceived(Ptr<Packet> packet, uint32_t receivedSize, Address from, 
-                            uint32_t currentSequenceNumber, string command, int data);
+    void HandleRead(Ptr<MessageData> md);
 
     /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
     void notifyNodesAboutRollbackConcluded();
@@ -144,26 +142,12 @@ class ClientNodeApp : public CheckpointApp
     ////////////////////////////////////////////////
 
     /* 
-      Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
-      como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
-      de uma aplicação. São atributos que não são incluídos em checkpoints.
+      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
+      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
+      (que nunca mudam) de uma aplicação.
     */
 
-    /// Traced Callback: transmitted packets.
-    TracedCallback<Ptr<const Packet>> m_txTrace;
-
-    /// Callbacks for tracing the packet Rx events
-    TracedCallback<Ptr<const Packet>> m_rxTrace;
-
-    /// Callbacks for tracing the packet Tx events, includes source and destination addresses
-    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_txTraceWithAddresses;
-
-    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
-    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
-
-    Ptr<Socket> m_socket;  //!< Socket
     EventId m_sendEvent;   //!< Event to send the next packet
-
     bool rollbackInProgress; //Indica se existe um procedimento de rollback em andamento
 
     ////////////////////////////////////////////////
@@ -172,22 +156,13 @@ class ClientNodeApp : public CheckpointApp
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    uint32_t m_count; //!< Maximum number of packets the application will send
-    Time m_interval;  //!< Packet inter-send time
-    uint32_t m_sent;       //!< Counter for sent packets
-    uint64_t last_seq;     //!< Last sequence number received from the server
-    uint64_t m_totalTx;    //!< Total bytes sent
-    Address m_address;     //!< This node's address
-    uint16_t m_port;       //!< This node's port
+    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
     Address m_peerAddress; //!< Remote peer address
     uint16_t m_peerPort;   //!< Remote peer port
-    //uint32_t m_size;  //!< Size of the sent packet (including the SeqTsHeader)
-    //uint8_t m_tos;         //!< The packets Type of Service
-
-/*#ifdef NS3_LOG_ENABLE
-    std::string m_peerAddressString; //!< Remote peer address string
-#endif                               // NS3_LOG_ENABLE*/
-
+    uint32_t m_count;      //!< Maximum number of messages the application will send
+    Time m_interval;       //!< Message inter-send time
+    uint64_t last_seq;     //!< Last sequence number received from the server
+    
 };
 
 } // namespace ns3

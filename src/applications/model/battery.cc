@@ -88,9 +88,6 @@ void Battery::rechargeEnergy(double amount){
     double newRemainingEnergy = remainingEnergy + amount;
     remainingEnergy = min(maxCapacity, newRemainingEnergy);
     
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", energia gerada: " << amount 
-                << ". Energia restante: " << to_string(remainingEnergy));
-
     NS_LOG_FUNCTION("Fim do método");
 }
 
@@ -102,9 +99,6 @@ void Battery::decrementEnergy(double amount){
     double newRemainingEnergy = remainingEnergy - amount;
     remainingEnergy = max(0., newRemainingEnergy);
     
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << " Energia consumida: " << amount << 
-                ". Energia restante: " << to_string(remainingEnergy));
-
     NS_LOG_FUNCTION("Fim do método");
 }
 

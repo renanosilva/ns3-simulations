@@ -18,6 +18,7 @@ build_lib(
     model/seq-ts-echo-header.cc
     model/seq-ts-header.cc
     model/seq-ts-size-header.cc
+    model/message-data.cc
     model/three-gpp-http-client.cc
     model/three-gpp-http-header.cc
     model/three-gpp-http-server.cc
@@ -39,6 +40,7 @@ build_lib(
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
     util/json-utils.cc
+    util/log-utils.cc
   HEADER_FILES
     helper/bulk-send-helper.h
     helper/on-off-helper.h
@@ -57,6 +59,7 @@ build_lib(
     model/seq-ts-echo-header.h
     model/seq-ts-header.h
     model/seq-ts-size-header.h
+    model/message-data.h
     model/three-gpp-http-client.h
     model/three-gpp-http-header.h
     model/three-gpp-http-server.h
@@ -78,6 +81,7 @@ build_lib(
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h
     util/json-utils.h
+    util/log-utils.h
   LIBRARIES_TO_LINK ${libinternet}
   TEST_SOURCES
     test/three-gpp-http-client-server-test.cc

@@ -20,6 +20,8 @@
 
 #include "packet-loss-counter.h"
 
+#include "ns3/battery.h"
+#include "ns3/udp-helper.h"
 #include "ns3/checkpoint-app.h"
 #include "ns3/address.h"
 #include "ns3/socket.h"
@@ -28,7 +30,6 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
-#include "ns3/battery.h"
 #include "ns3/energy-generator.h"
 #include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
@@ -71,44 +72,6 @@ class BatteryNodeApp : public CheckpointApp
     BatteryNodeApp();
     ~BatteryNodeApp() override;
 
-    /**
-     * \brief Returns the number of lost packets
-     * \return the number of lost packets
-     */
-    // uint32_t GetLost() const;
-
-    /**
-     * \brief Returns the number of received packets
-     * \return the number of received packets
-     */
-    // uint64_t GetReceived() const;
-
-    /**
-     * \brief Returns the size of the window used for checking loss.
-     * \return the size of the window used for checking loss.
-     */
-    // uint16_t GetPacketWindowSize() const;
-
-    /**
-     * \brief Set the size of the window used for checking loss. This value should
-     *  be a multiple of 8
-     * \param size the size of the window used for checking loss. This value should
-     *  be a multiple of 8
-     */
-    // void SetPacketWindowSize(uint16_t size);
-
-    /** 
-     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
-     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
-     * */
-    json to_json() const;
-    
-    /** 
-     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
-     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
-    */
-    void from_json(const json& j);
-
     bool isSleeping();
     
     bool isDepleted();
@@ -142,6 +105,18 @@ class BatteryNodeApp : public CheckpointApp
      * */
     bool mayCheckpoint() override;
 
+    /** 
+     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     * */
+    json to_json() const;
+    
+    /** 
+     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+    */
+    void from_json(const json& j);
+
   protected:
     void configureCheckpointStrategy() override;
 
@@ -156,7 +131,7 @@ class BatteryNodeApp : public CheckpointApp
      *
      * \param socket the socket the packet was received to.
      */
-    void HandleRead(Ptr<Socket> socket);
+    void HandleRead(Ptr<MessageData> md);
 
     /** Adiciona um endereço ao vetor de addresses. Não permite elementos repetidos. */
     void addAddress(Address a);
@@ -223,9 +198,9 @@ class BatteryNodeApp : public CheckpointApp
     ////////////////////////////////////////////////
 
     /* 
-      Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
-      como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
-      de uma aplicação. São atributos que não são incluídos em checkpoints.
+      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
+      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
+      (que nunca mudam) de uma aplicação.
     */
 
     /// Callbacks for tracing the packet Rx events
@@ -256,17 +231,14 @@ class BatteryNodeApp : public CheckpointApp
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    Ptr<Socket> m_socket;  //!< IPv4 Socket
-    uint16_t m_port;       //!< Port on which we listen for incoming packets.
-    Address m_local;       //!< local multicast address
-    uint64_t m_received;   //!< Number of received packets
-    uint64_t m_seq;        //!< Numeração de sequência das mensagens recebidas. É incrementada ao receber uma mensagem.
+    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
+    uint16_t m_port;                //!< Port on which we listen for incoming packets.
+    
+    /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
+    uint64_t m_seq;
     
     /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
     vector<Address> addresses;
-
-    //uint8_t m_tos;         //!< The packets Type of Service
-    // PacketLossCounter m_lossCounter; //!< Lost packet counter
 
 };
 
