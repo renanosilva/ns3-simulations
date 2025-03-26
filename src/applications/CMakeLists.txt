@@ -10,6 +10,7 @@ build_lib(
     helper/node-app-helper.cc
     helper/checkpoint-helper.cc
     helper/udp-helper.cc
+    helper/config-helper.cc
     model/application-packet-probe.cc
     model/bulk-send-application.cc
     model/onoff-application.cc
@@ -41,6 +42,7 @@ build_lib(
     exception/node-depleted-exception.cc
     util/json-utils.cc
     util/log-utils.cc
+    util/utils.cc
   HEADER_FILES
     helper/bulk-send-helper.h
     helper/on-off-helper.h
@@ -51,6 +53,7 @@ build_lib(
     helper/node-app-helper.h
     helper/checkpoint-helper.h
     helper/udp-helper.h
+    helper/config-helper.h
     model/application-packet-probe.h
     model/bulk-send-application.h
     model/onoff-application.h
@@ -82,6 +85,7 @@ build_lib(
     exception/node-depleted-exception.h
     util/json-utils.h
     util/log-utils.h
+    util/utils.h
   LIBRARIES_TO_LINK ${libinternet}
   TEST_SOURCES
     test/three-gpp-http-client-server-test.cc

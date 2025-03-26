@@ -76,23 +76,21 @@ public:
     ~UDPHelper() override;
 
     /** 
-     * Estabelece uma conexão via socket com um nó específico.
+     * Configura um socket e atribui um endereço IP ao nó.
      * 
      * @node Nó que está se conectando.
      * @nodeName Nome do nó que está se conectando.
-     * @peerAddress Endereço do nó ao qual se deseja conectar.
-     * @peerPort Porta do nó ao qual se deseja conectar.
     */
-    void connect(Ptr<Node> node, string nodeName, Address peerAddress, uint16_t peerPort);
+    void configureClient(Ptr<Node> node, string nodeName);
 
     /** 
-     * Atribui um endereço IP ao nó e fica aguardando mensagens de outros nós em uma porta específica.
+     * Atribui um endereço IP ao servidor e fica aguardando mensagens de outros nós em uma porta específica.
      * 
      * @node Nó que está se conectando.
      * @nodeName Nome do nó que está se conectando.
      * @port Porta através da qual as mensagens serão recebidas.
     */
-   void connect(Ptr<Node> node, string nodeName, uint16_t port);
+   void configureServer(Ptr<Node> node, string nodeName, uint16_t port);
 
     /** Encerra a conexão via socket.*/
     void terminateConnection();
@@ -102,10 +100,19 @@ public:
      * 
      * @param command comando que indica o tipo de mensagem.
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
-     * @param destination Opcional. Indica para qual endereço o pacote será enviado. Caso não seja
-     * informado, será enviado para o endereço previamente conectado através do socket.
+     * @param to Indica para qual endereço o pacote será enviado.
      * */
-    Ptr<MessageData> send(string command, int d, Address destination = Address());
+    Ptr<MessageData> send(string command, int d, Address to);
+
+    /** 
+     * Envia um pacote para um nó.
+     * 
+     * @param command comando que indica o tipo de mensagem.
+     * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
+     * @param ip IP de destino.
+     * @param port Porta de destino.
+     * */
+    Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port);
 
     /** Imprime os dados da classe para fins de debug. */
     void printData();
@@ -118,10 +125,10 @@ public:
 
     /**************  GETTERS  ***************/
 
-    ns3::Address getAddress() const;
+    Address getAddress() const;
     uint16_t getPort() const;
-    ns3::Address getPeerAddress() const;
-    uint16_t getPeerPort() const;
+    // Address getPeerAddress() const;
+    // uint16_t getPeerPort() const;
     uint64_t getTotalBytesSent() const;
     uint32_t getSentMessagesCounter() const;
     uint32_t getReceivedMessagesCounter() const;
@@ -138,8 +145,8 @@ public:
 
     void setAddress(const ns3::Address& address);
     void setPort(uint16_t port);
-    void setPeerAddress(const ns3::Address& peerAddress);
-    void setPeerPort(uint16_t peerPort);
+    // void setPeerAddress(const ns3::Address& peerAddress);
+    // void setPeerPort(uint16_t peerPort);
     void setNodeName(const std::string& name);
 
 private:
@@ -178,8 +185,8 @@ private:
     Address m_address;     //!< The node's address
     uint16_t m_port;       //!< The node's port
     Address m_local;       //!< local multicast address
-    Address m_peerAddress; //!< Remote peer address
-    uint16_t m_peerPort;   //!< Remote peer port
+    // Address m_peerAddress; //!< Remote peer address
+    // uint16_t m_peerPort;   //!< Remote peer port. This port will be used to send packets.
     uint64_t m_totalTx;    //!< Total bytes sent
     uint32_t m_sent;       //!< Counter for sent messages
     uint32_t m_received;   //!< Contador de mensagens recebidas (não necessariamente processadas)

@@ -34,7 +34,10 @@
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/core-module.h"
+#include "ns3/address.h"
 #include "ns3/log-utils.h"
+#include "ns3/json-utils.h"
+#include "ns3/utils.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -64,15 +67,15 @@ ClientNodeApp::GetTypeId()
                 MakeUintegerAccessor(&ClientNodeApp::m_count),
                 MakeUintegerChecker<uint32_t>())
             .AddAttribute("Interval",
-                          "The time to wait between packets",
-                          TimeValue(Seconds(1.0)),
-                          MakeTimeAccessor(&ClientNodeApp::m_interval),
-                          MakeTimeChecker())
-            .AddAttribute("RemoteAddress",
-                            "The destination Address of the outbound packets",
-                            AddressValue(),
-                            MakeAddressAccessor(&ClientNodeApp::m_peerAddress),
-                            MakeAddressChecker())
+                            "The time to wait between packets",
+                            TimeValue(Seconds(1.0)),
+                            MakeTimeAccessor(&ClientNodeApp::m_interval),
+                            MakeTimeChecker())
+            .AddAttribute("RemoteAddresses",
+                            "List of destination addresses in 'IP;IP;IP...' format",
+                            StringValue(""), // Valor padrão: vazio
+                            MakeStringAccessor(&ClientNodeApp::GetPeerAddresses, &ClientNodeApp::SetPeerAddresses),
+                            MakeStringChecker()) // Verifica se é uma string válida
             .AddAttribute("RemotePort",
                             "The destination port of the outbound packets",
                             UintegerValue(0),
@@ -82,6 +85,11 @@ ClientNodeApp::GetTypeId()
                             "This node's name. ",
                             StringValue(""),
                             MakeStringAccessor(&ClientNodeApp::nodeName),
+                            MakeStringChecker())
+            .AddAttribute("ConfigFilename",
+                            "This node's config filename. ",
+                            StringValue(""),
+                            MakeStringAccessor(&ClientNodeApp::configFilename),
                             MakeStringChecker());
 
     NS_LOG_FUNCTION("Fim do método");
@@ -135,11 +143,14 @@ ClientNodeApp::StartApplication()
 {
     NS_LOG_FUNCTION(this);
 
-    if (!checkpointStrategy)
-        configureCheckpointStrategy();
+    if (!configHelper){
+        configHelper = Create<ConfigHelper>(configFilename);
+    }
+
+    loadConfigurations();
 
     if (udpHelper->isDisconnected()){
-        udpHelper->connect(GetNode(), getNodeName(), m_peerAddress, m_peerPort);
+        udpHelper->configureClient(GetNode(), getNodeName());
     }
 
     udpHelper->setReceiveCallback(MakeCallback(&ClientNodeApp::HandleRead, this));
@@ -168,9 +179,12 @@ ClientNodeApp::Send()
     NS_LOG_FUNCTION(this);
     NS_ASSERT(m_sendEvent.IsExpired());
 
-    Ptr<MessageData> md = udpHelper->send(REQUEST_VALUE, 0);
+    for (Ipv4Address ip : m_peerAddresses){
+        
+        Ptr<MessageData> md = udpHelper->send(REQUEST_VALUE, 0, ip, m_peerPort);
+        utils::logRegularMessageSent(getNodeName(), md);
 
-    utils::logRegularMessageSent(getNodeName(), md);
+    }
 
     if (udpHelper->getSentMessagesCounter() < m_count || m_count == 0){
         //Agendando próximo envio
@@ -191,6 +205,7 @@ void ClientNodeApp::HandleRead(Ptr<MessageData> md)
     }
 
     if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
+        rollbackStarterIp = InetSocketAddress::ConvertFrom(md->GetFrom()).GetIpv4();
         resetNodeData();
         configureCheckpointStrategy();
         checkpointStrategy->startRollback(md->GetData());
@@ -199,12 +214,40 @@ void ClientNodeApp::HandleRead(Ptr<MessageData> md)
     NS_LOG_FUNCTION("Fim do método");
 }
 
+void ClientNodeApp::loadConfigurations() {
+    if (!checkpointStrategy){
+        configureCheckpointStrategy();
+    }
+}
+
+void ClientNodeApp::configureCheckpointStrategy() {
+    NS_LOG_FUNCTION(this);
+    
+    string property = "nodes.client-nodes." + getNodeName() + ".checkpoint-strategy";
+    string checkpointStrategyName = configHelper->GetStringProperty(property);
+
+    if (checkpointStrategyName == "SyncPredefinedTimesCheckpoint"){
+        
+        string intervalProperty = "nodes.client-nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), this);
+        checkpointStrategy->startCheckpointing();
+    
+    } else {
+        NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
+    }
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
 void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
     NS_LOG_FUNCTION(this);
     
-    Ptr<MessageData> md = udpHelper->send(ROLLBACK_FINISHED_COMMAND, 0);
-
+    Ptr<MessageData> md = udpHelper->send(ROLLBACK_FINISHED_COMMAND, 0, rollbackStarterIp, m_peerPort);
     utils::logRegularMessageSent(getNodeName(), md);
+
+    rollbackStarterIp = Ipv4Address::GetAny();
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -223,18 +266,8 @@ void ClientNodeApp::resetNodeData() {
     m_count = 0;
     m_interval = Time(); 
     last_seq = 0;
-    m_peerAddress = Address();
+    m_peerAddresses = vector<Ipv4Address>();
     m_peerPort = 0;
-
-    NS_LOG_FUNCTION("Fim do método");
-}
-
-void ClientNodeApp::configureCheckpointStrategy() {
-    NS_LOG_FUNCTION(this);
-    
-    //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
-    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), this);
-    checkpointStrategy->startCheckpointing();
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -287,10 +320,10 @@ json ClientNodeApp::to_json() const {
 
     json j = CheckpointApp::to_json();
     j["udpHelper"] = *udpHelper;
-    j["m_peerAddress"] = m_peerAddress;
+    j["m_peerAddresses"] = m_peerAddresses;
     j["m_peerPort"] = m_peerPort;
     j["m_count"] = m_count;
-    j = timeToJson(j, "m_interval", m_interval);
+    j = utils::timeToJson(j, "m_interval", m_interval);
     j["last_seq"] = last_seq;
     
     NS_LOG_FUNCTION("Fim do método");
@@ -305,10 +338,10 @@ void ClientNodeApp::from_json(const json& j) {
 
     udpHelper = Create<UDPHelper>();
     j.at("udpHelper").get_to(*udpHelper); 
-    j.at("m_peerAddress").get_to(m_peerAddress); 
+    j.at("m_peerAddresses").get_to(m_peerAddresses); 
     j.at("m_peerPort").get_to(m_peerPort); 
     j.at("m_count").get_to(m_count); 
-    m_interval = jsonToTime(j, "m_interval"); 
+    m_interval = utils::jsonToTime(j, "m_interval"); 
     j.at("last_seq").get_to(last_seq);
 
     NS_LOG_FUNCTION("Fim do método");
@@ -321,15 +354,43 @@ void ClientNodeApp::printNodeData(){
     NS_LOG_INFO(
         "m_count = " << m_count
         << ", m_interval = " << m_interval.As(Time::S)
-        << ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
+        << ", m_peerAddresses = " << utils::convertAddressesToString(m_peerAddresses)
         << ", m_peerPort = " << m_peerPort
         << ", m_sendEvent = " << m_sendEvent.GetTs()
         << ", rollbackInProgress = " << rollbackInProgress
-        << ", last_seq = " << last_seq);
+        << ", last_seq = " << last_seq
+        << ", configFilename = " << configFilename);
 
     udpHelper->printData();
 
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void ClientNodeApp::SetPeerAddresses(string addressList)
+{
+    m_peerAddresses.clear();
+    istringstream iss(addressList);
+    string token;
+
+    while (std::getline(iss, token, ';')) // Lê cada endereço separado por ";"
+    {
+        m_peerAddresses.push_back(Ipv4Address(token.c_str()));
+    }
+}
+
+string ClientNodeApp::GetPeerAddresses() const {
+    ostringstream oss;
+    
+    for (size_t i = 0; i < m_peerAddresses.size(); i++){
+        
+        if (i > 0)
+            oss << ";"; // Separador entre IPs
+
+        oss << m_peerAddresses[i];
+
+    }
+
+    return oss.str();
 }
 
 } // Namespace ns3

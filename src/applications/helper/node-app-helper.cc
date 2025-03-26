@@ -27,26 +27,29 @@
 namespace ns3
 {
 
-BatteryNodeAppHelper::BatteryNodeAppHelper(uint16_t port, string nodeName)
+BatteryNodeAppHelper::BatteryNodeAppHelper(uint16_t port, string nodeName, string configFilename)
     : ApplicationHelper(BatteryNodeApp::GetTypeId())
 {
     SetAttribute("Port", UintegerValue(port));
     SetAttribute("NodeName", StringValue(nodeName));
+    SetAttribute("ConfigFilename", StringValue(configFilename));
 }
 
-ClientNodeAppHelper::ClientNodeAppHelper(const Address& address, uint16_t port, string nodeName)
+ClientNodeAppHelper::ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename)
     : ApplicationHelper(ClientNodeApp::GetTypeId())
 {
-    SetAttribute("RemoteAddress", AddressValue(address));
+    SetAttribute("RemoteAddresses", StringValue(utils::convertAddressesToString(addresses)));
     SetAttribute("RemotePort", UintegerValue(port));
     SetAttribute("NodeName", StringValue(nodeName));
+    SetAttribute("ConfigFilename", StringValue(configFilename));
 }
 
-ClientNodeAppHelper::ClientNodeAppHelper(const Address& address, string nodeName)
-    : ApplicationHelper(ClientNodeApp::GetTypeId())
-{
-    SetAttribute("RemoteAddress", AddressValue(address));
-    SetAttribute("NodeName", StringValue(nodeName));
-}
+// ClientNodeAppHelper::ClientNodeAppHelper(vector<Ipv4Address>& addresses, string nodeName, string configFilename)
+//     : ApplicationHelper(ClientNodeApp::GetTypeId())
+// {
+//     SetAttribute("Addresses", StringValue(utils::convertAddressesToString(addresses)));
+//     SetAttribute("NodeName", StringValue(nodeName));
+//     SetAttribute("ConfigFilename", StringValue(configFilename));
+// }
 
 } // namespace ns3

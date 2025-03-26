@@ -15,33 +15,27 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef JSON_UTILS_H
-#define JSON_UTILS_H
+#include "utils.h"
+#include "ns3/inet-socket-address.h"
 
-#include "ns3/ptr.h"
-#include "ns3/energy-generator.h"
-#include "ns3/checkpoint-strategy.h"
-#include "ns3/nstime.h"
-#include <nlohmann/json.hpp>
-
-using namespace ns3;
-using json = nlohmann::json;
+NS_LOG_COMPONENT_DEFINE("Utils");
 
 namespace utils
 {
 
-/** Converte um objeto gerador de energia em JSON. */
-json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg);
+string convertAddressesToString(vector<Ipv4Address> addresses){
+    ostringstream oss;
+    
+    for (size_t i = 0; i < addresses.size(); i++){
+        
+        if (i > 0)
+            oss << ";"; // Separador entre IPs
 
-/** Converte um objeto estratégia de checkpoint em JSON. */
-//json checkpointStrategyToJson(json j, CheckpointStrategy *cs);
+        oss << addresses[i];
 
-//CheckpointStrategy* jsonToCheckpointStrategy(json j);
+    }
 
-json timeToJson(json j, string propertyName, Time t);
- 
-Time jsonToTime(json j, string propertyName);
+    return oss.str();
+}
 
-} // namespace ns3
-
-#endif /* JSON_UTILS_H */
+} // Namespace utils

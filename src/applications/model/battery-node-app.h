@@ -134,7 +134,12 @@ class BatteryNodeApp : public CheckpointApp
     void HandleRead(Ptr<MessageData> md);
 
     /** Adiciona um endereço ao vetor de addresses. Não permite elementos repetidos. */
-    void addAddress(Address a);
+    void addRollbackAddress(Address a);
+
+    /** 
+     * Carrega as configurações do arquivo de configurações referentes a esta classe.
+    */
+    void loadConfigurations();
 
     /** 
      * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
@@ -211,9 +216,15 @@ class BatteryNodeApp : public CheckpointApp
     
     Battery battery;  //!< bateria do sensor
     enum Mode currentMode; //Modo atual do nó
-    double idleEnergyConsumption; //Consumo de energia em modo idle
-    double sleepEnergyConsumption; //Consumo de energia em modo sleep
+    
     Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
+    double sleepEnergyConsumption; //Consumo de energia em modo sleep
+    double idleEnergyConsumption; //Consumo de energia em modo idle
+    double rollbackEnergyConsumption; //Consumo de energia para se realizar um rolback
+    double createCheckpointConsumption; //Consumo de energia para se criar um checkpoint
+    double receivePacketConsumption; //Consumo de energia para o recebimento de um pacote
+    double sendPacketConsumption; //Consumo de energia para o envio de um pacote
+    double connectConsumption; //Consumo de energia para conectar um socket
 
     /** Gerador de energia da bateria do nó */
     Ptr<EnergyGenerator> energyGenerator;
@@ -237,8 +248,11 @@ class BatteryNodeApp : public CheckpointApp
     /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
     uint64_t m_seq;
     
-    /** Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint. */
-    vector<Address> addresses;
+    /** 
+     * Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint.
+     * Indica quais nós devem fazer rollback caso este faça.
+     *  */
+    vector<Address> rollbackAddresses;
 
 };
 

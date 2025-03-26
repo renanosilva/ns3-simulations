@@ -49,16 +49,16 @@ UDPHelper::GetTypeId()
             .SetParent<Object>()
             .SetGroupName("Helpers")
             .AddConstructor<UDPHelper>()
-            .AddAttribute("RemoteAddress",
-                            "The destination Address of the outbound packets",
-                            AddressValue(),
-                            MakeAddressAccessor(&UDPHelper::m_peerAddress),
-                            MakeAddressChecker())
-            .AddAttribute("RemotePort",
-                            "The destination port of the outbound packets",
-                            UintegerValue(0),
-                            MakeUintegerAccessor(&UDPHelper::m_peerPort),
-                            MakeUintegerChecker<uint16_t>())
+            // .AddAttribute("RemoteAddress",
+            //                 "The destination Address of the outbound packets",
+            //                 AddressValue(),
+            //                 MakeAddressAccessor(&UDPHelper::m_peerAddress),
+            //                 MakeAddressChecker())
+            // .AddAttribute("RemotePort",
+            //                 "The destination port of the outbound packets",
+            //                 UintegerValue(0),
+            //                 MakeUintegerAccessor(&UDPHelper::m_peerPort),
+            //                 MakeUintegerChecker<uint16_t>())
             .AddAttribute("Address",
                             "The node's address",
                             AddressValue(Ipv4Address::GetAny()),
@@ -106,8 +106,8 @@ UDPHelper::UDPHelper()
 
     m_address = Ipv4Address::GetAny();
     m_port = 0;
-    m_peerAddress = Ipv4Address::GetAny();
-    m_peerPort = 0;
+    //m_peerAddress = Ipv4Address::GetAny();
+    // m_peerPort = 0;
     m_local = Address();
     m_totalTx = 0;
     m_sent = 0;
@@ -125,69 +125,38 @@ UDPHelper::~UDPHelper()
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void UDPHelper::connect(Ptr<Node> node, string nodeName, Address peerAddress, uint16_t peerPort){
-    NS_LOG_FUNCTION(this << node << nodeName << peerAddress << peerPort);
+void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
+    NS_LOG_FUNCTION(this << node << nodeName);
     
     m_nodeName = nodeName;
-    m_peerAddress = peerAddress;
-    m_peerPort = peerPort;
 
     TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
     m_socket = Socket::CreateSocket(node, tid);
-    NS_ABORT_MSG_IF(m_peerAddress.IsInvalid(), "'RemoteAddress' attribute not properly set");
     
-    if (Ipv4Address::IsMatchingType(m_peerAddress))
-    {
-        // Se for a primeira execução, o ns-3 irá escolher o IP
-        if (m_address == Ipv4Address::GetAny())
-        {
-            //m_socket->Bind(InetSocketAddress(Ipv4Address::GetAny(), m_port));
-            m_socket->Bind();
-            
-            // Após o Bind(), recuperar o IP atribuído pelo ns-3
-            Address a;
-            m_socket->GetSockName(a);  // Obtém o endereço local do socket
-            InetSocketAddress localAddr = InetSocketAddress::ConvertFrom(a);
-            m_port = localAddr.GetPort();   // Obtém a porta local
-            //m_address = localAddr.GetIpv4();  // Obtém o IP local
-
-            m_address = node->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
-        }
-        else
-        {
-            // Nas execuções subsequentes, usar o IP previamente atribuído
-            m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
-        }
-
-        //m_socket->SetIpTos(m_tos);
-        m_socket->Connect(InetSocketAddress(Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
+    // Se for a primeira execução, o ns-3 irá escolher o IP
+    if (m_address == Ipv4Address::GetAny()) {
+        
+        m_socket->Bind();
+        
+        // Após o Bind(), recuperar o IP atribuído pelo ns-3
+        Address a;
+        m_socket->GetSockName(a);  // Obtém o endereço local do socket
+        InetSocketAddress localAddr = InetSocketAddress::ConvertFrom(a);
+        m_port = localAddr.GetPort();   // Obtém a porta local
+        m_address = node->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
     }
-    else if (InetSocketAddress::IsMatchingType(m_peerAddress))
-    {
-        if (m_address == Ipv4Address::GetAny())
-        {
-            m_socket->Bind(InetSocketAddress(Ipv4Address::GetAny(), m_port));
-            m_address = node->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
-        }
-        else
-        {
-            m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
-        }
-
-        m_socket->Connect(m_peerAddress);
-    }
-    else
-    {
-        NS_ASSERT_MSG(false, "Incompatible address type: " << m_peerAddress);
+    else {
+        // Nas execuções subsequentes, usar o IP previamente atribuído
+        m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
     }
 
     m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
-    m_socket->SetAllowBroadcast(true);
+    //m_socket->SetAllowBroadcast(true);
 
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void UDPHelper::connect(Ptr<Node> node, string nodeName, uint16_t port){
+void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
     NS_LOG_FUNCTION(this << node << nodeName << port);
     
     m_nodeName = nodeName;
@@ -202,15 +171,15 @@ void UDPHelper::connect(Ptr<Node> node, string nodeName, uint16_t port){
         NS_FATAL_ERROR("Failed to bind socket");
     }
 
-    if (addressUtils::IsMulticast(m_local)) {
-        Ptr<UdpSocket> udpSocket = DynamicCast<UdpSocket>(m_socket);
-        if (udpSocket) {
-            // equivalent to setsockopt (MCAST_JOIN_GROUP)
-            udpSocket->MulticastJoinGroup(0, m_local);
-        } else {
-            NS_FATAL_ERROR("Error: Failed to join multicast group");
-        }
-    }
+    // if (addressUtils::IsMulticast(m_local)) {
+    //     Ptr<UdpSocket> udpSocket = DynamicCast<UdpSocket>(m_socket);
+    //     if (udpSocket) {
+    //         // equivalent to setsockopt (MCAST_JOIN_GROUP)
+    //         udpSocket->MulticastJoinGroup(0, m_local);
+    //     } else {
+    //         NS_FATAL_ERROR("Error: Failed to join multicast group");
+    //     }
+    // }
 
     m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
 
@@ -226,26 +195,21 @@ void UDPHelper::terminateConnection(){
     NS_LOG_FUNCTION("Fim do método");
 }
 
-Ptr<MessageData> UDPHelper::send(string command, int d, Address destination){
+Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     NS_LOG_FUNCTION(this);
-    
+    NS_ASSERT_MSG(!to.IsInvalid(), "Endereço de envio de pacote inválido!");
+
     Address from;
-    Address to;
     m_socket->GetSockName(from);
     
-    //destination == Address() significa que o parâmetro destination não foi informado
-    if (destination == Address())
-        m_socket->GetPeerName(to);
-    else
-        to = destination;
-
     /* Cabeçalho do pacote a ser enviado */
+    
     SeqTsHeader seqTs;
     seqTs.SetSeq(m_sent);
 
     /* Payload (corpo) do pacote */
 
-    // Serializar dados: comando (string) + número inteiro (int)
+    // Serializando dados: comando (string) + número inteiro (int)
     ostringstream oss;
     oss << command << " " << d;
 
@@ -261,8 +225,7 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address destination){
     p->AddHeader(seqTs);
     
     //Enviando pacote
-    if ((to == Address() && (m_socket->Send(p)) >= 0) 
-        || (to != Address() && m_socket->SendTo(p, 0, to))){
+    if (m_socket->SendTo(p, 0, to)){
         
         ++m_sent;
         m_totalTx += p->GetSize();
@@ -280,6 +243,11 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address destination){
     NS_LOG_FUNCTION("Fim do método");
 
     return md;
+}
+
+Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port){
+    InetSocketAddress destination = InetSocketAddress(ip, port);
+    return send(command, d, destination);
 }
 
 void UDPHelper::HandleRead(Ptr<Socket> socket)
@@ -349,8 +317,8 @@ void UDPHelper::printData(){
         << ", m_address = " << Ipv4Address::ConvertFrom(m_address)
         << ", m_port = " << m_port
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
-        << ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
-        << ", m_peerPort = " << m_peerPort
+        //<< ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
+        //<< ", m_peerPort = " << m_peerPort
         << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
         << "\n ");
 
@@ -364,8 +332,8 @@ void to_json(json& j, const UDPHelper& obj) {
         {"m_address", obj.m_address},
         {"m_port", obj.m_port},
         {"m_local", obj.m_local},
-        {"m_peerAddress", obj.m_peerAddress}, 
-        {"m_peerPort", obj.m_peerPort}, 
+        // {"m_peerAddress", obj.m_peerAddress}, 
+        // {"m_peerPort", obj.m_peerPort}, 
         {"m_totalTx", obj.m_totalTx}, 
         {"m_sent", obj.m_sent},
         {"m_received", obj.m_received}
@@ -380,8 +348,8 @@ void from_json(const json& j, UDPHelper& obj) {
     j.at("m_address").get_to(obj.m_address);
     j.at("m_port").get_to(obj.m_port);
     j.at("m_local").get_to(obj.m_local);
-    j.at("m_peerAddress").get_to(obj.m_peerAddress);
-    j.at("m_peerPort").get_to(obj.m_peerPort);
+    // j.at("m_peerAddress").get_to(obj.m_peerAddress);
+    // j.at("m_peerPort").get_to(obj.m_peerPort);
     j.at("m_totalTx").get_to(obj.m_totalTx);
     j.at("m_sent").get_to(obj.m_sent);
     j.at("m_received").get_to(obj.m_received);
@@ -390,22 +358,22 @@ void from_json(const json& j, UDPHelper& obj) {
 }
 
 // Getters
-ns3::Address UDPHelper::getAddress() const { return m_address; }
+Address UDPHelper::getAddress() const { return m_address; }
 uint16_t UDPHelper::getPort() const { return m_port; }
-ns3::Address UDPHelper::getPeerAddress() const { return m_peerAddress; }
-uint16_t UDPHelper::getPeerPort() const { return m_peerPort; }
 uint64_t UDPHelper::getTotalBytesSent() const { return m_totalTx; }
 uint32_t UDPHelper::getSentMessagesCounter() const { return m_sent; }
 uint32_t UDPHelper::getReceivedMessagesCounter() const { return m_received; }
 string UDPHelper::getNodeName() const { return m_nodeName; }
 bool UDPHelper::isDisconnected() const { return !m_socket; }
+// Address UDPHelper::getPeerAddress() const { return m_peerAddress; }
+// uint16_t UDPHelper::getPeerPort() const { return m_peerPort; }
 
 // Setters
 void UDPHelper::setAddress(const ns3::Address& address) { m_address = address; }
 void UDPHelper::setPort(uint16_t port) { m_port = port; }
-void UDPHelper::setPeerAddress(const ns3::Address& peerAddress) { m_peerAddress = peerAddress; }
-void UDPHelper::setPeerPort(uint16_t peerPort) { m_peerPort = peerPort; }
 void UDPHelper::setNodeName(const std::string& name) { m_nodeName = name; }
+// void UDPHelper::setPeerAddress(const ns3::Address& peerAddress) { m_peerAddress = peerAddress; }
+// void UDPHelper::setPeerPort(uint16_t peerPort) { m_peerPort = peerPort; }
 
 void UDPHelper::setReceiveCallback(Callback<void, Ptr<MessageData>> callback){
     receiveCallback = callback;

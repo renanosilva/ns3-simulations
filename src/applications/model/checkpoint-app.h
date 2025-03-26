@@ -21,6 +21,7 @@
 #include "ns3/application.h"
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/ptr.h"
+#include "ns3/config-helper.h"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
@@ -125,12 +126,16 @@ class CheckpointApp : public Application
     /** Estratégia de checkpoint escolhida para este nó. */
     Ptr<CheckpointStrategy> checkpointStrategy;
 
+    /** Helper que auxilia no gerenciamento das configurações do nó. */
+    Ptr<ConfigHelper> configHelper;
+
     ////////////////////////////////////////////////
     //////       ATRIBUTOS DE APLICAÇÃO       //////
     ////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
     string nodeName;       //nome deste nó
+    string configFilename; //nome do arquivo de configuração
     
 };
 

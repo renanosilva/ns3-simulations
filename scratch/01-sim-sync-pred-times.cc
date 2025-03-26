@@ -30,17 +30,22 @@
 #include "ns3/mobility-module.h"
 #include "ns3/network-module.h"
 #include "ns3/yans-wifi-helper.h"
+#include "ns3/config-helper.h"
 #include <fstream>
-#include <iostream>
 #include <vector>
 
 using namespace ns3;
+using namespace utils;
 
 NS_LOG_COMPONENT_DEFINE("myExample");
+
+/** Nome do arquivo de configuração da simulação */
+static const string CONFIG_FILENAME = "scratch/01-sim-sync-pred-times.json"; 
 
 int
 main(int argc, char* argv[])
 {
+
     //Habilitando mensagens de log
     
     LogComponentEnable("Application", LOG_INFO);
@@ -84,10 +89,19 @@ main(int argc, char* argv[])
     //Habilitando a impressão de pacotes
     ns3::PacketMetadata::Enable();
 
+    ConfigHelper config = ConfigHelper(CONFIG_FILENAME);
+    double simulationTime = config.GetDoubleProperty("simulation.time-in-seconds");
+    double distanceToRx = config.GetDoubleProperty("simulation.distance-to-rx-in-meters");
+    UintegerValue maxPackets = UintegerValue(config.GetIntProperty("simulation.max-packets"));
+    TimeValue interval = TimeValue(Seconds(config.GetDoubleProperty("simulation.interval")));
+    int batteryNodesQuantity = config.GetIntProperty("nodes.battery-nodes.amount");
+    int clientNodesQuantity = config.GetIntProperty("nodes.client-nodes.amount");
+    int totalNodesQuantity = batteryNodesQuantity + clientNodesQuantity;
+
     // simulation parameters
-    double distanceToRx = 10.0; // meters
-    UintegerValue maxPackets = UintegerValue(0); //número máximo de pacotes que podem ser enviados na simulação (0 = ilimitado).
-    TimeValue interval = TimeValue(Seconds(1.0)); //tempo que deve ser aguardado entre envio de pacotes
+    //double distanceToRx = 10.0; // meters
+    //UintegerValue maxPackets = UintegerValue(0); //número máximo de pacotes que podem ser enviados na simulação (0 = ilimitado).
+    //TimeValue interval = TimeValue(Seconds(1.0)); //tempo que deve ser aguardado entre envio de pacotes
     //UintegerValue packetSize = UintegerValue(1024);
 
     std::string phyMode("DsssRate1Mbps");
@@ -100,16 +114,28 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::WifiRemoteStationManager::RtsCtsThreshold", StringValue("2200"));
     // Fix non-unicast data rate to be the same as that of unicast
     Config::SetDefault("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue(phyMode));
+    
+    //criando nós
+    NodeContainer nodes;
+    nodes.Create(totalNodesQuantity);
 
-    NodeContainer c;
-    c.Create(2); // create 2 nodes
+    // NodeContainer networkNodes;
+    // networkNodes.Add(c.Get(0));
+    // networkNodes.Add(c.Get(1));
 
-    NodeContainer networkNodes;
-    networkNodes.Add(c.Get(0));
-    networkNodes.Add(c.Get(1));
+    NodeContainer clientNodes;
+    NodeContainer batteryServerNodes;
 
-    Ptr<Node> clientNode = networkNodes.Get(0);
-    Ptr<Node> batteryServerNode = networkNodes.Get(1);
+    for (int i = 0; i < batteryNodesQuantity; i++){
+        batteryServerNodes.Add(nodes.Get(i));
+    }
+
+    for (int i = batteryNodesQuantity; i < totalNodesQuantity; i++){
+        clientNodes.Add(nodes.Get(i));
+    }
+
+    // Ptr<Node> clientNode = nodesContainer.Get(0);
+    // Ptr<Node> batteryServerNode = nodesContainer.Get(1);
 
     // The below set of helpers will help us to put together the wifi NICs we want
     WifiHelper wifi;
@@ -144,7 +170,7 @@ main(int argc, char* argv[])
     wifiMac.SetType("ns3::AdhocWifiMac");
 
     /** install PHY + MAC **/
-    NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, networkNodes);
+    NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, nodes);
 
     // mobility (configurando posicionamento e mobilidade dos nós)
     // nós são estacionários e estão distantes um do outro conforme previamente estabelecido
@@ -154,11 +180,11 @@ main(int argc, char* argv[])
     positionAlloc->Add(Vector(2 * distanceToRx, 0.0, 0.0));
     mobility.SetPositionAllocator(positionAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-    mobility.Install(c);
+    mobility.Install(nodes);
 
     /** Internet stack **/
     InternetStackHelper internet;
-    internet.Install(networkNodes);
+    internet.Install(nodes);
 
     Ipv4AddressHelper ipv4;
     NS_LOG_INFO("Assign IP Addresses.");
@@ -169,23 +195,35 @@ main(int argc, char* argv[])
     CheckpointHelper ch;
     ch.removeAllCheckpointsAndLogs();
 
-    //Cria uma aplicação de servidor a bateria, de forma a gerar tráfego de dados. 9 é a porta.
-    BatteryNodeAppHelper batteryServerAppHelper(9, "battery-node-0");
+    vector<Ipv4Address> serverAddresses;
 
-    ApplicationContainer serverApps = batteryServerAppHelper.Install(batteryServerNode); //define o nó 1 como servidor
-    serverApps.Start(Seconds(1.0)); //o servidor será iniciado com 1s de simulação
+    //Iniciando aplicações a bateria
+    for (int j = 0; j < batteryNodesQuantity; j++){
+        
+        //Cria uma aplicação de servidor a bateria, de forma a gerar tráfego de dados. 9 é a porta.
+        BatteryNodeAppHelper batteryServerAppHelper(9, "battery-node-" + to_string(j), CONFIG_FILENAME);
+        
+        //Instala a aplicação no nó i e agenda sua inicialização
+        batteryServerAppHelper.Install(batteryServerNodes.Get(j)).Start(Seconds(1.0));
+        
+        serverAddresses.push_back(i.GetAddress(j));
+    }
 
-    ClientNodeAppHelper clientAppHelper(i.GetAddress(1), 9, "client-node-0"); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
-    clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
-    clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
-    //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
+    //Iniciando aplicações clientes
+    for (int j = 0; j < clientNodesQuantity; j++){
+        
+        ClientNodeAppHelper clientAppHelper(serverAddresses, 9, "client-node-" + to_string(j), CONFIG_FILENAME); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+        clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
+        clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
+        //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
 
-    ApplicationContainer clientApps = clientAppHelper.Install(clientNode); //instala a aplicação cliente no nó 0
-    clientApps.Start(Seconds(2.0)); //inicia o cliente com 2s de simulação
+        clientAppHelper.Install(clientNodes.Get(j)).Start(Seconds(2.0)); //instala a aplicação cliente no nó e agenda sua inicialização
+
+    }
 
     /** simulation setup **/
 
-    Simulator::Stop(Seconds(60.0));
+    Simulator::Stop(Seconds(simulationTime));
     Simulator::Run();
     Simulator::Destroy();
 

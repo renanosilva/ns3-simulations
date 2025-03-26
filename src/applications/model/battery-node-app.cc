@@ -48,14 +48,14 @@ NS_LOG_COMPONENT_DEFINE("BatteryNodeApp");
 
 NS_OBJECT_ENSURE_REGISTERED(BatteryNodeApp);
 
-static const double CONNECT_ENERGY = 50.; //Energia gasta para conectar um socket
-static const double SEND_ENERGY = 100.; //Energia gasta para enviar um pacote
-static const double RECEIVE_ENERGY = 100.; //Energia gasta para receber um pacote
-static const double CREATE_CHECKPOINT_ENERGY = 50.; //Energia gasta para criar um checkpoint
-static const double ROLLBACK_ENERGY = 50.; //Energia gasta para realizar um rollback
-static const double IDLE_ENERGY = 10.; //Energia gasta para se manter ligado (funcionamento básico)
-static const double SLEEP_ENERGY = 1.; //Energia gasta para se manter em modo sleep (funcionamento básico)
-static const Time ENERGY_UPDATE_INTERVAL = Seconds(1.0); //Intervalo de atualização de energia da bateria
+// static const double CONNECT_ENERGY = 50.; //Energia gasta para conectar um socket
+// static const double SEND_ENERGY = 100.; //Energia gasta para enviar um pacote
+// static const double RECEIVE_ENERGY = 100.; //Energia gasta para receber um pacote
+// static const double CREATE_CHECKPOINT_ENERGY = 50.; //Energia gasta para criar um checkpoint
+// static const double ROLLBACK_ENERGY = 50.; //Energia gasta para realizar um rollback
+// static const double IDLE_ENERGY = 10.; //Energia gasta para se manter ligado (funcionamento básico)
+// static const double SLEEP_ENERGY = 1.; //Energia gasta para se manter em modo sleep (funcionamento básico)
+// static const Time ENERGY_UPDATE_INTERVAL = Seconds(1.0); //Intervalo de atualização de energia da bateria
 
 TypeId
 BatteryNodeApp::GetTypeId()
@@ -82,6 +82,11 @@ BatteryNodeApp::GetTypeId()
                           UintegerValue(0),
                           MakeUintegerAccessor(&BatteryNodeApp::m_seq),
                           MakeUintegerChecker<uint64_t>())
+            .AddAttribute("ConfigFilename",
+                            "This node's config filename. ",
+                            StringValue(""),
+                            MakeStringAccessor(&BatteryNodeApp::configFilename),
+                            MakeStringChecker())
             .AddTraceSource("Rx",
                             "A packet has been received",
                             MakeTraceSourceAccessor(&BatteryNodeApp::m_rxTrace),
@@ -102,12 +107,13 @@ BatteryNodeApp::BatteryNodeApp()
 
     NS_LOG_FUNCTION(this);
 
-    energyUpdateInterval = ENERGY_UPDATE_INTERVAL;
-    idleEnergyConsumption = IDLE_ENERGY;
-    sleepEnergyConsumption = SLEEP_ENERGY;
+    // energyUpdateInterval = ENERGY_UPDATE_INTERVAL;
+    // idleEnergyConsumption = IDLE_ENERGY;
+    // sleepEnergyConsumption = SLEEP_ENERGY;
+
     currentMode = NORMAL;
     rollbackInProgress = false;
-    addresses.clear();
+    rollbackAddresses.clear();
     udpHelper = Create<UDPHelper>();
 
     NS_LOG_FUNCTION("Fim do método");
@@ -118,37 +124,7 @@ BatteryNodeApp::~BatteryNodeApp()
     NS_LOG_FUNCTION(this);
     
     udpHelper = nullptr;
-    addresses.clear();
-
-    NS_LOG_FUNCTION("Fim do método");
-}
-
-void BatteryNodeApp::configureCheckpointStrategy() {
-    NS_LOG_FUNCTION(this);
-    
-    //checkpointStrategy = new SyncPredefinedTimesCheckpoint(Seconds(5.0), getNodeName(), this);
-    checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(5.0), this);
-    checkpointStrategy->startCheckpointing();
-
-    NS_LOG_FUNCTION("Fim do método");
-}
-
-void BatteryNodeApp::configureEnergyGenerator() {
-    NS_LOG_FUNCTION(this);
-    
-    //energyGenerator = new FixedEnergyGenerator(100);
-    
-    energyGenerator = Create<CircularEnergyGenerator>();
-
-    //Agendando geração de energia
-    Simulator::Schedule(energyUpdateInterval,
-            &BatteryNodeApp::generateEnergy,
-            this);
-
-    //Agendando desconto contínuo de energia referente ao funcionamento básico do dispositivo
-    Simulator::Schedule(energyUpdateInterval,
-            &BatteryNodeApp::decreaseCurrentModeEnergy,
-            this);
+    rollbackAddresses.clear();
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -159,14 +135,13 @@ BatteryNodeApp::StartApplication()
     NS_LOG_FUNCTION(this);
     NS_LOG_INFO("Iniciando " << getNodeName() << "... Energia inicial: " << battery.getRemainingEnergy() << ".");
 
-    if (!energyGenerator)
-        configureEnergyGenerator();
+    if (!configHelper)
+        configHelper = Create<ConfigHelper>(configFilename);
 
-    if (!checkpointStrategy)
-        configureCheckpointStrategy();
-    
+    loadConfigurations();
+
     if (udpHelper->isDisconnected())
-        udpHelper->connect(GetNode(), getNodeName(), m_port);
+        udpHelper->configureServer(GetNode(), getNodeName(), m_port);
 
     udpHelper->setReceiveCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
 
@@ -187,8 +162,7 @@ BatteryNodeApp::StopApplication()
 }
 
 void
-BatteryNodeApp::HandleRead(Ptr<MessageData> md)
-{
+BatteryNodeApp::HandleRead(Ptr<MessageData> md){
     NS_LOG_FUNCTION(this << md);
 
     if (isSleeping() || isDepleted()){
@@ -224,7 +198,7 @@ BatteryNodeApp::HandleRead(Ptr<MessageData> md)
         Ptr<MessageData> mdResp = udpHelper->send(RESPONSE_VALUE, m_seq, md->GetFrom());
         utils::logRegularMessageSent(getNodeName(), mdResp, m_seq);
 
-        addAddress(md->GetFrom());
+        addRollbackAddress(md->GetFrom());
 
         decreaseSendEnergy();
 
@@ -234,6 +208,81 @@ BatteryNodeApp::HandleRead(Ptr<MessageData> md)
     } catch (NodeDepletedException& e) {
         NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
         return;
+    }
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void BatteryNodeApp::loadConfigurations() {
+    string propertyPrefix = "nodes.battery-nodes." + getNodeName() + ".";
+    
+    energyUpdateInterval = Seconds(configHelper->GetDoubleProperty(propertyPrefix + "energy-update-interval"));
+    sleepEnergyConsumption = configHelper->GetDoubleProperty(propertyPrefix + "sleep-energy");
+    idleEnergyConsumption = configHelper->GetDoubleProperty(propertyPrefix + "idle-energy");
+    rollbackEnergyConsumption = configHelper->GetDoubleProperty(propertyPrefix + "rollback-energy");
+    createCheckpointConsumption = configHelper->GetDoubleProperty(propertyPrefix + "create-checkpoint-energy");
+    receivePacketConsumption = configHelper->GetDoubleProperty(propertyPrefix + "receive-packet-energy");
+    sendPacketConsumption = configHelper->GetDoubleProperty(propertyPrefix + "send-packet-energy");
+    connectConsumption = configHelper->GetDoubleProperty(propertyPrefix + "connect-energy");
+    
+    if (!energyGenerator)
+        configureEnergyGenerator();
+
+    if (!checkpointStrategy)
+        configureCheckpointStrategy();
+
+}
+
+void BatteryNodeApp::configureEnergyGenerator() {
+    NS_LOG_FUNCTION(this);
+
+    string property = "nodes.battery-nodes." + getNodeName() + ".energy-generator";
+    string energyGeneratorName = configHelper->GetStringProperty(property);
+
+    if (energyGeneratorName == "FixedEnergyGenerator"){
+        
+        string valueProperty = "nodes.battery-nodes." + getNodeName() + ".energy-fixed-value";
+        double value = configHelper->GetDoubleProperty(valueProperty);
+
+        energyGenerator = Create<FixedEnergyGenerator>(value);    
+
+    } else if (energyGeneratorName == "CircularEnergyGenerator") {
+        
+        energyGenerator = Create<CircularEnergyGenerator>();
+
+    } else {
+        NS_ABORT_MSG("Não foi possível identificar a estratégia de geração de energia de " << getNodeName());
+    }
+    
+    //Agendando geração de energia
+    Simulator::Schedule(energyUpdateInterval,
+            &BatteryNodeApp::generateEnergy,
+            this);
+
+    //Agendando desconto contínuo de energia referente ao funcionamento básico do dispositivo
+    Simulator::Schedule(energyUpdateInterval,
+            &BatteryNodeApp::decreaseCurrentModeEnergy,
+            this);
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void BatteryNodeApp::configureCheckpointStrategy() {
+    NS_LOG_FUNCTION(this);
+    
+    string property = "nodes.battery-nodes." + getNodeName() + ".checkpoint-strategy";
+    string checkpointStrategyName = configHelper->GetStringProperty(property);
+
+    if (checkpointStrategyName == "SyncPredefinedTimesCheckpoint"){
+        
+        string intervalProperty = "nodes.battery-nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), this);
+        checkpointStrategy->startCheckpointing();
+    
+    } else {
+        NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
     }
 
     NS_LOG_FUNCTION("Fim do método");
@@ -316,7 +365,7 @@ void BatteryNodeApp::afterCheckpoint(){
     NS_LOG_FUNCTION(this);
     
     //Removendo endereços com os quais este nó se comunicou no ciclo anterior
-    addresses.clear();
+    rollbackAddresses.clear();
 
     decreaseCheckpointEnergy();
 
@@ -364,9 +413,9 @@ void BatteryNodeApp::notifyNodesAboutRollback(){
     NS_LOG_FUNCTION(this);
 
     // Enviando notificação para os nós com os quais houve comunicação
-    if (addresses.size() > 0){
+    if (rollbackAddresses.size() > 0){
 
-        for (Address a : addresses){
+        for (Address a : rollbackAddresses){
             
             // Enviando o pacote para o destino
             Ptr<MessageData> md = udpHelper->send(REQUEST_TO_START_ROLLBACK_COMMAND, checkpointStrategy->getLastCheckpointId(), a);
@@ -399,31 +448,31 @@ void BatteryNodeApp::decreaseEnergy(double amount) {
 
 void BatteryNodeApp::decreaseCheckpointEnergy(){
     NS_LOG_FUNCTION(this);
-    decreaseEnergy(CREATE_CHECKPOINT_ENERGY);
+    decreaseEnergy(createCheckpointConsumption);
     NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseRollbackEnergy(){
     NS_LOG_FUNCTION(this);
-    decreaseEnergy(ROLLBACK_ENERGY);
+    decreaseEnergy(rollbackEnergyConsumption);
     NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseReadEnergy(){
     NS_LOG_FUNCTION(this);
-    decreaseEnergy(RECEIVE_ENERGY);
+    decreaseEnergy(receivePacketConsumption);
     NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseSendEnergy(){
     NS_LOG_FUNCTION(this);
-    decreaseEnergy(SEND_ENERGY);
+    decreaseEnergy(sendPacketConsumption);
     NS_LOG_FUNCTION("Fim do método");
 }
 
 void BatteryNodeApp::decreaseConnectEnergy(){
     NS_LOG_FUNCTION(this);
-    decreaseEnergy(CONNECT_ENERGY);
+    decreaseEnergy(connectConsumption);
     NS_LOG_FUNCTION("Fim do método");
 }
 
@@ -480,22 +529,22 @@ void BatteryNodeApp::resetNodeData() {
     udpHelper = nullptr;
     m_port = 0;
     m_seq = 0;
-    addresses.clear();
+    rollbackAddresses.clear();
     checkpointStrategy = nullptr;
     rollbackInProgress = false;
     
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void BatteryNodeApp::addAddress(Address a){
+void BatteryNodeApp::addRollbackAddress(Address a){
     NS_LOG_FUNCTION(this);
     
-    auto it = find(addresses.begin(), addresses.end(), a);
+    auto it = find(rollbackAddresses.begin(), rollbackAddresses.end(), a);
 
-    if (it == addresses.end()) {
+    if (it == rollbackAddresses.end()) {
         //Endereço não foi encontrado
         //Adiciona endereço ao vetor de endereços
-        addresses.push_back(a);
+        rollbackAddresses.push_back(a);
     }
 
     NS_LOG_FUNCTION("Fim do método");
@@ -515,7 +564,8 @@ void BatteryNodeApp::printNodeData(){
         << ", rollbackInProgress = " << rollbackInProgress
         << ", m_port = " << m_port
         << ", m_seq = " << m_seq
-        << ", addresses.size() = " << addresses.size());
+        << ", rollbackAddresses.size() = " << rollbackAddresses.size()
+        << ", configFilename = " << configFilename);
     
     udpHelper->printData();
 
@@ -529,7 +579,7 @@ json BatteryNodeApp::to_json() const {
     j["udpHelper"] = *udpHelper;
     j["m_port"] = m_port;
     j["m_seq"] = m_seq;
-    j["addresses"] = addresses;
+    j["rollbackAddresses"] = rollbackAddresses;
 
     NS_LOG_FUNCTION("Fim do método");
 
@@ -545,7 +595,7 @@ void BatteryNodeApp::from_json(const json& j) {
     j.at("udpHelper").get_to(*udpHelper); 
     j.at("m_port").get_to(m_port);
     j.at("m_seq").get_to(m_seq); 
-    j.at("addresses").get_to(addresses); 
+    j.at("rollbackAddresses").get_to(rollbackAddresses); 
 
     NS_LOG_FUNCTION("Fim do método");
 }

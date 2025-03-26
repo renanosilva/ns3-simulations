@@ -11,7 +11,7 @@ namespace ns3
 {
 
 /** Exceção que é lançada quando um nó está em modo SLEEP. */
-class NodeAsleepException : public exception {
+class NodeAsleepException : public std::exception {
 
 private:
     string message;

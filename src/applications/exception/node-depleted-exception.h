@@ -11,7 +11,7 @@ namespace ns3
 {
 
 /** Exceção que é lançada quando um nó está em modo DEPLETED. */
-class NodeDepletedException : public exception {
+class NodeDepletedException : public std::exception {
 
 private:
     string message;

@@ -20,7 +20,7 @@
 #include "ns3/circular-energy-generator.h"
 #include "ns3/sync-predefined-times-checkpoint.h"
 
-namespace ns3
+namespace utils
 {
 
 json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg) {

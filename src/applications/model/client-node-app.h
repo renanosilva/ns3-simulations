@@ -23,9 +23,7 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
-#include "ns3/checkpoint-strategy.h"
 #include "ns3/checkpoint-app.h"
-#include "ns3/json-utils.h"
 #include "ns3/udp-helper.h"
 #include <nlohmann/json.hpp>
 
@@ -44,6 +42,87 @@ class Packet;
  */
 class ClientNodeApp : public CheckpointApp
 {
+  private:
+
+    ////////////////////////////////////////////////
+    //////          ATRIBUTOS NATIVOS         //////
+    ////////////////////////////////////////////////
+
+    /* 
+      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
+      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
+      (que nunca mudam) de uma aplicação.
+    */
+
+    EventId m_sendEvent;   //!< Event to send the next packet
+    bool rollbackInProgress; //Indica se existe um procedimento de rollback em andamento
+
+    ////////////////////////////////////////////////
+    //////       ATRIBUTOS DE APLICAÇÃO       //////
+    ////////////////////////////////////////////////
+
+    //Somente atributos de aplicação serão armazenados em checkpoints
+
+    //Auxilia a conexão de um nó com outro
+    Ptr<UDPHelper> udpHelper;
+
+    //!< Remote peer IP addresses. Packets will be sent to these addresses.
+    vector<Ipv4Address> m_peerAddresses;
+
+    //Endereço IP do nó que iniciou o último procedimento de rollback
+    Ipv4Address rollbackStarterIp;
+    
+    //!< Remote peer port
+    uint16_t m_peerPort;
+    
+    //!< Maximum number of messages the application will send
+    uint32_t m_count;
+    
+    //!< Message inter-send time
+    Time m_interval;
+    
+    //!< Last sequence number received from the server
+    uint64_t last_seq;
+
+    void StartApplication() override;
+
+    void StopApplication() override;
+
+    /** \brief Send a packet */
+    void Send();
+
+    /**
+     * \brief Handle a packet reception.
+     *
+     * This function is called by lower layers.
+     *
+     * \param socket the socket the packet was received to.
+     */
+    void HandleRead(Ptr<MessageData> md);
+
+    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
+    void notifyNodesAboutRollbackConcluded();
+
+    /** 
+     * Carrega as configurações do arquivo de configurações referentes a esta classe.
+    */
+    void loadConfigurations();
+
+    /** 
+     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
+     * algum erro.
+    */
+    void resetNodeData();
+
+    /** 
+     * Imprime os dados dos atributos desta classe (para fins de debug).
+    */
+    void printNodeData();
+
+  protected:
+    
+    void configureCheckpointStrategy() override;
+
   public:
     /**
      * \brief Get the type ID.
@@ -100,68 +179,15 @@ class ClientNodeApp : public CheckpointApp
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
-  
-  protected:
-    void configureCheckpointStrategy() override;
-
-  private:
-    
-    void StartApplication() override;
-    void StopApplication() override;
-
-    /**
-     * \brief Send a packet
-     */
-    void Send();
-
-    /**
-     * \brief Handle a packet reception.
-     *
-     * This function is called by lower layers.
-     *
-     * \param socket the socket the packet was received to.
-     */
-    void HandleRead(Ptr<MessageData> md);
-
-    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
-    void notifyNodesAboutRollbackConcluded();
 
     /** 
-     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
-     * algum erro.
-    */
-    void resetNodeData();
+     * Converte uma string padronizada no formato 'IP;IP;IP...', adicionando os endereços
+     * ao vetor de endereços a enviar pacotes.
+     */
+    void SetPeerAddresses(string addressList);
 
-    /** 
-     * Imprime os dados dos atributos desta classe (para fins de debug).
-    */
-    void printNodeData();
-
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
-
-    /* 
-      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
-      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
-      (que nunca mudam) de uma aplicação.
-    */
-
-    EventId m_sendEvent;   //!< Event to send the next packet
-    bool rollbackInProgress; //Indica se existe um procedimento de rollback em andamento
-
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
-
-    //Somente atributos de aplicação serão armazenados em checkpoints
-
-    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
-    Address m_peerAddress; //!< Remote peer address
-    uint16_t m_peerPort;   //!< Remote peer port
-    uint32_t m_count;      //!< Maximum number of messages the application will send
-    Time m_interval;       //!< Message inter-send time
-    uint64_t last_seq;     //!< Last sequence number received from the server
+    /** Converte o vetor de endereços em uma string. */
+    string GetPeerAddresses() const;
     
 };
 

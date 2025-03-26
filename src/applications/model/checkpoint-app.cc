@@ -16,6 +16,7 @@
  */
 
 #include "checkpoint-app.h"
+#include "ns3/sync-predefined-times-checkpoint.h"
 
 namespace ns3
 {
@@ -52,7 +53,9 @@ CheckpointApp::~CheckpointApp()
 }
 
 void CheckpointApp::configureCheckpointStrategy() {
+    NS_LOG_FUNCTION(this);
     
+    NS_LOG_FUNCTION("Fim do método");
 }
 
 bool CheckpointApp::mayCheckpoint(){
@@ -92,6 +95,7 @@ json CheckpointApp::to_json() const {
     
     json j = Application::to_json();
     j["nodeName"] = nodeName;
+    j["configFilename"] = configFilename;
     
     NS_LOG_FUNCTION("Fim do método");
     return j;
@@ -101,7 +105,8 @@ void CheckpointApp::from_json(const json& j) {
     NS_LOG_FUNCTION(this);
 
     Application::from_json(j);
-    j.at("nodeName").get_to(nodeName); 
+    j.at("nodeName").get_to(nodeName);
+    j.at("configFilename").get_to(configFilename); 
 
     NS_LOG_FUNCTION("Fim do método");
 }

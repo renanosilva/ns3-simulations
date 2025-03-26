@@ -112,10 +112,11 @@ void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
             << checkpointHelper->getCheckpointBasename() << ".");
 
+        //decreaseCheckpointEnergy();
+
         app->afterCheckpoint();
 
         scheduleNextCheckpoint();
-        //decreaseCheckpointEnergy();
         
     }
 

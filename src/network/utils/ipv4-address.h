@@ -26,6 +26,10 @@
 #include <ostream>
 #include <stdint.h>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 namespace ns3
 {
 
@@ -205,6 +209,12 @@ class Ipv4Address
      * \return the 127.0.0.1 address
      */
     static Ipv4Address GetLoopback();
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const Ipv4Address& a);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, Ipv4Address& a);
 
   private:
     /**

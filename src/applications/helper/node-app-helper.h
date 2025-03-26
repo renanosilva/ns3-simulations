@@ -21,7 +21,7 @@
 #define SENSOR_AND_CLIENT_HELPER_H
 
 #include <ns3/application-helper.h>
-
+#include "ns3/utils.h"
 #include <stdint.h>
 #include <string>
 
@@ -43,7 +43,7 @@ class BatteryNodeAppHelper : public ApplicationHelper
      *
      * \param port The port the server will wait on for incoming packets
      */
-    BatteryNodeAppHelper(uint16_t port, string nodeName);
+    BatteryNodeAppHelper(uint16_t port, string nodeName, string configFilename);
 };
 
 /**
@@ -60,7 +60,7 @@ class ClientNodeAppHelper : public ApplicationHelper
      * \param ip The IP address of the remote sensor
      * \param port The port number of the remote sensor
      */
-    ClientNodeAppHelper(const Address& ip, uint16_t port, string nodeName);
+    ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename);
 
     /**
      * Create ClientHelper which will make life easier for people trying
@@ -70,7 +70,7 @@ class ClientNodeAppHelper : public ApplicationHelper
      *
      * \param addr The address of the remote sensor
      */
-    ClientNodeAppHelper(const Address& addr, string nodeName);
+    // ClientNodeAppHelper(vector<Ipv4Address>& addresses, string nodeName, string configFilename);
 
 };
 

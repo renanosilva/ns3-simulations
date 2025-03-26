@@ -448,6 +448,18 @@ operator>>(std::istream& is, Ipv4Mask& mask)
     return is;
 }
 
+void to_json(json& j, const Ipv4Address& a) {
+    j = nlohmann::json{
+        {"m_address", a.m_address}, 
+        {"m_initialized", a.m_initialized}
+    };
+}
+
+void from_json(const json& j, Ipv4Address& a) {
+    j.at("m_address").get_to(a.m_address);
+    j.at("m_initialized").get_to(a.m_initialized);
+}
+
 ATTRIBUTE_HELPER_CPP(Ipv4Address);
 ATTRIBUTE_HELPER_CPP(Ipv4Mask);
 
