@@ -49,16 +49,6 @@ UDPHelper::GetTypeId()
             .SetParent<Object>()
             .SetGroupName("Helpers")
             .AddConstructor<UDPHelper>()
-            // .AddAttribute("RemoteAddress",
-            //                 "The destination Address of the outbound packets",
-            //                 AddressValue(),
-            //                 MakeAddressAccessor(&UDPHelper::m_peerAddress),
-            //                 MakeAddressChecker())
-            // .AddAttribute("RemotePort",
-            //                 "The destination port of the outbound packets",
-            //                 UintegerValue(0),
-            //                 MakeUintegerAccessor(&UDPHelper::m_peerPort),
-            //                 MakeUintegerChecker<uint16_t>())
             .AddAttribute("Address",
                             "The node's address",
                             AddressValue(Ipv4Address::GetAny()),
@@ -106,8 +96,6 @@ UDPHelper::UDPHelper()
 
     m_address = Ipv4Address::GetAny();
     m_port = 0;
-    //m_peerAddress = Ipv4Address::GetAny();
-    // m_peerPort = 0;
     m_local = Address();
     m_totalTx = 0;
     m_sent = 0;
@@ -151,7 +139,6 @@ void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
     }
 
     m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
-    //m_socket->SetAllowBroadcast(true);
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -317,8 +304,6 @@ void UDPHelper::printData(){
         << ", m_address = " << Ipv4Address::ConvertFrom(m_address)
         << ", m_port = " << m_port
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
-        //<< ", m_peerAddress = " << Ipv4Address::ConvertFrom(m_peerAddress)
-        //<< ", m_peerPort = " << m_peerPort
         << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
         << "\n ");
 
@@ -332,8 +317,6 @@ void to_json(json& j, const UDPHelper& obj) {
         {"m_address", obj.m_address},
         {"m_port", obj.m_port},
         {"m_local", obj.m_local},
-        // {"m_peerAddress", obj.m_peerAddress}, 
-        // {"m_peerPort", obj.m_peerPort}, 
         {"m_totalTx", obj.m_totalTx}, 
         {"m_sent", obj.m_sent},
         {"m_received", obj.m_received}
@@ -348,8 +331,6 @@ void from_json(const json& j, UDPHelper& obj) {
     j.at("m_address").get_to(obj.m_address);
     j.at("m_port").get_to(obj.m_port);
     j.at("m_local").get_to(obj.m_local);
-    // j.at("m_peerAddress").get_to(obj.m_peerAddress);
-    // j.at("m_peerPort").get_to(obj.m_peerPort);
     j.at("m_totalTx").get_to(obj.m_totalTx);
     j.at("m_sent").get_to(obj.m_sent);
     j.at("m_received").get_to(obj.m_received);
@@ -365,15 +346,11 @@ uint32_t UDPHelper::getSentMessagesCounter() const { return m_sent; }
 uint32_t UDPHelper::getReceivedMessagesCounter() const { return m_received; }
 string UDPHelper::getNodeName() const { return m_nodeName; }
 bool UDPHelper::isDisconnected() const { return !m_socket; }
-// Address UDPHelper::getPeerAddress() const { return m_peerAddress; }
-// uint16_t UDPHelper::getPeerPort() const { return m_peerPort; }
 
 // Setters
 void UDPHelper::setAddress(const ns3::Address& address) { m_address = address; }
 void UDPHelper::setPort(uint16_t port) { m_port = port; }
 void UDPHelper::setNodeName(const std::string& name) { m_nodeName = name; }
-// void UDPHelper::setPeerAddress(const ns3::Address& peerAddress) { m_peerAddress = peerAddress; }
-// void UDPHelper::setPeerPort(uint16_t peerPort) { m_peerPort = peerPort; }
 
 void UDPHelper::setReceiveCallback(Callback<void, Ptr<MessageData>> callback){
     receiveCallback = callback;

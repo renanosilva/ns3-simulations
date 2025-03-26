@@ -127,8 +127,6 @@ public:
 
     Address getAddress() const;
     uint16_t getPort() const;
-    // Address getPeerAddress() const;
-    // uint16_t getPeerPort() const;
     uint64_t getTotalBytesSent() const;
     uint32_t getSentMessagesCounter() const;
     uint32_t getReceivedMessagesCounter() const;
@@ -145,8 +143,6 @@ public:
 
     void setAddress(const ns3::Address& address);
     void setPort(uint16_t port);
-    // void setPeerAddress(const ns3::Address& peerAddress);
-    // void setPeerPort(uint16_t peerPort);
     void setNodeName(const std::string& name);
 
 private:
@@ -185,12 +181,13 @@ private:
     Address m_address;     //!< The node's address
     uint16_t m_port;       //!< The node's port
     Address m_local;       //!< local multicast address
-    // Address m_peerAddress; //!< Remote peer address
-    // uint16_t m_peerPort;   //!< Remote peer port. This port will be used to send packets.
     uint64_t m_totalTx;    //!< Total bytes sent
     uint32_t m_sent;       //!< Counter for sent messages
     uint32_t m_received;   //!< Contador de mensagens recebidas (não necessariamente processadas)
     string m_nodeName;     //nome do nó que está usando este helper
+
+    // Address m_peerAddress; //!< Remote peer address
+    // uint16_t m_peerPort;   //!< Remote peer port. This port will be used to send packets.
 
 };
 

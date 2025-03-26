@@ -83,9 +83,6 @@ public:
      * */
     vector<string> GetPropertyValues(const string& propertyPath);
 
-    // Método para obter um valor genérico de qualquer tipo
-    template <typename T> T GetProperty(const string &key, const T &defaultValue);
-
     /** 
      * Obtém o valor, do tipo inteiro, associado a uma propriedade.
      * O valor padrão, caso não seja possível obter o valor, é 0.
@@ -97,6 +94,13 @@ public:
      * O valor padrão, caso não seja possível obter o valor, é 0.
      */
     double GetDoubleProperty(const string key);
+
+    /** 
+     * Obtém o valor, do tipo double, associado a uma propriedade.
+     * O valor padrão, caso não seja possível obter o valor, é o 
+     * do parâmetro defaultValue.
+     */
+    double GetDoubleProperty(const string key, double defaultValue);
 
     /** 
      * Obtém o valor, do tipo string, associado a uma propriedade.

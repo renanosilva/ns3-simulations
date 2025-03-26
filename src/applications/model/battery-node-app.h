@@ -60,8 +60,157 @@ class Packet;
  * \ingroup sensor
  * \brief Aplicação referente a um nó que funcion a bateria.
  */
-class BatteryNodeApp : public CheckpointApp
-{
+class BatteryNodeApp : public CheckpointApp {
+
+  private:
+
+    ////////////////////////////////////////////////
+    //////          ATRIBUTOS NATIVOS         //////
+    ////////////////////////////////////////////////
+
+    /* 
+      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
+      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
+      (que nunca mudam) de uma aplicação.
+    */
+
+    /// Callbacks for tracing the packet Rx events
+    TracedCallback<Ptr<const Packet>> m_rxTrace;
+
+    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
+    
+    Battery battery;  //!< bateria do sensor
+    enum Mode currentMode; //Modo atual do nó
+    
+    Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
+    double sleepEnergyConsumption; //Consumo de energia em modo sleep
+    double idleEnergyConsumption; //Consumo de energia em modo idle
+    double rollbackEnergyConsumption; //Consumo de energia para se realizar um rolback
+    double createCheckpointConsumption; //Consumo de energia para se criar um checkpoint
+    double receivePacketConsumption; //Consumo de energia para o recebimento de um pacote
+    double sendPacketConsumption; //Consumo de energia para o envio de um pacote
+    double connectConsumption; //Consumo de energia para conectar um socket
+    double sleepModePercentage; //Porcentagem da bateria a partir da qual se entra no modo sleep
+    double normalModePercentage; //Porcentagem da bateria a partir da qual se volta para o modo normal (estando no modo sleep)
+
+    /** Gerador de energia da bateria do nó */
+    Ptr<EnergyGenerator> energyGenerator;
+
+    /**
+     * Indica se um procedimento de rollback está em progresso. Quando um rollback
+     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
+     * que a comunicação possa ser restabelecida.
+     */
+    bool rollbackInProgress;
+  
+    ////////////////////////////////////////////////
+    //////       ATRIBUTOS DE APLICAÇÃO       //////
+    ////////////////////////////////////////////////
+
+    //Somente atributos de aplicação serão armazenados em checkpoints
+
+    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
+    uint16_t m_port;                //!< Port on which we listen for incoming packets.
+    
+    /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
+    uint64_t m_seq;
+    
+    /** 
+     * Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint.
+     * Indica quais nós devem fazer rollback caso este faça.
+     *  */
+    vector<Address> rollbackAddresses;
+
+    ////////////////////////////////////////////////
+    //////              MÉTODOS               //////
+    ////////////////////////////////////////////////
+    
+    void StartApplication() override;
+
+    void StopApplication() override;
+
+    /**
+     * \brief Handle a packet reception.
+     *
+     * This function is called by lower layers.
+     *
+     * \param socket the socket the packet was received to.
+     */
+    void HandleRead(Ptr<MessageData> md);
+
+    /** Adiciona um endereço ao vetor de endereços de rollback. Não permite elementos repetidos. */
+    void addRollbackAddress(Address a);
+
+    /** Remove um endereço do vetor de endereços de rollback. */
+    void removeRollbackAddress(Address a);
+
+    /** 
+     * Carrega as configurações do arquivo de configurações referentes a esta classe.
+    */
+    void loadConfigurations();
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
+     * Método chamado quando este nó realiza seu próprio rollback.
+     */
+    void notifyNodesAboutRollback();
+
+    /** 
+     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
+    algum erro.
+    */
+    void resetNodeData();
+
+    /** Define o gerador de energia a ser utilizado por este nó. */
+    void configureEnergyGenerator();
+
+    /** Diminui a energia da bateria referente ao seu funcionamento básico */
+    void decreaseIdleEnergy(); 
+    
+    /** Diminui a energia da bateria quando em modo sleep */
+    void decreaseSleepEnergy();
+    
+    /** Diminui a energia da bateria referente ao modo atual em que ela se encontra */
+    void decreaseCurrentModeEnergy();
+    
+    /** Diminui a energia da bateria referente ao recebimento de um pacote */
+    void decreaseReadEnergy(); 
+    
+    /** Diminui a energia da bateria referente ao envio de um pacote */
+    void decreaseSendEnergy();
+    
+    /** Diminui a energia da bateria referente à conexão de um socket */
+    void decreaseConnectEnergy();
+
+    /** Diminui a energia da bateria referente à criação de um checkpoint */
+    void decreaseCheckpointEnergy();
+
+    /** Diminui a energia da bateria referente ao processo de rollback */
+    void decreaseRollbackEnergy();
+
+    /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
+    void decreaseEnergy(double amount);
+    
+    /** Verifica se a bateria deve mudar de modo, com base na energia restante */
+    void checkModeChange();
+
+    /** Gera energia para a bateria, ou seja, a recarrega. */
+    void generateEnergy();
+
+    Mode getCurrentMode();
+    
+    Time getEnergyUpdateInterval();
+
+    /** 
+       * Imprime os dados dos atributos desta classe (para fins de debug).
+      */
+    void printNodeData();
+
+  protected:
+
+    void configureCheckpointStrategy() override;
+
   public:
 
     /**
@@ -116,143 +265,6 @@ class BatteryNodeApp : public CheckpointApp
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
-
-  protected:
-    void configureCheckpointStrategy() override;
-
-  private:
-    void StartApplication() override;
-    void StopApplication() override;
-
-    /**
-     * \brief Handle a packet reception.
-     *
-     * This function is called by lower layers.
-     *
-     * \param socket the socket the packet was received to.
-     */
-    void HandleRead(Ptr<MessageData> md);
-
-    /** Adiciona um endereço ao vetor de addresses. Não permite elementos repetidos. */
-    void addRollbackAddress(Address a);
-
-    /** 
-     * Carrega as configurações do arquivo de configurações referentes a esta classe.
-    */
-    void loadConfigurations();
-
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
-     * Método chamado quando este nó realiza seu próprio rollback.
-     */
-    void notifyNodesAboutRollback();
-
-    /** 
-     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
-    algum erro.
-    */
-   void resetNodeData();
-
-   /** Define o gerador de energia a ser utilizado por este nó. */
-   void configureEnergyGenerator();
-
-   /** Diminui a energia da bateria referente ao seu funcionamento básico */
-   void decreaseIdleEnergy(); 
-   
-   /** Diminui a energia da bateria quando em modo sleep */
-   void decreaseSleepEnergy();
-   
-   /** Diminui a energia da bateria referente ao modo atual em que ela se encontra */
-   void decreaseCurrentModeEnergy();
-   
-   /** Diminui a energia da bateria referente ao recebimento de um pacote */
-   void decreaseReadEnergy(); 
-   
-   /** Diminui a energia da bateria referente ao envio de um pacote */
-   void decreaseSendEnergy();
-   
-   /** Diminui a energia da bateria referente à conexão de um socket */
-   void decreaseConnectEnergy();
-
-   /** Diminui a energia da bateria referente à criação de um checkpoint */
-   void decreaseCheckpointEnergy();
-
-   /** Diminui a energia da bateria referente ao processo de rollback */
-   void decreaseRollbackEnergy();
-
-   /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
-   void decreaseEnergy(double amount);
-   
-   /** Verifica se a bateria deve mudar de modo, com base na energia restante */
-   void checkModeChange();
-
-   /** Gera energia para a bateria, ou seja, a recarrega. */
-   void generateEnergy();
-
-   Mode getCurrentMode();
-  
-   Time getEnergyUpdateInterval();
-
-   /** 
-     * Imprime os dados dos atributos desta classe (para fins de debug).
-    */
-   void printNodeData();
-
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
-
-    /* 
-      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
-      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
-      (que nunca mudam) de uma aplicação.
-    */
-
-    /// Callbacks for tracing the packet Rx events
-    TracedCallback<Ptr<const Packet>> m_rxTrace;
-
-    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
-    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
-    
-    Battery battery;  //!< bateria do sensor
-    enum Mode currentMode; //Modo atual do nó
-    
-    Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
-    double sleepEnergyConsumption; //Consumo de energia em modo sleep
-    double idleEnergyConsumption; //Consumo de energia em modo idle
-    double rollbackEnergyConsumption; //Consumo de energia para se realizar um rolback
-    double createCheckpointConsumption; //Consumo de energia para se criar um checkpoint
-    double receivePacketConsumption; //Consumo de energia para o recebimento de um pacote
-    double sendPacketConsumption; //Consumo de energia para o envio de um pacote
-    double connectConsumption; //Consumo de energia para conectar um socket
-
-    /** Gerador de energia da bateria do nó */
-    Ptr<EnergyGenerator> energyGenerator;
-
-    /**
-     * Indica se um procedimento de rollback está em progresso. Quando um rollback
-     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
-     * que a comunicação possa ser restabelecida.
-     */
-    bool rollbackInProgress;
-  
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
-
-    //Somente atributos de aplicação serão armazenados em checkpoints
-
-    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
-    uint16_t m_port;                //!< Port on which we listen for incoming packets.
-    
-    /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
-    uint64_t m_seq;
-    
-    /** 
-     * Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint.
-     * Indica quais nós devem fazer rollback caso este faça.
-     *  */
-    vector<Address> rollbackAddresses;
 
 };
 

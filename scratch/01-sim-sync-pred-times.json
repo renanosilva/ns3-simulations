@@ -19,12 +19,18 @@
                 "connect-energy": 50.0,
                 "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
                 "checkpoint-interval": 5.0,
-                "energy-generator": "CircularEnergyGenerator"
+                "energy-generator": "CircularEnergyGenerator",
+                "sleep-mode-percentage": 10.0,
+                "normal-mode-percentage": 30.0
             }
         },
         "client-nodes": {
-            "amount": 1,
+            "amount": 2,
             "client-node-0":{
+                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-interval": 5.0
+            },
+            "client-node-1":{
                 "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
                 "checkpoint-interval": 5.0
             }

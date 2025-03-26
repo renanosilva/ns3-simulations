@@ -177,17 +177,25 @@ BatteryNodeApp::HandleRead(Ptr<MessageData> md){
             return;
         }
 
+        utils::logMessageReceived(getNodeName(), md);
+
         if (rollbackInProgress && md->GetCommand() == ROLLBACK_FINISHED_COMMAND){
-            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                            << " saiu do modo de bloqueio de comunicação.");
-            
-            rollbackInProgress = false;
+
+            removeRollbackAddress(md->GetFrom());
+
+            //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
+            if (rollbackAddresses.empty()){
+
+                NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+                                << " saiu do modo de bloqueio de comunicação.");
+                
+                rollbackInProgress = false;
+            }
+
             m_seq++;
             decreaseReadEnergy();
             return;
         }
-
-        utils::logMessageReceived(getNodeName(), md);
 
         m_seq++;
 
@@ -224,6 +232,8 @@ void BatteryNodeApp::loadConfigurations() {
     receivePacketConsumption = configHelper->GetDoubleProperty(propertyPrefix + "receive-packet-energy");
     sendPacketConsumption = configHelper->GetDoubleProperty(propertyPrefix + "send-packet-energy");
     connectConsumption = configHelper->GetDoubleProperty(propertyPrefix + "connect-energy");
+    sleepModePercentage = configHelper->GetDoubleProperty(propertyPrefix + "sleep-mode-percentage", 10.0);
+    normalModePercentage = configHelper->GetDoubleProperty(propertyPrefix + "normal-mode-percentage", 20.0);
     
     if (!energyGenerator)
         configureEnergyGenerator();
@@ -330,7 +340,7 @@ void BatteryNodeApp::generateEnergy(){
 void BatteryNodeApp::checkModeChange(){
     NS_LOG_FUNCTION(this);
     
-    if (battery.getBatteryPercentage() == 0 && currentMode != Mode::DEPLETED){
+    /*if (battery.getBatteryPercentage() == 0 && currentMode != Mode::DEPLETED){
         currentMode = Mode::DEPLETED;
 
         resetNodeData();
@@ -338,7 +348,9 @@ void BatteryNodeApp::checkModeChange(){
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo DEPLETED.");
         throw NodeDepletedException("Bateria entrou em modo DEPLETED.");
 
-    } else if (battery.getBatteryPercentage() <= 10 && currentMode == Mode::NORMAL){
+    } else */
+    
+    if (battery.getBatteryPercentage() <= sleepModePercentage && currentMode == Mode::NORMAL){
         currentMode = Mode::SLEEP;
 
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo SLEEP.");
@@ -346,7 +358,7 @@ void BatteryNodeApp::checkModeChange(){
 
         throw NodeAsleepException("Bateria entrou em modo SLEEP.");
 
-    } else if (battery.getBatteryPercentage() > 20 && currentMode != Mode::NORMAL){
+    } else if (battery.getBatteryPercentage() > normalModePercentage && currentMode != Mode::NORMAL){
         currentMode = Mode::NORMAL;
         NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo NORMAL.");
 
@@ -548,6 +560,22 @@ void BatteryNodeApp::addRollbackAddress(Address a){
     }
 
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void BatteryNodeApp::removeRollbackAddress(Address a){
+    // Função de comparação para encontrar o endereço exato
+    auto it = std::remove_if(rollbackAddresses.begin(), rollbackAddresses.end(),
+                             [a](const Address &addr)
+                             {
+                                 return InetSocketAddress::ConvertFrom(addr).GetIpv4() ==
+                                        InetSocketAddress::ConvertFrom(a).GetIpv4();
+                             });
+
+    // Remove efetivamente o elemento do vetor
+    if (it != rollbackAddresses.end())
+    {
+        rollbackAddresses.erase(it, rollbackAddresses.end());
+    }
 }
 
 void BatteryNodeApp::printNodeData(){

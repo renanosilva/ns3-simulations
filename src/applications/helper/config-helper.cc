@@ -101,22 +101,20 @@ double ConfigHelper::GetDoubleProperty(const string key){
     }
 }
 
+double ConfigHelper::GetDoubleProperty(const string key, double defaultValue){
+    try {
+        return propertyTree.get<double>(key);
+    } catch (const std::exception &e) {
+        return defaultValue;
+    }
+}
+
 string ConfigHelper::GetStringProperty(const string key){
     try {
         return propertyTree.get<string>(key);
     } catch (const std::exception &e) {
         std::cerr << "Erro ao ler propriedade: " << key << " - " << e.what() << std::endl;
         return 0;
-    }
-}
-
-// Método para obter um valor genérico de qualquer tipo
-template <typename T> T ConfigHelper::GetProperty(const std::string &key, const T &defaultValue) {
-    try {
-        return propertyTree.get<T>(key, defaultValue);
-    } catch (const std::exception &e) {
-        std::cerr << "Erro ao ler propriedade: " << key << " - " << e.what() << std::endl;
-        return defaultValue;
     }
 }
 
