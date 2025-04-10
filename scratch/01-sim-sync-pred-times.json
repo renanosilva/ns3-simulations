@@ -7,7 +7,7 @@
     },
     "nodes": {
         "battery-nodes": {
-            "amount": 1,
+            "amount": 2,
             "battery-node-0":{
                 "energy-update-interval": 1.0,
                 "sleep-energy": 1.0,
@@ -19,20 +19,40 @@
                 "connect-energy": 50.0,
                 "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
                 "checkpoint-interval": 5.0,
+                "checkpoint-timeout": 2.0,
                 "energy-generator": "CircularEnergyGenerator",
                 "sleep-mode-percentage": 10.0,
-                "normal-mode-percentage": 30.0
+                "normal-mode-percentage": 40.0
+            },
+            "battery-node-1":{
+                "energy-update-interval": 1.0,
+                "sleep-energy": 1.0,
+                "idle-energy": 10.0,
+                "rollback-energy": 50.0,
+                "create-checkpoint-energy": 50.0,
+                "receive-packet-energy": 100.0,
+                "send-packet-energy": 100.0,
+                "connect-energy": 50.0,
+                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-interval": 5.0,
+                "checkpoint-timeout": 2.0,
+                "energy-generator": "FixedEnergyGenerator",
+                "energy-fixed-value": 70.0,
+                "sleep-mode-percentage": 10.0,
+                "normal-mode-percentage": 40.0
             }
         },
         "client-nodes": {
             "amount": 2,
             "client-node-0":{
                 "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
-                "checkpoint-interval": 5.0
+                "checkpoint-interval": 5.0,
+                "checkpoint-timeout": 2.0
             },
             "client-node-1":{
                 "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
-                "checkpoint-interval": 5.0
+                "checkpoint-interval": 5.0,
+                "checkpoint-timeout": 2.0
             }
         }
     }

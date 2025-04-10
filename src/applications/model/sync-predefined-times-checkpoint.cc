@@ -44,32 +44,28 @@ SyncPredefinedTimesCheckpoint::GetTypeId()
                           MakeTimeAccessor(&SyncPredefinedTimesCheckpoint::interval),
                           MakeTimeChecker());
     
-    NS_LOG_FUNCTION("Fim do método");
-    
     return tid;
 }
 
-SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, Ptr<CheckpointApp> application){
+SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, Time tout, Ptr<CheckpointApp> application){
     NS_LOG_FUNCTION(this);
 
     interval = timeInterval;
+    timeout = tout;
     app = application;
-    agendamento = EventId();
+    creationScheduling = EventId();
+    discardScheduling = EventId();
     checkpointHelper = Create<CheckpointHelper>(application->getNodeName());
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(){
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
 {
     NS_LOG_FUNCTION(this);
     stopCheckpointing();
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 //VERIFICAR COMO FORÇAR A EXCLUSÃO DE UM PTR
@@ -77,50 +73,87 @@ SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
 void SyncPredefinedTimesCheckpoint::startCheckpointing() {
     NS_LOG_FUNCTION(this);
     scheduleNextCheckpoint();
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void SyncPredefinedTimesCheckpoint::stopCheckpointing() {
     NS_LOG_FUNCTION(this);
-    Simulator::Cancel(agendamento);
-    NS_LOG_FUNCTION("Fim do método");
-}
-
-void SyncPredefinedTimesCheckpoint::writeLog() {
-    /*if (logData != ""){
-        checkpointHelper->writeLog(logData);
-    }
-
-    NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", log criado por " 
-        << checkpointHelper->getCheckpointBasename()) ;
-
-    logData = "";*/
-    
+    Simulator::Cancel(creationScheduling);
+    Simulator::Cancel(discardScheduling);
 }
 
 void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
-
     NS_LOG_FUNCTION(this);
     
-    if (app->mayCheckpoint()){
-        int time = Simulator::Now().GetSeconds();
-
-        app->beforeCheckpoint();
-
-        checkpointHelper->writeCheckpoint(app, time);
-
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
-            << checkpointHelper->getCheckpointBasename() << ".");
-
-        //decreaseCheckpointEnergy();
-
-        app->afterCheckpoint();
-
-        scheduleNextCheckpoint();
+    try {
         
-    }
+        if (app->mayCheckpoint()){
+            int time = Simulator::Now().GetSeconds();
+
+            app->beforePartialCheckpoint();
+
+            checkpointHelper->writeCheckpoint(app, time);
+
+            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
+                << checkpointHelper->getCheckpointBasename() << ".");
+
+            app->afterPartialCheckpoint();
+
+            //Abordagem pessimista: agenda a remoção do checkpoint caso o timeout seja atingido
+            //Caso o checkpoint seja confirmado, esse agendamento é cancelado
+            scheduleLastCheckpointDiscard();
+        
+        } else {
+            scheduleNextCheckpoint();
+        }
+
+    } catch (NodeAsleepException& e) {
+        //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
+    } catch (NodeDepletedException& e) {
+        //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
+    } 
 
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void SyncPredefinedTimesCheckpoint::discardLastCheckpoint() {
+    NS_LOG_FUNCTION(this);
+    
+    try {
+
+        if (app->mayRemoveCheckpoint()){
+            app->beforeCheckpointDiscard();
+
+            checkpointHelper->removeCheckpoint(checkpointHelper->getLastCheckpointId());
+
+            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint DESCARTADO por " 
+                << checkpointHelper->getCheckpointBasename() << ".");
+
+            app->afterCheckpointDiscard();
+        }
+
+        //Agenda o próximo checkpoint
+        scheduleNextCheckpoint();
+    
+    } catch (NodeAsleepException& e) {
+        //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
+    } catch (NodeDepletedException& e) {
+        //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
+    } 
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void SyncPredefinedTimesCheckpoint::confirmLastCheckpoint() {
+    NS_LOG_FUNCTION(this);
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint CONFIRMADO por " 
+            << checkpointHelper->getCheckpointBasename() << ".");
+    
+    //Cancela agendamento da remoção do checkpoint
+    Simulator::Cancel(discardScheduling);
+
+    //Agenda o próximo checkpoint
+    scheduleNextCheckpoint();
 }
 
 Time SyncPredefinedTimesCheckpoint::getDelayToNextCheckpoint(){
@@ -132,34 +165,36 @@ Time SyncPredefinedTimesCheckpoint::getDelayToNextCheckpoint(){
     double nextCheckpointing = intervalSec - mod;
     Time delay = Time(to_string(nextCheckpointing) + "s");
 
-    NS_LOG_FUNCTION("Fim do método");
     return delay;
 }
 
 void SyncPredefinedTimesCheckpoint::scheduleNextCheckpoint(){
     NS_LOG_FUNCTION(this);
 
-    if (app->mayCheckpoint()){
-        NS_LOG_LOGIC("\n" << checkpointHelper->getCheckpointBasename() << " agendando próximo checkpoint\n");
+    NS_LOG_LOGIC("\n" << checkpointHelper->getCheckpointBasename() << " agendando próximo checkpoint\n");
 
-        //Agendando próximo checkpoint
-        Time delay = getDelayToNextCheckpoint();
+    //Agendando próximo checkpoint
+    Time delay = getDelayToNextCheckpoint();
 
-        //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
-        agendamento = Simulator::Schedule(delay,
-                                    &SyncPredefinedTimesCheckpoint::writeCheckpoint,
-                                    this);
-    } else {
-        NS_LOG_LOGIC("\nNão foi possível realizar o agendamento de checkpoint (não permitido).");
-    }
-
+    //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
+    creationScheduling = Simulator::Schedule(delay,
+                                &SyncPredefinedTimesCheckpoint::writeCheckpoint,
+                                this);
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void SyncPredefinedTimesCheckpoint::scheduleLastCheckpointDiscard(){
+    NS_LOG_FUNCTION(this);
+    
+    //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
+    discardScheduling = Simulator::Schedule(timeout,
+                                &SyncPredefinedTimesCheckpoint::discardLastCheckpoint,
+                                this);
 }
 
 void SyncPredefinedTimesCheckpoint::startRollbackToLastCheckpoint() {
     NS_LOG_FUNCTION(this);   
     startRollback(checkpointHelper->getLastCheckpointId());
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void SyncPredefinedTimesCheckpoint::startRollback(int checkpointId) {
@@ -182,31 +217,7 @@ void SyncPredefinedTimesCheckpoint::startRollback(int checkpointId) {
 
     app->afterRollback();
 
-    // scheduleNextCheckpoint();
-
-    NS_LOG_FUNCTION("Fim do método");
 }
-
-/*void SyncPredefinedTimesCheckpoint::decreaseCheckpointEnergy() {
-    NS_LOG_FUNCTION(this);
-    
-    //BatteryNodeApp* bna = dynamic_cast<BatteryNodeApp*>(app);
-    Ptr<BatteryNodeApp> bna = DynamicCast<BatteryNodeApp>(app);
-    
-    if (bna){
-        
-        try {
-            bna->decreaseCheckpointEnergy();
-        } catch (NodeAsleepException& e) {
-            //Nada a fazer
-        } catch (NodeDepletedException& e) {
-            //Nada a fazer
-        } 
-
-    }
-
-    NS_LOG_FUNCTION("Fim do método");
-}*/
 
 void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {
     NS_LOG_FUNCTION("SyncPredefinedTimesCheckpoint::to_json");
@@ -215,8 +226,6 @@ void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {
     j["strategy"] = "SyncPredefinedTimesCheckpoint";
     j["interval"] = obj.interval.GetTimeStep();
     j["app.typeid.uid"] = obj.app->GetTypeId().GetUid();
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj) {
@@ -232,8 +241,6 @@ void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj) {
     
     //o atributo app é redefinido através da própria aplicação
     //sendo assim, não é necessário redefini-lo aqui
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 } // Namespace ns3

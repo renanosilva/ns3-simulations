@@ -56,6 +56,9 @@ const static string RESPONSE_VALUE = "RESPONSE_VALUE";
 /** Payload referente a um aviso de rollback concluído. */
 const static string ROLLBACK_FINISHED_COMMAND = "ROLLBACK_FINISHED_COMMAND";
 
+/** Payload referente a um aviso de checkpoint concluído. */
+const static string CHECKPOINT_FINISHED_COMMAND = "CHECKPOINT_FINISHED_COMMAND";
+
 /**
  * \ingroup helper
  * \brief Classe que auxilia no processo de gerenciamento de sockets e pacotes UDP.

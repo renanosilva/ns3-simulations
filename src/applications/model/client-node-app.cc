@@ -103,6 +103,8 @@ ClientNodeApp::ClientNodeApp()
     
     udpHelper = Create<UDPHelper>();
     m_sendEvent = EventId();
+    rollbackInProgress = false;
+    checkpointInProgress = false;
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -179,10 +181,14 @@ ClientNodeApp::Send()
     NS_LOG_FUNCTION(this);
     NS_ASSERT(m_sendEvent.IsExpired());
 
-    for (Ipv4Address ip : m_peerAddresses){
+    if (!rollbackInProgress && !checkpointInProgress){
         
-        Ptr<MessageData> md = udpHelper->send(REQUEST_VALUE, 0, ip, m_peerPort);
-        utils::logRegularMessageSent(getNodeName(), md);
+        for (Ipv4Address ip : m_peerAddresses){
+            Ptr<MessageData> md = udpHelper->send(REQUEST_VALUE, 0, ip, m_peerPort);
+            utils::logRegularMessageSent(getNodeName(), md);
+
+            addAddress(dependentAddresses, InetSocketAddress(ip, m_peerPort));
+        }
 
     }
 
@@ -194,27 +200,106 @@ ClientNodeApp::Send()
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void ClientNodeApp::HandleRead(Ptr<MessageData> md)
-{
+void ClientNodeApp::HandleRead(Ptr<MessageData> md){
     NS_LOG_FUNCTION(this << md);
 
+    if (checkpointInProgress){
+        HandleReadInCheckpointMode(md);
+        return;
+    }
+
+    if (rollbackInProgress){
+        HandleReadInRollbackMode(md);
+        return;
+    }
+
     utils::logMessageReceived(getNodeName(), md);
+
+    if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
+        startRollback(md->GetFrom(), md->GetData());
+    }
 
     if (md->GetCommand() == RESPONSE_VALUE){
         last_seq = md->GetData();
     }
 
-    if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
-        rollbackStarterIp = InetSocketAddress::ConvertFrom(md->GetFrom()).GetIpv4();
-        resetNodeData();
-        configureCheckpointStrategy();
-        checkpointStrategy->startRollback(md->GetData());
-    }
-
     NS_LOG_FUNCTION("Fim do método");
 }
 
+void ClientNodeApp::HandleReadInRollbackMode(Ptr<MessageData> md){
+    NS_LOG_FUNCTION(this);
+
+    if (md->GetCommand() == RESPONSE_VALUE){
+        //Ignora pacotes até a conclusão do rollback dos outros nós
+        return;
+    }
+
+    utils::logMessageReceived(getNodeName(), md);
+
+    //Se receber uma notificação de término de rollback de outro nó
+    //OU se receber uma requisição para voltar ao estado no qual já se encontra
+    if (md->GetCommand() == ROLLBACK_FINISHED_COMMAND || 
+        (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND &&
+        addressVectorContain(pendingRollbackAddresses, md->GetFrom()) &&
+        checkpointId == md->GetData())){
+        
+        //Avisando o nó emissor que o rollback foi concluído
+        Ptr<MessageData> mSent = udpHelper->send(ROLLBACK_FINISHED_COMMAND, 0, md->GetFrom());
+        utils::logRegularMessageSent(getNodeName(), mSent);
+
+        removeAddress(pendingRollbackAddresses, md->GetFrom());
+
+        //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
+        if (pendingRollbackAddresses.empty()){
+            notifyNodesAboutRollbackConcluded();
+        }
+    }
+}
+
+void ClientNodeApp::HandleReadInCheckpointMode(Ptr<MessageData> md){
+    NS_LOG_FUNCTION(this);
+    
+    if (checkpointInProgress){
+
+        if (md->GetCommand() == RESPONSE_VALUE){
+            //Ignora pacotes até a conclusão do rollback dos outros nós
+            return;
+        }
+
+        utils::logMessageReceived(getNodeName(), md);
+
+        if (md->GetCommand() == CHECKPOINT_FINISHED_COMMAND){
+            removeAddress(pendingCheckpointAddresses, md->GetFrom());
+
+            //Só termina o checkpointing caso todos os nós tenham terminado seus checkpoints
+            if (pendingCheckpointAddresses.empty()){
+                notifyNodesAboutCheckpointConcluded();
+                confirmCheckpointCreation(true);
+            }
+        }
+
+        /* Também é possível receber requisições de rollback enquanto se está aguardando 
+        confirmação de checkpoint. Nesse caso, cancela-se o checkpoint e faz-se o rollback */
+        if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
+            checkpointStrategy->discardLastCheckpoint();
+            startRollback(md->GetFrom(), md->GetData());
+        }
+    }
+}
+
+void ClientNodeApp::startRollback(Address requester, int cpId){
+    NS_LOG_FUNCTION(this);
+    
+    rollbackStarterIp = InetSocketAddress::ConvertFrom(requester).GetIpv4();
+    checkpointId = cpId;
+    resetNodeData();
+    configureCheckpointStrategy();
+    checkpointStrategy->startRollback(checkpointId);
+}
+
 void ClientNodeApp::loadConfigurations() {
+    NS_LOG_FUNCTION(this);
+    
     if (!checkpointStrategy){
         configureCheckpointStrategy();
     }
@@ -231,7 +316,10 @@ void ClientNodeApp::configureCheckpointStrategy() {
         string intervalProperty = "nodes.client-nodes." + getNodeName() + ".checkpoint-interval";
         double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
 
-        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), this);
+        string timeoutProperty = "nodes.client-nodes." + getNodeName() + ".checkpoint-timeout";
+        double checkpointTimeout = configHelper->GetDoubleProperty(timeoutProperty);
+
+        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
         checkpointStrategy->startCheckpointing();
     
     } else {
@@ -241,13 +329,41 @@ void ClientNodeApp::configureCheckpointStrategy() {
     NS_LOG_FUNCTION("Fim do método");
 }
 
+void ClientNodeApp::notifyNodesAboutRollback(){
+    NS_LOG_FUNCTION(this);
+
+    removeAddress(pendingRollbackAddresses, InetSocketAddress(rollbackStarterIp, m_peerPort));
+    
+    // Enviando notificação para os nós com os quais houve comunicação
+    if (pendingRollbackAddresses.size() > 0){
+
+        for (Address a : pendingRollbackAddresses){
+            
+            // Enviando o pacote para o destino
+            Ptr<MessageData> md = udpHelper->send(REQUEST_TO_START_ROLLBACK_COMMAND, checkpointId, a);
+            utils::logRegularMessageSent(getNodeName(), md);
+        }
+    
+    } else {
+
+        //Se não existem outros nós a fazerem rollback, então o rollback está concluído 
+        notifyNodesAboutRollbackConcluded();
+    }
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
 void ClientNodeApp::notifyNodesAboutRollbackConcluded(){
     NS_LOG_FUNCTION(this);
-    
+
     Ptr<MessageData> md = udpHelper->send(ROLLBACK_FINISHED_COMMAND, 0, rollbackStarterIp, m_peerPort);
     utils::logRegularMessageSent(getNodeName(), md);
 
+    rollbackInProgress = false;
     rollbackStarterIp = Ipv4Address::GetAny();
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+    << " saiu do modo de bloqueio de comunicação.");
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -268,6 +384,8 @@ void ClientNodeApp::resetNodeData() {
     last_seq = 0;
     m_peerAddresses = vector<Ipv4Address>();
     m_peerPort = 0;
+    rollbackInProgress = false;
+    checkpointInProgress = false;
 
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -286,6 +404,9 @@ void ClientNodeApp::beforeRollback(){
     NS_LOG_FUNCTION(this);
     
     rollbackInProgress = true;
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+                                    << " entrou no modo de bloqueio de comunicação.");
     
     NS_LOG_FUNCTION("Fim do método");
 }
@@ -301,11 +422,72 @@ void ClientNodeApp::afterRollback(){
 
     NS_LOG_INFO("\nApós o rollback...");
     printNodeData();
+    
+    //Copiando os endereços para o vetor de rollbacks pendentes
+    pendingRollbackAddresses = vector<Address>(dependentAddresses);
 
-    notifyNodesAboutRollbackConcluded();
-    rollbackInProgress = false;
-
+    notifyNodesAboutRollback();
+    
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void ClientNodeApp::beforePartialCheckpoint(){
+    NS_LOG_FUNCTION(this);
+
+    checkpointInProgress = true;
+    pendingCheckpointAddresses = vector<Address>(dependentAddresses);
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+                                    << " entrou no modo de bloqueio de comunicação.");
+}
+
+void ClientNodeApp::afterPartialCheckpoint(){
+    NS_LOG_FUNCTION(this);
+    
+    //Se não houver nós dependentes, confirma o checkpoint
+    //Caso contrário, fica aguardando o recebimento das confirmações dos outros nós
+    if (pendingCheckpointAddresses.size() == 0){
+        confirmCheckpointCreation(true);
+    }
+
+    // Enviando notificação para os nós com os quais houve comunicação
+    // if (pendingCheckpointAddresses.size() > 0){
+    //     notifyNodesAboutCheckpointConcluded();
+    // } else {
+    //     confirmCheckpointCreation(true);
+    // }
+}
+
+void ClientNodeApp::afterCheckpointDiscard(){
+    NS_LOG_FUNCTION(this);
+    confirmCheckpointCreation(false);
+}
+
+void ClientNodeApp::notifyNodesAboutCheckpointConcluded(){
+    NS_LOG_FUNCTION(this);
+
+    for (Address a : dependentAddresses){
+        
+        // Enviando o pacote para o destino
+        Ptr<MessageData> md = udpHelper->send(CHECKPOINT_FINISHED_COMMAND, checkpointStrategy->getLastCheckpointId() , a);
+        utils::logRegularMessageSent(getNodeName(), md);
+    }
+}
+
+void ClientNodeApp::confirmCheckpointCreation(bool confirm) {
+    NS_LOG_FUNCTION(this);
+    
+    checkpointInProgress = false;
+
+    //Removendo endereços com os quais este nó se comunicou no ciclo anterior
+    dependentAddresses.clear();
+
+    if (confirm){
+        checkpointStrategy->confirmLastCheckpoint();
+    }
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
+        << " saiu do modo de bloqueio de comunicação.");
 }
 
 uint64_t
@@ -358,6 +540,9 @@ void ClientNodeApp::printNodeData(){
         << ", m_peerPort = " << m_peerPort
         << ", m_sendEvent = " << m_sendEvent.GetTs()
         << ", rollbackInProgress = " << rollbackInProgress
+        << ", checkpointInProgress = " << checkpointInProgress
+        << ", rollbackStarterIp = " << rollbackStarterIp
+        << ", dependentAddresses.size() = " << dependentAddresses.size()
         << ", last_seq = " << last_seq
         << ", configFilename = " << configFilename);
 
@@ -368,17 +553,21 @@ void ClientNodeApp::printNodeData(){
 
 void ClientNodeApp::SetPeerAddresses(string addressList)
 {
+    NS_LOG_FUNCTION(this);
+    
     m_peerAddresses.clear();
     istringstream iss(addressList);
     string token;
 
-    while (std::getline(iss, token, ';')) // Lê cada endereço separado por ";"
-    {
+    // Lê cada endereço separado por ";"
+    while (std::getline(iss, token, ';')){ 
         m_peerAddresses.push_back(Ipv4Address(token.c_str()));
     }
 }
 
 string ClientNodeApp::GetPeerAddresses() const {
+    NS_LOG_FUNCTION(this);
+    
     ostringstream oss;
     
     for (size_t i = 0; i < m_peerAddresses.size(); i++){

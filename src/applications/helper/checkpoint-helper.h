@@ -76,6 +76,13 @@ class CheckpointHelper : public Object
     */
     void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId);
 
+    /** 
+     * Remove um checkpoint de determinado nome.
+     * @param app Aplicação do nó que irá criar o checkpoint
+     * @param CheckpointId ID do checkpoint a ser criado
+    */
+   void removeCheckpoint(int checkpointId);
+
     /** Lê o conteúdo do último checkpoint criado. */
     json readLastCheckpoint();
 

@@ -66,11 +66,19 @@ void CheckpointStrategy::writeCheckpoint(){
     
 }
 
+void CheckpointStrategy::discardLastCheckpoint(){
+    
+}
+
 void CheckpointStrategy::startRollbackToLastCheckpoint(){
     
 }
 
 void CheckpointStrategy::startRollback(int checkpointId){
+    
+}
+
+void CheckpointStrategy::confirmLastCheckpoint(){
     
 }
 

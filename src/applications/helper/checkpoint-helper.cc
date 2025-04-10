@@ -27,6 +27,7 @@
 #include "ns3/simulator.h"
 #include "ns3/battery-node-app.h"
 #include <regex>
+#include <cstdio>
 
 using namespace std;
 
@@ -157,20 +158,16 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId)
     
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
     NS_LOG_FUNCTION("Fim do método");
+}
+
+void CheckpointHelper::removeCheckpoint(int checkpointId){
+    NS_LOG_FUNCTION(this);
+
+    string filename = getCheckpointFilename(checkpointId);
+    std::remove(filename.c_str());
+    
+    NS_LOG_FUNCTION("Fim do método");
 }  
-
-/*void CheckpointHelper::skipCheckpoint(){
-    NS_LOG_FUNCTION(this);
-    counter++;
-    NS_LOG_INFO("\n" << checkpointBaseName << " - CHECKPOINT PULADO E CONTADOR INCREMENTADO: " << counter << "\n");
-    NS_LOG_FUNCTION("Fim do método");
-}*/
-
-/*void CheckpointHelper::writeLog(string data){
-    NS_LOG_FUNCTION(this);
-    writeFile(getLogFilename(counter), data);
-    NS_LOG_FUNCTION("Fim do método");
-}*/
 
 void CheckpointHelper::writeFile(string filename, nlohmann::json j){
     NS_LOG_FUNCTION(this);
@@ -252,22 +249,6 @@ int CheckpointHelper::getLastCheckpointId(){
     //retorna o valor do último checkpoint válido
     return lastCheckpointId;
     
-    /*
-    string nome = nomes[nomes.size() - 1]; //pegando o nome do último arquivo
-
-    //obtendo o contador do checkpoint presente no nome do arquivo do checkpoint
-
-    // Expressão regular para capturar o número antes de ".json"
-    regex re("^(.*)-node-(\\d+)-(\\d+)\\.json$");
-    smatch match;
-    
-    if (regex_search(nome, match, re)) {
-        // O número antes de ".json" será o terceiro grupo capturado
-        string c = match[3];
-        counter = stoi(c);
-    }
-
-    */
 }
 
 int CheckpointHelper::findMaxIdFromFilenames(const vector<std::string>& filenames) {
@@ -293,25 +274,6 @@ int CheckpointHelper::findMaxIdFromFilenames(const vector<std::string>& filename
 
     return maxNumber;
     
-    /*regex pattern("(\\d+)(?=\\.json$)"); // Captura o último número antes de ".json"
-    string maxStr;
-    int maxNumber = -1;
-
-    for (const auto& filename : filenames) {
-        std::smatch match;
-        if (std::regex_search(filename, match, pattern)) {
-            int num = std::stoi(match.str());
-            if (num > maxNumber) {
-                maxNumber = num;
-                maxStr = filename;
-            }
-        }
-    }
-
-    NS_LOG_INFO("\n\nMAX NUMBER: " << maxNumber);
-    NS_LOG_INFO("MAX STR: " << maxStr << "\n\n");
-
-    return maxNumber; // Retorna a string com o maior número*/
 }
 
 void to_json(json& j, const CheckpointHelper& obj) {

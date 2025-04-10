@@ -36,8 +36,38 @@ namespace ns3
  * a cada período predefinido de tempo. Todos os nós criam checkpoints
  * no mesmo instante de tempo.
  */
-class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
-{
+class SyncPredefinedTimesCheckpoint : public CheckpointStrategy {
+
+  private:
+
+    /** Intervalo de tempo no qual serão criados checkpoints. */
+    Time interval;
+
+    /** 
+     * Timeout referente à criação do checkpoint. Se esse tempo for atingido e não houver
+     * confirmação dos outros nós com relação à criação de seus checkpoints, o checkpoint
+     * será excluído.
+     * */
+    Time timeout;
+
+    /** Evento utilizado para criação de checkpoint. */
+    EventId creationScheduling;
+
+    /** Evento utilizado para cancelamento do último checkpoint criado. */
+    EventId discardScheduling;
+
+    /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
+    Time getDelayToNextCheckpoint();
+
+    /** Agenda a criação do próximo checkpoint. */
+    void scheduleNextCheckpoint();
+
+    /** Agenda a exclusão do último checkpoint. */
+    void scheduleLastCheckpointDiscard();
+
+    /** Confirma a criação do último checkpoint. */
+    void confirmLastCheckpoint();
+
   public:
     /**
      * \brief Get the type ID.
@@ -48,11 +78,14 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     /** 
      * Construtor. 
      * @param interval Define a periodicidade (em segundos) na qual serão criados checkpoints.
+     * @param timeout Timeout referente à criação do checkpoint. Se esse tempo for atingido e não houver
+     * confirmação dos outros nós com relação à criação de seus checkpoints, o checkpoint
+     * será excluído.
      * @param nodeName Nome do nó. Utilizado para criação de checkpoints.
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    SyncPredefinedTimesCheckpoint(Time timeInterval, Ptr<CheckpointApp> application);
+    SyncPredefinedTimesCheckpoint(Time timeInterval, Time timeout, Ptr<CheckpointApp> application);
 
     /** Construtor padrão. */
     SyncPredefinedTimesCheckpoint();
@@ -64,33 +97,18 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy
     virtual void stopCheckpointing() override;
 
     virtual void writeCheckpoint() override; 
-    
-    virtual void writeLog() override; 
 
+    virtual void discardLastCheckpoint() override; 
+    
     virtual void startRollbackToLastCheckpoint() override; 
 
-    virtual void startRollback(int checkpointId) override; 
+    virtual void startRollback(int checkpointId) override;
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj);
-
-  private:
-
-    /** Intervalo de tempo no qual serão criados checkpoints. */
-    Time interval;
-
-    EventId agendamento;
-
-    /** Diminui a quantidade de energia referente à criação de um checkpoint. */
-    //void decreaseCheckpointEnergy();
-
-    /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
-    Time getDelayToNextCheckpoint();
-
-    void scheduleNextCheckpoint();
 };
 
 } // namespace ns3

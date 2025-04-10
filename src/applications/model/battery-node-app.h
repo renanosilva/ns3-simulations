@@ -64,14 +64,14 @@ class BatteryNodeApp : public CheckpointApp {
 
   private:
 
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
 
     /* 
-      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
-      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
-      (que nunca mudam) de uma aplicação.
+      Por questão de organização, aqui devem ser declarados os atributos que não devem ser armazenados em 
+      checkpoints. Exemplos desses tipos de atributos incluem atributos físicos, como, a carga atual da bateria, 
+      ou atributos fixos (que nunca mudam) de uma aplicação.
     */
 
     /// Callbacks for tracing the packet Rx events
@@ -97,31 +97,18 @@ class BatteryNodeApp : public CheckpointApp {
     /** Gerador de energia da bateria do nó */
     Ptr<EnergyGenerator> energyGenerator;
 
-    /**
-     * Indica se um procedimento de rollback está em progresso. Quando um rollback
-     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
-     * que a comunicação possa ser restabelecida.
-     */
-    bool rollbackInProgress;
-  
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
+    Ptr<UDPHelper> udpHelper;       //Auxilia a conexão de um nó com outro
     uint16_t m_port;                //!< Port on which we listen for incoming packets.
     
     /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
     uint64_t m_seq;
     
-    /** 
-     * Endereços dos outros nós com os quais este nó se comunicou desde o último checkpoint.
-     * Indica quais nós devem fazer rollback caso este faça.
-     *  */
-    vector<Address> rollbackAddresses;
-
     ////////////////////////////////////////////////
     //////              MÉTODOS               //////
     ////////////////////////////////////////////////
@@ -139,11 +126,19 @@ class BatteryNodeApp : public CheckpointApp {
      */
     void HandleRead(Ptr<MessageData> md);
 
-    /** Adiciona um endereço ao vetor de endereços de rollback. Não permite elementos repetidos. */
-    void addRollbackAddress(Address a);
+    /**
+     * Gerencia a recepção de um pacote enquanto está no modo de rollback.
+     *
+     * \param md Dados da mensagem recebida.
+     */
+    void HandleReadInRollbackMode(Ptr<MessageData> md);
 
-    /** Remove um endereço do vetor de endereços de rollback. */
-    void removeRollbackAddress(Address a);
+    /**
+     * Gerencia a recepção de um pacote enquanto está no modo de criação de checkpoint.
+     *
+     * \param md Dados da mensagem recebida.
+     */
+    void HandleReadInCheckpointMode(Ptr<MessageData> md);
 
     /** 
      * Carrega as configurações do arquivo de configurações referentes a esta classe.
@@ -155,6 +150,25 @@ class BatteryNodeApp : public CheckpointApp {
      * Método chamado quando este nó realiza seu próprio rollback.
      */
     void notifyNodesAboutRollback();
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
+     */
+    void notifyNodesAboutCheckpointConcluded();
+
+    /** 
+     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,
+     * ou o cancela. 
+     * @param confirm Indica se o checkpoint será confirmado ou descartado.
+    */
+    void confirmCheckpointCreation(bool confirm);
+
+        /**
+     * Inicia um processo de rollback para um checkpoint específico.
+     * @param requester Nó que requisitou o rollback.
+     * @param cpId ID do checkpoint para o qual será feito rollback.
+     */
+    void startRollback(Address requester, int cpId);
 
     /** 
      * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
@@ -226,16 +240,22 @@ class BatteryNodeApp : public CheckpointApp {
     bool isDepleted();
 
     /** 
-     * Método chamado imediatamente antes da criação de um checkpoint
-     * para realizar algum processamento, caso seja necessário.
+     * Método abstrato. Método chamado imediatamente antes da criação de um checkpoint
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
      * */
-    void beforeCheckpoint() override;
+    void beforePartialCheckpoint() override;
 
     /** 
-     * Método chamado imediatamente após a criação de um checkpoint
+     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
+     * */
+    void afterPartialCheckpoint() override;
+
+    /** 
+     * Método chamado imediatamente após o cancelamento de um checkpoint
      * para realizar algum processamento, caso seja necessário.
      * */
-    void afterCheckpoint() override;
+    void afterCheckpointDiscard() override;
 
     /** 
      * Método abstrato. Método chamado imediatamente antes da execução de um rollback
@@ -253,6 +273,11 @@ class BatteryNodeApp : public CheckpointApp {
      * Indica em quais condições esta aplicação pode criar checkpoints ou não.
      * */
     bool mayCheckpoint() override;
+
+    /** 
+     * Indica em quais condições esta aplicação pode remover checkpoints ou não.
+     * */
+    bool mayRemoveCheckpoint() override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

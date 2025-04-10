@@ -45,7 +45,76 @@ class CheckpointStrategy;
  */
 class CheckpointApp : public Application
 {
-  public:
+  private:
+
+    virtual void StartApplication();
+    virtual void StopApplication();
+
+  protected:
+
+    /** Define a estratégia de checkpointing a ser utilizada por este nó. */
+    virtual void configureCheckpointStrategy();
+
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
+
+    /* 
+      Por questão de organização, aqui devem ser declarados os atributos que não devem ser armazenados em 
+      checkpoints. Exemplos desses tipos de atributos incluem atributos físicos, como, a carga atual da bateria, 
+      ou atributos fixos (que nunca mudam) de uma aplicação.
+    */
+
+    /** Estratégia de checkpoint escolhida para este nó. */
+    Ptr<CheckpointStrategy> checkpointStrategy;
+
+    /** Helper que auxilia no gerenciamento das configurações do nó. */
+    Ptr<ConfigHelper> configHelper;
+
+    //Endereço IP do nó que iniciou o último procedimento de rollback
+    Ipv4Address rollbackStarterIp;
+
+    //ID do checkpoint para o qual deve ser feito rollback
+    int checkpointId;
+
+    /** Indica quais nós dependentes ainda precisam fazer rollback. */
+    vector<Address> pendingRollbackAddresses;
+
+    /** Indica quais nós dependentes ainda precisam confirmar criação de checkpoint. */
+    vector<Address> pendingCheckpointAddresses;
+
+    /**
+     * Indica se um procedimento de rollback está em progresso. Quando um rollback
+     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
+     * que a comunicação possa ser restabelecida.
+     */
+    bool rollbackInProgress;
+
+    /**
+     * Indica se um procedimento de criação de checkpoints está em progresso. Quando 
+     * um checkpoint é criado, é necessário aguardar que todos os nós envolvidos 
+     * comuniquem sua conclusão para que o funcionamento normal da aplicação seja
+     * retomado.
+     */
+    bool checkpointInProgress;
+
+    //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
+
+    //Somente atributos de aplicação serão armazenados em checkpoints
+    
+    string nodeName;       //nome deste nó
+    string configFilename; //nome do arquivo de configuração
+
+    /** 
+     * Endereços dos nós para os quais este nó enviou mensagens desde o último checkpoint.
+     * Indica quais nós têm dependência com este nó, em caso de criação de checkpoints e 
+     * de realização de rollbacks.
+     */
+    vector<Address> dependentAddresses;
+
+    public:
 
     /**
      * \brief Get the type ID.
@@ -71,15 +140,25 @@ class CheckpointApp : public Application
 
     /** 
      * Método abstrato. Método chamado imediatamente antes da criação de um checkpoint
-     * para realizar algum processamento, caso seja necessário.
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
      * */
-    virtual void beforeCheckpoint();
+    virtual void beforePartialCheckpoint();
+
+     /** 
+     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
+     * */
+    virtual void afterPartialCheckpoint();
 
     /** 
-     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
-     * para realizar algum processamento, caso seja necessário.
+     * Método abstrato. Método chamado imediatamente antes do cancelamento de um checkpoint.
      * */
-    virtual void afterCheckpoint();
+    virtual void beforeCheckpointDiscard();
+
+    /** 
+     * Método abstrato. Método chamado imediatamente após o cancelamento de um checkpoint.
+     * */
+    virtual void afterCheckpointDiscard();
 
     /** 
      * Método abstrato. Método chamado imediatamente antes da execução de um rollback
@@ -101,41 +180,32 @@ class CheckpointApp : public Application
      */
     virtual bool mayCheckpoint();
 
-    //friend class CheckpointStrategy;
+    /**
+     * Método abstrato. Serve para indicar em quais condições uma aplicação pode remover
+     * um checkpoint ou não.
+     * Por padrão, uma aplicação sempre pode remover checkpoints.
+     * Caso não deseje dessa forma, a aplicação deve sobrescrever este método. 
+     */
+    virtual bool mayRemoveCheckpoint();
 
-  private:
+    /** 
+     * Adiciona um endereço a um vetor de endereços. Não permite elementos repetidos.
+     * @param v Vetor no qual o elemento será inserido.
+     * @param a Endereço que será inserido no vetor.
+     */
+    void addAddress(vector<Address> &v, Address a);
 
-    virtual void StartApplication();
-    virtual void StopApplication();
+    /** 
+     * Remove um endereço de um vetor de endereços, mantendo a ordenação dos elementos. 
+     * @param v Vetor do qual o elemento será removido.
+     * @param a Endereço que será removido do vetor.
+     * */
+    void removeAddress(vector<Address> &v, Address a);
 
-  protected:
-
-    /** Define a estratégia de checkpointing a ser utilizada por este nó. */
-    virtual void configureCheckpointStrategy();
-
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
-
-    /* 
-      Atributos nativos não são controlados pela aplicação. Podem ser atributos físicos,
-      como, por exemplo, a carga atual da bateria, ou atributos fixos (que nunca mudam) 
-      de uma aplicação. Esses atributos não são incluídos em checkpoints.
-    */
-
-    /** Estratégia de checkpoint escolhida para este nó. */
-    Ptr<CheckpointStrategy> checkpointStrategy;
-
-    /** Helper que auxilia no gerenciamento das configurações do nó. */
-    Ptr<ConfigHelper> configHelper;
-
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
-
-    //Somente atributos de aplicação serão armazenados em checkpoints
-    string nodeName;       //nome deste nó
-    string configFilename; //nome do arquivo de configuração
+    /** Verifica se um determinado vetor de endereços possui um determinado elemento. */
+    bool addressVectorContain(vector<Address> &v, const Address& a) {
+      return find(v.begin(), v.end(), a) != v.end();
+    }
     
 };
 

@@ -17,6 +17,7 @@
 
 #include "checkpoint-app.h"
 #include "ns3/sync-predefined-times-checkpoint.h"
+#include "ns3/inet-socket-address.h"
 
 namespace ns3
 {
@@ -49,7 +50,6 @@ CheckpointApp::~CheckpointApp()
 {
     NS_LOG_FUNCTION(this);
     NS_LOG_FUNCTION("Fim do método");
-    //delete checkpointStrategy;
 }
 
 void CheckpointApp::configureCheckpointStrategy() {
@@ -59,6 +59,10 @@ void CheckpointApp::configureCheckpointStrategy() {
 }
 
 bool CheckpointApp::mayCheckpoint(){
+    return true;
+}
+
+bool CheckpointApp::mayRemoveCheckpoint(){
     return true;
 }
 
@@ -74,11 +78,19 @@ CheckpointApp::StopApplication()
     NS_LOG_FUNCTION(this);
 }
 
-void CheckpointApp::beforeCheckpoint(){
+void CheckpointApp::beforePartialCheckpoint(){
     
 }
 
-void CheckpointApp::afterCheckpoint(){
+void CheckpointApp::afterPartialCheckpoint(){
+    
+}
+
+void CheckpointApp::beforeCheckpointDiscard(){
+    
+}
+
+void CheckpointApp::afterCheckpointDiscard(){
     
 }
 
@@ -90,12 +102,42 @@ void CheckpointApp::afterRollback(){
     
 }
 
+void CheckpointApp::addAddress(vector<Address> &v, Address a){
+    NS_LOG_FUNCTION(this);
+    
+    auto it = find(v.begin(), v.end(), a);
+
+    if (it == v.end()) {
+        //Endereço não foi encontrado
+        //Adiciona endereço ao vetor de endereços
+        v.push_back(a);
+    }
+
+    NS_LOG_FUNCTION("Fim do método");
+}
+
+void CheckpointApp::removeAddress(vector<Address> &v, Address a){
+    // Função de comparação para encontrar o endereço exato
+    auto it = std::remove_if(v.begin(), v.end(),
+                             [a](const Address &addr)
+                             {
+                                 return InetSocketAddress::ConvertFrom(addr).GetIpv4() ==
+                                        InetSocketAddress::ConvertFrom(a).GetIpv4();
+                             });
+
+    // Remove efetivamente o elemento do vetor
+    if (it != v.end()){
+        v.erase(it, v.end());
+    }
+}
+
 json CheckpointApp::to_json() const {
     NS_LOG_FUNCTION(this);
     
     json j = Application::to_json();
     j["nodeName"] = nodeName;
     j["configFilename"] = configFilename;
+    j["dependentAddresses"] = dependentAddresses;
     
     NS_LOG_FUNCTION("Fim do método");
     return j;
@@ -107,6 +149,7 @@ void CheckpointApp::from_json(const json& j) {
     Application::from_json(j);
     j.at("nodeName").get_to(nodeName);
     j.at("configFilename").get_to(configFilename); 
+    j.at("dependentAddresses").get_to(dependentAddresses); 
 
     NS_LOG_FUNCTION("Fim do método");
 }

@@ -66,6 +66,9 @@ class CheckpointStrategy : public Object
      * */
     virtual void writeCheckpoint();
 
+    /** Método abstrato. Utilizado para descarte do último checkpoint criado. */
+    virtual void discardLastCheckpoint();
+
     /** 
      * Método abstrato. Utilizado para criação de logs. 
      * Logs são uma forma de complemento aos checkpoints. Logs podem armazenar, por exemplo,
@@ -89,6 +92,9 @@ class CheckpointStrategy : public Object
      * Método abstrato. A implementação irá depender da estratégia adotada. 
      * */
     virtual void startRollback(int checkpointId);
+
+    /** Confirma a criação do último checkpoint. */
+    virtual void confirmLastCheckpoint();
 
     /** Obtém o identificador do último checkpoint criado. */
     int getLastCheckpointId();

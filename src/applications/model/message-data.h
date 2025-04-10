@@ -30,6 +30,7 @@
 #include <string>
 #include "ns3/core-module.h"
 #include "ns3/ipv4-address.h"
+#include "ns3/inet-socket-address.h"
 
 #include <nlohmann/json.hpp>
 
@@ -75,10 +76,11 @@ class MessageData : public Object
 
     // Getters
     Address GetFrom() const { return from; }
+    Ipv4Address GetFromIpv4() const { return InetSocketAddress::ConvertFrom(from).GetIpv4(); }
     Address GetTo() const { return to; }
     uint32_t GetSequenceNumber() const { return sequenceNumber; }
     std::string GetCommand() const { return command; }
-    std::string GetCompleteCommand() const { return command + " " + to_string(data); }
+    std::string GetCompleteCommand() const { return command + (data > 0 ? " " + to_string(data) : ""); }
     int GetData() const { return data; }
     uint32_t GetSize() const { return size; }
     uint64_t GetUid() const { return uid; }

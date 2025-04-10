@@ -44,22 +44,21 @@ class ClientNodeApp : public CheckpointApp
 {
   private:
 
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
 
     /* 
-      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
-      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
-      (que nunca mudam) de uma aplicação.
+      Por questão de organização, aqui devem ser declarados os atributos que não devem ser armazenados em 
+      checkpoints. Exemplos desses tipos de atributos incluem atributos físicos, como, a carga atual da bateria, 
+      ou atributos fixos (que nunca mudam) de uma aplicação.
     */
 
     EventId m_sendEvent;   //!< Event to send the next packet
-    bool rollbackInProgress; //Indica se existe um procedimento de rollback em andamento
 
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
@@ -69,9 +68,6 @@ class ClientNodeApp : public CheckpointApp
     //!< Remote peer IP addresses. Packets will be sent to these addresses.
     vector<Ipv4Address> m_peerAddresses;
 
-    //Endereço IP do nó que iniciou o último procedimento de rollback
-    Ipv4Address rollbackStarterIp;
-    
     //!< Remote peer port
     uint16_t m_peerPort;
     
@@ -100,8 +96,46 @@ class ClientNodeApp : public CheckpointApp
      */
     void HandleRead(Ptr<MessageData> md);
 
+    /**
+     * Gerencia a recepção de um pacote enquanto está no modo de rollback.
+     *
+     * \param md Dados da mensagem recebida.
+     */
+    void HandleReadInRollbackMode(Ptr<MessageData> md);
+
+    /**
+     * Gerencia a recepção de um pacote enquanto está no modo de criação de checkpoint.
+     *
+     * \param md Dados da mensagem recebida.
+     */
+    void HandleReadInCheckpointMode(Ptr<MessageData> md);
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
+     * Método chamado quando este nó realiza seu próprio rollback.
+     */
+    void notifyNodesAboutRollback();
+
     /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
     void notifyNodesAboutRollbackConcluded();
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
+     */
+    void notifyNodesAboutCheckpointConcluded();
+
+    /** 
+     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes. 
+     * @param Indica se o checkpoint será confirmado ou descartado.
+    */
+    void confirmCheckpointCreation(bool confirm);
+
+    /**
+     * Inicia um processo de rollback para um checkpoint específico.
+     * @param requester Nó que requisitou o rollback.
+     * @param cpId ID do checkpoint para o qual será feito rollback.
+     */
+    void startRollback(Address requester, int cpId);
 
     /** 
      * Carrega as configurações do arquivo de configurações referentes a esta classe.
@@ -167,6 +201,23 @@ class ClientNodeApp : public CheckpointApp
      * para realizar algum processamento, caso seja necessário.
      * */
     void afterRollback() override;
+
+    /** 
+     * Método chamado imediatamente antes da criação de um checkpoint
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
+     * */
+    void beforePartialCheckpoint() override;
+
+    /** 
+     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
+     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
+     * */
+    void afterPartialCheckpoint() override;
+
+    /** 
+     * Método chamado imediatamente após o cancelamento de um checkpoint.
+     * */
+    void afterCheckpointDiscard() override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
