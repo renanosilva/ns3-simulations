@@ -15,7 +15,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "sync-predefined-times-checkpoint.h"
+#include "global-sync-clocks-strategy.h"
 #include "ns3/battery-node-app.h"
 #include "ns3/simulator.h"
 #include "ns3/node-depleted-exception.h"
@@ -24,30 +24,30 @@
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE("SyncPredefinedTimesCheckpoint");
+NS_LOG_COMPONENT_DEFINE("GlobalSyncClocksStrategy");
 
-NS_OBJECT_ENSURE_REGISTERED(SyncPredefinedTimesCheckpoint);
+NS_OBJECT_ENSURE_REGISTERED(GlobalSyncClocksStrategy);
 
 TypeId
-SyncPredefinedTimesCheckpoint::GetTypeId()
+GlobalSyncClocksStrategy::GetTypeId()
 {
-    NS_LOG_FUNCTION(SyncPredefinedTimesCheckpoint::GetTypeId());
+    NS_LOG_FUNCTION(GlobalSyncClocksStrategy::GetTypeId());
 
     static TypeId tid =
-        TypeId("ns3::SyncPredefinedTimesCheckpoint")
+        TypeId("ns3::GlobalSyncClocksStrategy")
             .SetParent<CheckpointStrategy>()
             .SetGroupName("Checkpoint")
-            .AddConstructor<SyncPredefinedTimesCheckpoint>()
+            .AddConstructor<GlobalSyncClocksStrategy>()
             .AddAttribute("interval",
                           "Intervalo de tempo no qual serão criados checkpoints.",
                           TimeValue(Seconds(5.0)), //valor inicial
-                          MakeTimeAccessor(&SyncPredefinedTimesCheckpoint::interval),
+                          MakeTimeAccessor(&GlobalSyncClocksStrategy::interval),
                           MakeTimeChecker());
     
     return tid;
 }
 
-SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, Time tout, Ptr<CheckpointApp> application){
+GlobalSyncClocksStrategy::GlobalSyncClocksStrategy(Time timeInterval, Time tout, Ptr<CheckpointApp> application){
     NS_LOG_FUNCTION(this);
 
     interval = timeInterval;
@@ -58,11 +58,11 @@ SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(Time timeInterval, 
     checkpointHelper = Create<CheckpointHelper>(application->getNodeName());
 }
 
-SyncPredefinedTimesCheckpoint::SyncPredefinedTimesCheckpoint(){
+GlobalSyncClocksStrategy::GlobalSyncClocksStrategy(){
     NS_LOG_FUNCTION(this);
 }
 
-SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
+GlobalSyncClocksStrategy::~GlobalSyncClocksStrategy()
 {
     NS_LOG_FUNCTION(this);
     stopCheckpointing();
@@ -70,18 +70,18 @@ SyncPredefinedTimesCheckpoint::~SyncPredefinedTimesCheckpoint()
 
 //VERIFICAR COMO FORÇAR A EXCLUSÃO DE UM PTR
 
-void SyncPredefinedTimesCheckpoint::startCheckpointing() {
+void GlobalSyncClocksStrategy::startCheckpointing() {
     NS_LOG_FUNCTION(this);
     scheduleNextCheckpoint();
 }
 
-void SyncPredefinedTimesCheckpoint::stopCheckpointing() {
+void GlobalSyncClocksStrategy::stopCheckpointing() {
     NS_LOG_FUNCTION(this);
     Simulator::Cancel(creationScheduling);
     Simulator::Cancel(discardScheduling);
 }
 
-void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
+void GlobalSyncClocksStrategy::writeCheckpoint() {
     NS_LOG_FUNCTION(this);
     
     try {
@@ -115,7 +115,7 @@ void SyncPredefinedTimesCheckpoint::writeCheckpoint() {
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void SyncPredefinedTimesCheckpoint::discardLastCheckpoint() {
+void GlobalSyncClocksStrategy::discardLastCheckpoint() {
     NS_LOG_FUNCTION(this);
     
     try {
@@ -143,7 +143,7 @@ void SyncPredefinedTimesCheckpoint::discardLastCheckpoint() {
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void SyncPredefinedTimesCheckpoint::confirmLastCheckpoint() {
+void GlobalSyncClocksStrategy::confirmLastCheckpoint() {
     NS_LOG_FUNCTION(this);
 
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint CONFIRMADO por " 
@@ -156,7 +156,7 @@ void SyncPredefinedTimesCheckpoint::confirmLastCheckpoint() {
     scheduleNextCheckpoint();
 }
 
-Time SyncPredefinedTimesCheckpoint::getDelayToNextCheckpoint(){
+Time GlobalSyncClocksStrategy::getDelayToNextCheckpoint(){
     NS_LOG_FUNCTION(this);
     
     double now = Simulator::Now().GetSeconds();
@@ -168,7 +168,7 @@ Time SyncPredefinedTimesCheckpoint::getDelayToNextCheckpoint(){
     return delay;
 }
 
-void SyncPredefinedTimesCheckpoint::scheduleNextCheckpoint(){
+void GlobalSyncClocksStrategy::scheduleNextCheckpoint(){
     NS_LOG_FUNCTION(this);
 
     NS_LOG_LOGIC("\n" << checkpointHelper->getCheckpointBasename() << " agendando próximo checkpoint\n");
@@ -178,26 +178,26 @@ void SyncPredefinedTimesCheckpoint::scheduleNextCheckpoint(){
 
     //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
     creationScheduling = Simulator::Schedule(delay,
-                                &SyncPredefinedTimesCheckpoint::writeCheckpoint,
+                                &GlobalSyncClocksStrategy::writeCheckpoint,
                                 this);
     NS_LOG_FUNCTION("Fim do método");
 }
 
-void SyncPredefinedTimesCheckpoint::scheduleLastCheckpointDiscard(){
+void GlobalSyncClocksStrategy::scheduleLastCheckpointDiscard(){
     NS_LOG_FUNCTION(this);
     
     //Será agendado com um delay calculado para garantir o intervalo de tempo predefinido
     discardScheduling = Simulator::Schedule(timeout,
-                                &SyncPredefinedTimesCheckpoint::discardLastCheckpoint,
+                                &GlobalSyncClocksStrategy::discardLastCheckpoint,
                                 this);
 }
 
-void SyncPredefinedTimesCheckpoint::startRollbackToLastCheckpoint() {
+void GlobalSyncClocksStrategy::startRollbackToLastCheckpoint() {
     NS_LOG_FUNCTION(this);   
     startRollback(checkpointHelper->getLastCheckpointId());
 }
 
-void SyncPredefinedTimesCheckpoint::startRollback(int checkpointId) {
+void GlobalSyncClocksStrategy::startRollback(int checkpointId) {
     NS_LOG_FUNCTION(this);
 
     app->beforeRollback();
@@ -219,17 +219,17 @@ void SyncPredefinedTimesCheckpoint::startRollback(int checkpointId) {
 
 }
 
-void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj) {
-    NS_LOG_FUNCTION("SyncPredefinedTimesCheckpoint::to_json");
+void to_json(json& j, const GlobalSyncClocksStrategy& obj) {
+    NS_LOG_FUNCTION("GlobalSyncClocksStrategy::to_json");
     
     to_json(j, static_cast<const CheckpointStrategy&>(obj));
-    j["strategy"] = "SyncPredefinedTimesCheckpoint";
+    j["strategy"] = "GlobalSyncClocksStrategy";
     j["interval"] = obj.interval.GetTimeStep();
     j["app.typeid.uid"] = obj.app->GetTypeId().GetUid();
 }
 
-void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj) {
-    NS_LOG_FUNCTION("SyncPredefinedTimesCheckpoint::from_json");
+void from_json(const json& j, GlobalSyncClocksStrategy& obj) {
+    NS_LOG_FUNCTION("GlobalSyncClocksStrategy::from_json");
     
     from_json(j, static_cast<CheckpointStrategy&>(obj));
 

@@ -18,7 +18,6 @@
 #include "json-utils.h"
 #include "ns3/fixed-energy-generator.h"
 #include "ns3/circular-energy-generator.h"
-#include "ns3/sync-predefined-times-checkpoint.h"
 
 namespace utils
 {
@@ -44,7 +43,7 @@ json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg) {
 }
 
 /*json checkpointStrategyToJson(json j, CheckpointStrategy *cs) {
-    SyncPredefinedTimesCheckpoint* sptc = dynamic_cast<SyncPredefinedTimesCheckpoint*>(cs);
+    GlobalSyncClocksStrategy* sptc = dynamic_cast<GlobalSyncClocksStrategy*>(cs);
 
     if (sptc) {
         j["checkpointStrategy"] = *sptc;
@@ -56,9 +55,9 @@ json energyGeneratorToJson(json j, Ptr<EnergyGenerator> eg) {
 }*/
 
 /*CheckpointStrategy* jsonToCheckpointStrategy(json j) {
-    if (j["strategy"] == "SyncPredefinedTimesCheckpoint"){
+    if (j["strategy"] == "GlobalSyncClocksStrategy"){
         
-        CheckpointStrategy *cs = new SyncPredefinedTimesCheckpoint();
+        CheckpointStrategy *cs = new GlobalSyncClocksStrategy();
         //cs->setApp(application);
         
         from_json(j, *cs);

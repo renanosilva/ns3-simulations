@@ -23,7 +23,7 @@
 #include "fixed-energy-generator.h"
 #include "circular-energy-generator.h"
 
-#include "ns3/sync-predefined-times-checkpoint.h"
+#include "ns3/global-sync-clocks-strategy.h"
 
 #include "ns3/address-utils.h"
 #include "ns3/inet-socket-address.h"
@@ -335,7 +335,7 @@ void BatteryNodeApp::configureCheckpointStrategy() {
     string property = "nodes.battery-nodes." + getNodeName() + ".checkpoint-strategy";
     string checkpointStrategyName = configHelper->GetStringProperty(property);
 
-    if (checkpointStrategyName == "SyncPredefinedTimesCheckpoint"){
+    if (checkpointStrategyName == "GlobalSyncClocksStrategy"){
         
         string intervalProperty = "nodes.battery-nodes." + getNodeName() + ".checkpoint-interval";
         double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
@@ -343,7 +343,7 @@ void BatteryNodeApp::configureCheckpointStrategy() {
         string timeoutProperty = "nodes.battery-nodes." + getNodeName() + ".checkpoint-timeout";
         double checkpointTimeout = configHelper->GetDoubleProperty(timeoutProperty);
 
-        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
+        checkpointStrategy = Create<GlobalSyncClocksStrategy>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
         checkpointStrategy->startCheckpointing();
     
     } else {

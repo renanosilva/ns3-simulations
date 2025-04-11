@@ -19,7 +19,7 @@
 
 #include "seq-ts-header.h"
 
-#include "ns3/sync-predefined-times-checkpoint.h"
+#include "ns3/global-sync-clocks-strategy.h"
 
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
@@ -311,7 +311,7 @@ void ClientNodeApp::configureCheckpointStrategy() {
     string property = "nodes.client-nodes." + getNodeName() + ".checkpoint-strategy";
     string checkpointStrategyName = configHelper->GetStringProperty(property);
 
-    if (checkpointStrategyName == "SyncPredefinedTimesCheckpoint"){
+    if (checkpointStrategyName == "GlobalSyncClocksStrategy"){
         
         string intervalProperty = "nodes.client-nodes." + getNodeName() + ".checkpoint-interval";
         double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
@@ -319,7 +319,7 @@ void ClientNodeApp::configureCheckpointStrategy() {
         string timeoutProperty = "nodes.client-nodes." + getNodeName() + ".checkpoint-timeout";
         double checkpointTimeout = configHelper->GetDoubleProperty(timeoutProperty);
 
-        checkpointStrategy = Create<SyncPredefinedTimesCheckpoint>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
+        checkpointStrategy = Create<GlobalSyncClocksStrategy>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
         checkpointStrategy->startCheckpointing();
     
     } else {

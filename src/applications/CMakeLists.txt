@@ -36,7 +36,7 @@ build_lib(
     model/fixed-energy-generator.cc
     model/circular-energy-generator.cc
     model/checkpoint-strategy.cc
-    model/sync-predefined-times-checkpoint.cc
+    model/global-sync-clocks-strategy.cc
     model/checkpoint-app.cc
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
@@ -79,7 +79,7 @@ build_lib(
     model/fixed-energy-generator.h
     model/circular-energy-generator.h
     model/checkpoint-strategy.h
-    model/sync-predefined-times-checkpoint.h
+    model/global-sync-clocks-strategy.h
     model/checkpoint-app.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h

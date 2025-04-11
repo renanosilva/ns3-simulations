@@ -17,7 +17,7 @@
                 "receive-packet-energy": 100.0,
                 "send-packet-energy": 100.0,
                 "connect-energy": 50.0,
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-strategy": "GlobalSyncClocksStrategy",
                 "checkpoint-interval": 5.0,
                 "checkpoint-timeout": 2.0,
                 "energy-generator": "CircularEnergyGenerator",
@@ -33,7 +33,7 @@
                 "receive-packet-energy": 100.0,
                 "send-packet-energy": 100.0,
                 "connect-energy": 50.0,
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-strategy": "GlobalSyncClocksStrategy",
                 "checkpoint-interval": 5.0,
                 "checkpoint-timeout": 2.0,
                 "energy-generator": "FixedEnergyGenerator",
@@ -45,12 +45,12 @@
         "client-nodes": {
             "amount": 2,
             "client-node-0":{
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-strategy": "GlobalSyncClocksStrategy",
                 "checkpoint-interval": 5.0,
                 "checkpoint-timeout": 2.0
             },
             "client-node-1":{
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint",
+                "checkpoint-strategy": "GlobalSyncClocksStrategy",
                 "checkpoint-interval": 5.0,
                 "checkpoint-timeout": 2.0
             }

@@ -33,10 +33,10 @@ namespace ns3
 
 /** 
  * Estratégia de checkpointing síncrona, na qual são gerados checkpoints 
- * a cada período predefinido de tempo. Todos os nós criam checkpoints
- * no mesmo instante de tempo.
+ * a cada período predefinido de tempo. Todos os nós possuem relógios
+ * sincronizados e criam checkpoints no mesmo instante de tempo.
  */
-class SyncPredefinedTimesCheckpoint : public CheckpointStrategy {
+class GlobalSyncClocksStrategy : public CheckpointStrategy {
 
   private:
 
@@ -85,12 +85,12 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy {
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    SyncPredefinedTimesCheckpoint(Time timeInterval, Time timeout, Ptr<CheckpointApp> application);
+    GlobalSyncClocksStrategy(Time timeInterval, Time timeout, Ptr<CheckpointApp> application);
 
     /** Construtor padrão. */
-    SyncPredefinedTimesCheckpoint();
+    GlobalSyncClocksStrategy();
 
-    ~SyncPredefinedTimesCheckpoint() override;
+    ~GlobalSyncClocksStrategy() override;
 
     virtual void startCheckpointing() override;
     
@@ -105,10 +105,10 @@ class SyncPredefinedTimesCheckpoint : public CheckpointStrategy {
     virtual void startRollback(int checkpointId) override;
 
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const SyncPredefinedTimesCheckpoint& obj);
+    friend void to_json(json& j, const GlobalSyncClocksStrategy& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, SyncPredefinedTimesCheckpoint& obj);
+    friend void from_json(const json& j, GlobalSyncClocksStrategy& obj);
 };
 
 } // namespace ns3

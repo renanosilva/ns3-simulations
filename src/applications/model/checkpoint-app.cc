@@ -16,7 +16,6 @@
  */
 
 #include "checkpoint-app.h"
-#include "ns3/sync-predefined-times-checkpoint.h"
 #include "ns3/inet-socket-address.h"
 
 namespace ns3

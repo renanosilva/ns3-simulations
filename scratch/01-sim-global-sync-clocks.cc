@@ -37,10 +37,10 @@
 using namespace ns3;
 using namespace utils;
 
-NS_LOG_COMPONENT_DEFINE("myExample");
+NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/01-sim-sync-pred-times.json"; 
+static const string CONFIG_FILENAME = "scratch/01-sim-global-sync-clocks.json"; 
 
 int
 main(int argc, char* argv[])
@@ -55,7 +55,7 @@ main(int argc, char* argv[])
     LogComponentEnable("Battery", LOG_INFO);
     LogComponentEnable("CheckpointStrategy", LOG_INFO);
     LogComponentEnable("CheckpointHelper", LOG_INFO);
-    LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_INFO);
+    LogComponentEnable("GlobalSyncClocksStrategy", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);
@@ -68,7 +68,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("Battery", LOG_FUNCTION);
     // LogComponentEnable("CheckpointStrategy", LOG_FUNCTION);
     // LogComponentEnable("CheckpointHelper", LOG_FUNCTION);
-    // LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_FUNCTION);
+    // LogComponentEnable("GlobalSyncClocksStrategy", LOG_FUNCTION);
     // LogComponentEnable("EnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("CircularEnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("UDPHelper", LOG_FUNCTION);
@@ -80,7 +80,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("Battery", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointStrategy", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointHelper", LOG_LEVEL_ALL);
-    // LogComponentEnable("SyncPredefinedTimesCheckpoint", LOG_LEVEL_ALL);
+    // LogComponentEnable("GlobalSyncClocksStrategy", LOG_LEVEL_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("UDPHelper", LOG_LEVEL_ALL);

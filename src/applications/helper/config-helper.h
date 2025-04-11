@@ -71,12 +71,12 @@ public:
      * Útil para quando uma propriedade possui mais de um valor associado.
      * 
      * Ex.: 
-     * "client-nodes": {
+     * "nodes": {
             "client-node-0":{
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint"
+                "checkpoint-strategy": "GlobalSyncClocksStrategy"
             },
             "client-node-1":{
-                "checkpoint-strategy": "SyncPredefinedTimesCheckpoint"
+                "checkpoint-strategy": "GlobalSyncClocksStrategy"
             }
         }
      * 
