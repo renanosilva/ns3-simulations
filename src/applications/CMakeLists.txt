@@ -81,6 +81,7 @@ build_lib(
     model/checkpoint-strategy.h
     model/global-sync-clocks-strategy.h
     model/checkpoint-app.h
+    model/application-type.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h
     util/json-utils.h

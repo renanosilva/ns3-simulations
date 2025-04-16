@@ -26,6 +26,8 @@
 #include "ns3/nstime.h"
 #include "checkpoint-strategy.h"
 #include "ns3/checkpoint-helper.h"
+#include "ns3/message-data.h"
+#include "ns3/client-node-app.h"
 #include <ns3/double.h>
 
 namespace ns3
@@ -68,6 +70,46 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
     /** Confirma a criação do último checkpoint. */
     void confirmLastCheckpoint();
 
+    /**
+     * Intercepta a recepção de um pacote de um servidor enquanto ele está no modo de rollback.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    bool interceptServerReadInRollbackMode(Ptr<MessageData> md);
+
+    /**
+     * Intercepta a recepção de um pacote de um servidor enquanto ele está no modo de criação de checkpoint.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    bool interceptServerReadInCheckpointMode(Ptr<MessageData> md);
+
+    /**
+     * Intercepta a recepção de um pacote de um cliente enquanto ele está no modo de rollback.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    bool interceptClientReadInRollbackMode(Ptr<MessageData> md);
+
+    /**
+     * Intercepta a recepção de um pacote de um cliente enquanto ele está no modo de criação de checkpoint.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    bool interceptClientReadInCheckpointMode(Ptr<MessageData> md);
+
   public:
     /**
      * \brief Get the type ID.
@@ -100,9 +142,62 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
 
     virtual void discardLastCheckpoint() override; 
     
-    virtual void startRollbackToLastCheckpoint() override; 
+    virtual void rollbackToLastCheckpoint() override; 
 
-    virtual void startRollback(int checkpointId) override;
+    virtual void rollback(int checkpointId) override;
+
+    /** 
+     * Utilizado para iniciar um processo de rollback, após a solicitação
+     * de um outro nó. O rollback será feito para o checkpoint identificado como
+     * parâmetro.
+     * Método abstrato. A implementação irá depender da estratégia adotada. 
+     * @param requester Nó que solicitou o rollback.
+     * @param checkpointId ID do checkpoint para o qual deverá ser feito rollback.
+     * */
+    virtual void rollback(Address requester, int cpId) override;
+
+    /**
+     * Intercepta a leitura de um pacote. Dessa forma, a estratégia de checkpoint
+     * tem a oportunidade de processar a leitura antes da aplicação.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve mais processá-la. Retorna false caso contrário, ou seja, se a 
+     * mensagem não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    virtual bool interceptRead(Ptr<MessageData> md) override;
+
+    /**
+     * Intercepta o envio de um pacote. Dessa forma, a estratégia de checkpoint
+     * tem a oportunidade analisar pacotes enviados pela aplicação.
+     *
+     * \param md Dados da mensagem enviada.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    virtual bool interceptSend(Ptr<MessageData> md) override;
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
+     */
+    void notifyNodesAboutCheckpointConcluded();
+
+    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
+    void notifyNodesAboutRollbackConcluded();
+    
+    /** 
+     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,
+     * ou o cancela. 
+     * @param confirm Indica se o checkpoint será confirmado ou descartado.
+    */
+    virtual void confirmCheckpointCreation(bool confirm) override;
+
+    /** 
+     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
+     * Método chamado quando este nó realiza seu próprio rollback.
+     */
+    void notifyNodesAboutRollback();
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const GlobalSyncClocksStrategy& obj);

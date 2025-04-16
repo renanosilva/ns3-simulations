@@ -23,8 +23,6 @@
 #include "fixed-energy-generator.h"
 #include "circular-energy-generator.h"
 
-#include "ns3/global-sync-clocks-strategy.h"
-
 #include "ns3/address-utils.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
@@ -93,30 +91,18 @@ BatteryNodeApp::GetTypeId()
 }
 
 BatteryNodeApp::BatteryNodeApp()
-    : m_seq(0)
-{
-
+    : m_seq(0){
     NS_LOG_FUNCTION(this);
 
     currentMode = NORMAL;
-    rollbackInProgress = false;
-    checkpointInProgress = false;
-    dependentAddresses.clear();
-    pendingRollbackAddresses.clear();
-    pendingCheckpointAddresses.clear();
     udpHelper = Create<UDPHelper>();
-
+    applicationType = SERVER;
 }
 
 BatteryNodeApp::~BatteryNodeApp()
 {
     NS_LOG_FUNCTION(this);
-    
     udpHelper = nullptr;
-    dependentAddresses.clear();
-    pendingRollbackAddresses.clear();
-    pendingCheckpointAddresses.clear();
-
 }
 
 void
@@ -133,143 +119,18 @@ BatteryNodeApp::StartApplication()
     if (udpHelper->isDisconnected())
         udpHelper->configureServer(GetNode(), getNodeName(), m_port);
 
+    //Atribuindo um callback de recebimento e envio de mensagens para o protocolo de checkpointing e para a aplicação
+    udpHelper->setProtocolSendCallback(MakeCallback(&CheckpointStrategy::interceptSend, checkpointStrategy));
+    udpHelper->setProtocolReceiveCallback(MakeCallback(&CheckpointStrategy::interceptRead, checkpointStrategy));
     udpHelper->setReceiveCallback(MakeCallback(&BatteryNodeApp::HandleRead, this));
 
     NS_LOG_INFO(getNodeName() << " conectado.");
     decreaseConnectEnergy();
 }
 
-void
-BatteryNodeApp::StopApplication()
-{
+void BatteryNodeApp::StopApplication() {
     NS_LOG_FUNCTION(this);
     udpHelper->terminateConnection();
-}
-
-void
-BatteryNodeApp::HandleRead(Ptr<MessageData> md){
-    NS_LOG_FUNCTION(this << md);
-
-    if (isSleeping() || isDepleted()){
-        //ignora mensagens se estiver em modo sleep ou descarregado
-        return;
-    }
-
-    try {
-        if (checkpointInProgress){
-            HandleReadInCheckpointMode(md);
-            return;
-        }
-        
-        if (rollbackInProgress){
-            HandleReadInRollbackMode(md);
-            return;
-        }
-
-        utils::logMessageReceived(getNodeName(), md);
-
-        m_seq++;
-        decreaseReadEnergy();
-
-        if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
-            startRollback(md->GetFrom(), md->GetData());
-        }
-
-        if (md->GetCommand() == REQUEST_VALUE){
-            NS_LOG_LOGIC("Responding packet");
-        
-            Ptr<MessageData> mdResp = udpHelper->send(RESPONSE_VALUE, m_seq, md->GetFrom());
-            utils::logRegularMessageSent(getNodeName(), mdResp, m_seq);
-
-            addAddress(dependentAddresses, md->GetFrom());
-
-            decreaseSendEnergy();
-        }
-
-    } catch (NodeAsleepException& e) {
-        NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
-        return;
-    } catch (NodeDepletedException& e) {
-        NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
-        return;
-    }
-
-}
-
-void BatteryNodeApp::HandleReadInRollbackMode(Ptr<MessageData> md){
-    NS_LOG_FUNCTION(this);
-
-    if (rollbackInProgress){
-        
-        if (md->GetCommand() != ROLLBACK_FINISHED_COMMAND){
-            //Ignora pacotes até a conclusão do rollback dos outros nós
-            return;
-        }
-
-        utils::logMessageReceived(getNodeName(), md);
-
-        if (md->GetCommand() == ROLLBACK_FINISHED_COMMAND){
-            removeAddress(pendingRollbackAddresses, md->GetFrom());
-
-            //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
-            if (pendingRollbackAddresses.empty()){
-
-                NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                                << " saiu do modo de bloqueio de comunicação.");
-                
-                rollbackInProgress = false;
-            }
-
-            m_seq++;
-            decreaseReadEnergy();
-            return;
-        }
-
-    }
-}
-
-void BatteryNodeApp::HandleReadInCheckpointMode(Ptr<MessageData> md){
-    NS_LOG_FUNCTION(this);
-    
-    if (checkpointInProgress){
-
-        if (md->GetCommand() == REQUEST_VALUE){
-            //Ignora pacotes até a conclusão do checkpoint dos outros nós
-            return;
-        }
-
-        utils::logMessageReceived(getNodeName(), md);
-
-        if (md->GetCommand() == CHECKPOINT_FINISHED_COMMAND){
-            removeAddress(pendingCheckpointAddresses, md->GetFrom());
-
-            //Só termina o checkpointing caso todos os nós tenham terminado seus checkpoints
-            if (pendingCheckpointAddresses.empty()){
-                confirmCheckpointCreation(true);
-            }
-
-            m_seq++;
-            decreaseReadEnergy();
-            return;
-        }
-
-        //Também é possível receber requisições de rollback enquanto se está aguardando 
-        //confirmação de checkpoint. Nesse caso, cancela-se o checkpoint e faz-se o rollback
-        if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
-            checkpointStrategy->discardLastCheckpoint();
-            startRollback(md->GetFrom(), md->GetData());
-        }
-    }
-}
-
-void BatteryNodeApp::startRollback(Address requester, int cpId){
-    NS_LOG_FUNCTION(this);
-
-    rollbackStarterIp = InetSocketAddress::ConvertFrom(requester).GetIpv4();
-    checkpointId = cpId;
-    resetNodeData();
-    configureCheckpointStrategy();
-    checkpointStrategy->startRollback(checkpointId);
 }
 
 void BatteryNodeApp::loadConfigurations() {
@@ -293,7 +154,6 @@ void BatteryNodeApp::loadConfigurations() {
 
     if (!checkpointStrategy)
         configureCheckpointStrategy();
-
 }
 
 void BatteryNodeApp::configureEnergyGenerator() {
@@ -329,26 +189,68 @@ void BatteryNodeApp::configureEnergyGenerator() {
 
 }
 
-void BatteryNodeApp::configureCheckpointStrategy() {
-    NS_LOG_FUNCTION(this);
-    
-    string property = "nodes.battery-nodes." + getNodeName() + ".checkpoint-strategy";
-    string checkpointStrategyName = configHelper->GetStringProperty(property);
+void BatteryNodeApp::HandleRead(Ptr<MessageData> md){
+    NS_LOG_FUNCTION(this << md);
 
-    if (checkpointStrategyName == "GlobalSyncClocksStrategy"){
-        
-        string intervalProperty = "nodes.battery-nodes." + getNodeName() + ".checkpoint-interval";
-        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
-
-        string timeoutProperty = "nodes.battery-nodes." + getNodeName() + ".checkpoint-timeout";
-        double checkpointTimeout = configHelper->GetDoubleProperty(timeoutProperty);
-
-        checkpointStrategy = Create<GlobalSyncClocksStrategy>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
-        checkpointStrategy->startCheckpointing();
-    
-    } else {
-        NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
+    if (isSleeping() || isDepleted()){
+        //ignora mensagens se estiver em modo sleep ou descarregado
+        return;
     }
+
+    try {
+        utils::logMessageReceived(getNodeName(), md);
+
+        decreaseReadEnergy();
+
+        if (md->GetCommand() == REQUEST_VALUE){
+            NS_LOG_LOGIC("Responding packet");
+
+            m_seq++;
+        
+            Ptr<MessageData> mdResp = send(RESPONSE_VALUE, m_seq, md->GetFrom());
+            decreaseSendEnergy();
+        }
+
+    } catch (NodeAsleepException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
+        return;
+    } catch (NodeDepletedException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
+        return;
+    }
+}
+
+void BatteryNodeApp::initiateRollback(Address requester, int cpId){
+    NS_LOG_FUNCTION(this);
+
+    resetNodeData();
+    configureCheckpointStrategy();
+    checkpointStrategy->rollback(requester, cpId);
+}
+
+void BatteryNodeApp::initiateRollbackToLastCheckpoint(){
+    NS_LOG_FUNCTION(this);
+
+    configureCheckpointStrategy();
+    checkpointStrategy->rollbackToLastCheckpoint();
+}
+
+void BatteryNodeApp::afterRollback(){
+    NS_LOG_FUNCTION(this);
+
+    try {
+
+        //Reiniciando aplicação...
+        StartApplication();
+
+        NS_LOG_INFO("\nDepois do rollback...");
+        printNodeData();
+
+    } catch (NodeAsleepException& e) {
+        //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
+    } catch (NodeDepletedException& e) {
+        //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
+    } 
 }
 
 void BatteryNodeApp::generateEnergy(){
@@ -394,136 +296,8 @@ void BatteryNodeApp::checkModeChange(){
         currentMode = Mode::NORMAL;
         NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo NORMAL.");
 
-        configureCheckpointStrategy();
-        checkpointId = checkpointStrategy->getLastCheckpointId();
-        checkpointStrategy->startRollbackToLastCheckpoint();
+        initiateRollbackToLastCheckpoint();
     }
-
-}
-
-void BatteryNodeApp::beforePartialCheckpoint(){
-    NS_LOG_FUNCTION(this);
-
-    checkpointInProgress = true;
-    pendingCheckpointAddresses = vector<Address>(dependentAddresses);
-
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                                    << " entrou no modo de bloqueio de comunicação.");
-}
-
-void BatteryNodeApp::afterPartialCheckpoint(){
-    NS_LOG_FUNCTION(this);
-    
-    decreaseCheckpointEnergy();
-    
-    // Enviando notificação para os nós com os quais houve comunicação
-    if (pendingCheckpointAddresses.size() > 0){
-        notifyNodesAboutCheckpointConcluded();
-    } else {
-        confirmCheckpointCreation(true);
-    }
-}
-
-void BatteryNodeApp::afterCheckpointDiscard(){
-    NS_LOG_FUNCTION(this);
-    confirmCheckpointCreation(false);
-}   
-
-void BatteryNodeApp::notifyNodesAboutCheckpointConcluded(){
-    NS_LOG_FUNCTION(this);
-
-    for (Address a : pendingCheckpointAddresses){
-        
-        // Enviando o pacote para o destino
-        Ptr<MessageData> md = udpHelper->send(CHECKPOINT_FINISHED_COMMAND, checkpointStrategy->getLastCheckpointId() , a);
-        utils::logRegularMessageSent(getNodeName(), md);
-    }
-    
-    decreaseSendEnergy();
-}
-
-void BatteryNodeApp::confirmCheckpointCreation(bool confirm) {
-    NS_LOG_FUNCTION(this);
-    
-    checkpointInProgress = false;
-
-    //Removendo endereços com os quais este nó se comunicou no ciclo anterior
-    dependentAddresses.clear();
-
-    if (confirm){
-        checkpointStrategy->confirmLastCheckpoint();
-    }
-    
-    decreaseCheckpointEnergy();
-
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-        << " saiu do modo de bloqueio de comunicação.");
-}
-
-void BatteryNodeApp::beforeRollback(){
-    NS_LOG_FUNCTION(this);
-    
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                                    << " entrou no modo de bloqueio de comunicação.");
-    rollbackInProgress = true;
-
-}
-
-void BatteryNodeApp::afterRollback(){
-    NS_LOG_FUNCTION(this);
-
-    try {
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-            << " concluiu o procedimento de rollback.");
-    
-        decreaseRollbackEnergy();
-
-        //Reiniciando aplicação...
-        StartApplication();
-
-        NS_LOG_INFO("\nDepois do rollback...");
-        printNodeData();
-
-        //Copiando os endereços para o vetor de rollbacks pendentes
-        pendingRollbackAddresses = vector<Address>(dependentAddresses);
-
-        if (pendingRollbackAddresses.size() > 0){
-           
-            //Enviando mensagem de rollback para os outros nós envolvidos
-            notifyNodesAboutRollback();
-            
-        } else {
-           
-            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() 
-                                << " saiu do modo de bloqueio de comunicação.");
-                
-            rollbackInProgress = false;
-        }
-    
-    } catch (NodeAsleepException& e) {
-        //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
-    } catch (NodeDepletedException& e) {
-        //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
-    } 
-
-}
-
-void BatteryNodeApp::notifyNodesAboutRollback(){
-    NS_LOG_FUNCTION(this);
-
-    // Enviando notificação para os nós com os quais houve comunicação
-    if (pendingRollbackAddresses.size() > 0){
-
-        for (Address a : pendingRollbackAddresses){
-            
-            // Enviando o pacote para o destino
-            Ptr<MessageData> md = udpHelper->send(REQUEST_TO_START_ROLLBACK_COMMAND, checkpointId, a);
-            utils::logRegularMessageSent(getNodeName(), md);
-        }
-    
-        decreaseSendEnergy();
-    }
-
 }
 
 void BatteryNodeApp::decreaseEnergy(double amount) {
@@ -540,7 +314,6 @@ void BatteryNodeApp::decreaseEnergy(double amount) {
                 ": " << amount << ". Energia restante: " << to_string(battery.getRemainingEnergy()) << ".");
 
     checkModeChange();
-
 }
 
 void BatteryNodeApp::decreaseCheckpointEnergy(){
@@ -578,7 +351,6 @@ void BatteryNodeApp::decreaseIdleEnergy(){
     } catch (NodeDepletedException& e) {
         //Nada a fazer
     } 
-
 }
 
 void BatteryNodeApp::decreaseSleepEnergy(){
@@ -589,7 +361,6 @@ void BatteryNodeApp::decreaseSleepEnergy(){
     } catch (NodeDepletedException& e) {
         //Nada a fazer
     }
-
 }
 
 void BatteryNodeApp::decreaseCurrentModeEnergy(){
@@ -618,13 +389,7 @@ void BatteryNodeApp::resetNodeData() {
     udpHelper = nullptr;
     m_port = 0;
     m_seq = 0;
-    dependentAddresses.clear();
-    pendingCheckpointAddresses.clear();
-    pendingRollbackAddresses.clear();
     checkpointStrategy = nullptr;
-    rollbackInProgress = false;
-    checkpointInProgress = false;
-    
 }
 
 void BatteryNodeApp::printNodeData(){
@@ -638,15 +403,14 @@ void BatteryNodeApp::printNodeData(){
         << ", sleepEnergyConsumption = " << sleepEnergyConsumption
         << ", energyUpdateInterval = " << energyUpdateInterval.As(Time::S)
         << ", energyGenerator->GetTypeId() = " << energyGenerator->GetTypeId()
-        << ", rollbackInProgress = " << rollbackInProgress
-        << ", checkpointInProgress = " << checkpointInProgress
+        << ", rollbackInProgress = " << checkpointStrategy->isRollbackInProgress()
+        << ", checkpointInProgress = " << checkpointStrategy->isCheckpointInProgress()
         << ", m_port = " << m_port
         << ", m_seq = " << m_seq
-        << ", dependentAddresses.size() = " << dependentAddresses.size()
+        << ", dependentAddresses.size() = " << checkpointStrategy->getDependentAddresses().size()
         << ", configFilename = " << configFilename);
     
     udpHelper->printData();
-
 }
 
 Mode BatteryNodeApp::getCurrentMode(){
@@ -672,7 +436,7 @@ Time BatteryNodeApp::getEnergyUpdateInterval(){
 bool BatteryNodeApp::mayCheckpoint(){
     NS_LOG_FUNCTION(this);
     
-    return !isDepleted() && !isSleeping() && !rollbackInProgress;
+    return !isDepleted() && !isSleeping() && !checkpointStrategy->isRollbackInProgress();
 }
 
 bool BatteryNodeApp::mayRemoveCheckpoint() {
@@ -685,11 +449,8 @@ json BatteryNodeApp::to_json() const {
     NS_LOG_FUNCTION(this);
 
     json j = CheckpointApp::to_json();
-    j["udpHelper"] = *udpHelper;
     j["m_port"] = m_port;
     j["m_seq"] = m_seq;
-
-    NS_LOG_FUNCTION("Fim do método");
 
     return j;
 }
@@ -699,11 +460,8 @@ void BatteryNodeApp::from_json(const json& j) {
     
     CheckpointApp::from_json(j);
 
-    udpHelper = Create<UDPHelper>();
-    j.at("udpHelper").get_to(*udpHelper); 
     j.at("m_port").get_to(m_port);
     j.at("m_seq").get_to(m_seq); 
-
 }
 
 } // Namespace ns3

@@ -24,7 +24,6 @@
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
 #include "ns3/checkpoint-app.h"
-#include "ns3/udp-helper.h"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -62,9 +61,6 @@ class ClientNodeApp : public CheckpointApp
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    //Auxilia a conexão de um nó com outro
-    Ptr<UDPHelper> udpHelper;
-
     //!< Remote peer IP addresses. Packets will be sent to these addresses.
     vector<Ipv4Address> m_peerAddresses;
 
@@ -84,62 +80,16 @@ class ClientNodeApp : public CheckpointApp
 
     void StopApplication() override;
 
-    /** \brief Send a packet */
+    /** Envia um pacote para os servidores. */
     void Send();
 
     /**
-     * \brief Handle a packet reception.
-     *
-     * This function is called by lower layers.
-     *
-     * \param socket the socket the packet was received to.
+     * Método responsável pelo recebimento de pacotes. 
+     * @param md Dados da mensagem recebida.
      */
     void HandleRead(Ptr<MessageData> md);
 
-    /**
-     * Gerencia a recepção de um pacote enquanto está no modo de rollback.
-     *
-     * \param md Dados da mensagem recebida.
-     */
-    void HandleReadInRollbackMode(Ptr<MessageData> md);
-
-    /**
-     * Gerencia a recepção de um pacote enquanto está no modo de criação de checkpoint.
-     *
-     * \param md Dados da mensagem recebida.
-     */
-    void HandleReadInCheckpointMode(Ptr<MessageData> md);
-
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
-     * Método chamado quando este nó realiza seu próprio rollback.
-     */
-    void notifyNodesAboutRollback();
-
-    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
-    void notifyNodesAboutRollbackConcluded();
-
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
-     */
-    void notifyNodesAboutCheckpointConcluded();
-
-    /** 
-     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes. 
-     * @param Indica se o checkpoint será confirmado ou descartado.
-    */
-    void confirmCheckpointCreation(bool confirm);
-
-    /**
-     * Inicia um processo de rollback para um checkpoint específico.
-     * @param requester Nó que requisitou o rollback.
-     * @param cpId ID do checkpoint para o qual será feito rollback.
-     */
-    void startRollback(Address requester, int cpId);
-
-    /** 
-     * Carrega as configurações do arquivo de configurações referentes a esta classe.
-    */
+    /** Carrega as configurações do arquivo de configurações referentes a esta classe. */
     void loadConfigurations();
 
     /** 
@@ -148,14 +98,8 @@ class ClientNodeApp : public CheckpointApp
     */
     void resetNodeData();
 
-    /** 
-     * Imprime os dados dos atributos desta classe (para fins de debug).
-    */
+    /** Imprime os dados dos atributos desta classe (para fins de debug). */
     void printNodeData();
-
-  protected:
-    
-    void configureCheckpointStrategy() override;
 
   public:
     /**
@@ -169,21 +113,13 @@ class ClientNodeApp : public CheckpointApp
     ~ClientNodeApp() override;
 
     /**
-     * \brief set the remote address and port
-     * \param ip remote IP address
-     * \param port remote port
+     * Reseta os dados do nó e realiza um processo de rollback para um checkpoint específico, 
+     * quando solicitado por outro nó.
+     * 
+     * @param requester Nó que requisitou o rollback.
+     * @param cpId ID do checkpoint para o qual será feito rollback.
      */
-    void SetRemote(Address ip, uint16_t port);
-    /**
-     * \brief set the remote address
-     * \param addr remote address
-     */
-    void SetRemote(Address addr);
-
-    /**
-     * \return the total bytes sent by this app
-     */
-    uint64_t GetTotalTx() const;
+    virtual void initiateRollback(Address requester, int cpId) override;
 
     /** 
      * Indica em quais condições esta aplicação pode criar checkpoints ou não.
@@ -191,33 +127,26 @@ class ClientNodeApp : public CheckpointApp
     bool mayCheckpoint() override;
 
     /** 
-     * Método abstrato. Método chamado imediatamente antes da execução de um rollback
-     * para realizar algum processamento, caso seja necessário.
-     * */
-    void beforeRollback() override;
-
-    /** 
      * Método abstrato. Método chamado imediatamente após a execução de um rollback
      * para realizar algum processamento, caso seja necessário.
      * */
     void afterRollback() override;
 
-    /** 
-     * Método chamado imediatamente antes da criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
-     * */
-    void beforePartialCheckpoint() override;
+    /**
+     * \return the total bytes sent by this app
+     */
+    uint64_t GetTotalTx() const;
 
     /** 
-     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
-     * */
-    void afterPartialCheckpoint() override;
+     * Converte uma string padronizada no formato 'IP;IP;IP...', adicionando os endereços
+     * ao vetor de endereços a enviar pacotes.
+     */
+    void SetPeerAddresses(string addressList);
 
-    /** 
-     * Método chamado imediatamente após o cancelamento de um checkpoint.
-     * */
-    void afterCheckpointDiscard() override;
+    /** Converte o vetor de endereços em uma string. */
+    string GetPeerAddresses() const;
+
+    uint16_t getPeerPort();
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
@@ -230,16 +159,6 @@ class ClientNodeApp : public CheckpointApp
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
-
-    /** 
-     * Converte uma string padronizada no formato 'IP;IP;IP...', adicionando os endereços
-     * ao vetor de endereços a enviar pacotes.
-     */
-    void SetPeerAddresses(string addressList);
-
-    /** Converte o vetor de endereços em uma string. */
-    string GetPeerAddresses() const;
-    
 };
 
 } // namespace ns3

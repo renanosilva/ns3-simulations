@@ -3,11 +3,14 @@
         "time-in-seconds": 60.0,
         "distance-to-rx-in-meters": 10.0,
         "max-packets": 0,
-        "interval": 1.0
+        "interval": 1.0,
+        "checkpoint-strategy": "GlobalSyncClocksStrategy",
+        "checkpoint-interval": 5.0,
+        "checkpoint-timeout": 2.0
     },
     "nodes": {
         "battery-nodes": {
-            "amount": 2,
+            "amount": 1,
             "battery-node-0":{
                 "energy-update-interval": 1.0,
                 "sleep-energy": 1.0,
@@ -17,9 +20,6 @@
                 "receive-packet-energy": 100.0,
                 "send-packet-energy": 100.0,
                 "connect-energy": 50.0,
-                "checkpoint-strategy": "GlobalSyncClocksStrategy",
-                "checkpoint-interval": 5.0,
-                "checkpoint-timeout": 2.0,
                 "energy-generator": "CircularEnergyGenerator",
                 "sleep-mode-percentage": 10.0,
                 "normal-mode-percentage": 40.0
@@ -43,7 +43,7 @@
             }
         },
         "client-nodes": {
-            "amount": 2,
+            "amount": 1,
             "client-node-0":{
                 "checkpoint-strategy": "GlobalSyncClocksStrategy",
                 "checkpoint-interval": 5.0,

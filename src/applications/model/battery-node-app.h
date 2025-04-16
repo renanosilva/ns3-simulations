@@ -21,7 +21,6 @@
 #include "packet-loss-counter.h"
 
 #include "ns3/battery.h"
-#include "ns3/udp-helper.h"
 #include "ns3/checkpoint-app.h"
 #include "ns3/address.h"
 #include "ns3/socket.h"
@@ -80,8 +79,14 @@ class BatteryNodeApp : public CheckpointApp {
     /// Callbacks for tracing the packet Rx events, includes source and destination addresses
     TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
     
-    Battery battery;  //!< bateria do sensor
-    enum Mode currentMode; //Modo atual do nó
+    //Bateria do nó
+    Battery battery;
+
+    /** Gerador de energia da bateria do nó */
+    Ptr<EnergyGenerator> energyGenerator;
+
+    //Modo atual do nó
+    enum Mode currentMode;
     
     Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
     double sleepEnergyConsumption; //Consumo de energia em modo sleep
@@ -94,17 +99,14 @@ class BatteryNodeApp : public CheckpointApp {
     double sleepModePercentage; //Porcentagem da bateria a partir da qual se entra no modo sleep
     double normalModePercentage; //Porcentagem da bateria a partir da qual se volta para o modo normal (estando no modo sleep)
 
-    /** Gerador de energia da bateria do nó */
-    Ptr<EnergyGenerator> energyGenerator;
-
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    Ptr<UDPHelper> udpHelper;       //Auxilia a conexão de um nó com outro
-    uint16_t m_port;                //!< Port on which we listen for incoming packets.
+    /** Port on which we listen for incoming packets. */
+    uint16_t m_port;
     
     /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
     uint64_t m_seq;
@@ -126,58 +128,25 @@ class BatteryNodeApp : public CheckpointApp {
      */
     void HandleRead(Ptr<MessageData> md);
 
-    /**
-     * Gerencia a recepção de um pacote enquanto está no modo de rollback.
-     *
-     * \param md Dados da mensagem recebida.
-     */
-    void HandleReadInRollbackMode(Ptr<MessageData> md);
-
-    /**
-     * Gerencia a recepção de um pacote enquanto está no modo de criação de checkpoint.
-     *
-     * \param md Dados da mensagem recebida.
-     */
-    void HandleReadInCheckpointMode(Ptr<MessageData> md);
-
     /** 
      * Carrega as configurações do arquivo de configurações referentes a esta classe.
     */
     void loadConfigurations();
 
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
-     * Método chamado quando este nó realiza seu próprio rollback.
-     */
-    void notifyNodesAboutRollback();
+    /** Define o gerador de energia a ser utilizado por este nó. */
+    void configureEnergyGenerator();
 
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
+     /**
+     * Realiza um processo de rollback para o último checkpoint criado, por iniciativa do 
+     * próprio nó. Não reseta os dados do nó (isso já deve ter sido feito antes).
      */
-    void notifyNodesAboutCheckpointConcluded();
-
-    /** 
-     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,
-     * ou o cancela. 
-     * @param confirm Indica se o checkpoint será confirmado ou descartado.
-    */
-    void confirmCheckpointCreation(bool confirm);
-
-        /**
-     * Inicia um processo de rollback para um checkpoint específico.
-     * @param requester Nó que requisitou o rollback.
-     * @param cpId ID do checkpoint para o qual será feito rollback.
-     */
-    void startRollback(Address requester, int cpId);
+    void initiateRollbackToLastCheckpoint();
 
     /** 
      * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
     algum erro.
     */
     void resetNodeData();
-
-    /** Define o gerador de energia a ser utilizado por este nó. */
-    void configureEnergyGenerator();
 
     /** Diminui a energia da bateria referente ao seu funcionamento básico */
     void decreaseIdleEnergy(); 
@@ -189,22 +158,22 @@ class BatteryNodeApp : public CheckpointApp {
     void decreaseCurrentModeEnergy();
     
     /** Diminui a energia da bateria referente ao recebimento de um pacote */
-    void decreaseReadEnergy(); 
+    void decreaseReadEnergy() override; 
     
     /** Diminui a energia da bateria referente ao envio de um pacote */
-    void decreaseSendEnergy();
+    void decreaseSendEnergy() override;
     
     /** Diminui a energia da bateria referente à conexão de um socket */
     void decreaseConnectEnergy();
 
     /** Diminui a energia da bateria referente à criação de um checkpoint */
-    void decreaseCheckpointEnergy();
+    void decreaseCheckpointEnergy() override;
 
     /** Diminui a energia da bateria referente ao processo de rollback */
-    void decreaseRollbackEnergy();
+    void decreaseRollbackEnergy() override;
 
     /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
-    void decreaseEnergy(double amount);
+    void decreaseEnergy(double amount) override;
     
     /** Verifica se a bateria deve mudar de modo, com base na energia restante */
     void checkModeChange();
@@ -216,14 +185,8 @@ class BatteryNodeApp : public CheckpointApp {
     
     Time getEnergyUpdateInterval();
 
-    /** 
-       * Imprime os dados dos atributos desta classe (para fins de debug).
-      */
+    /** Imprime os dados dos atributos desta classe (para fins de debug). */
     void printNodeData();
-
-  protected:
-
-    void configureCheckpointStrategy() override;
 
   public:
 
@@ -232,36 +195,14 @@ class BatteryNodeApp : public CheckpointApp {
      * \return the object TypeId
      */
     static TypeId GetTypeId();
+
     BatteryNodeApp();
+
     ~BatteryNodeApp() override;
 
     bool isSleeping();
     
     bool isDepleted();
-
-    /** 
-     * Método abstrato. Método chamado imediatamente antes da criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
-     * */
-    void beforePartialCheckpoint() override;
-
-    /** 
-     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
-     * */
-    void afterPartialCheckpoint() override;
-
-    /** 
-     * Método chamado imediatamente após o cancelamento de um checkpoint
-     * para realizar algum processamento, caso seja necessário.
-     * */
-    void afterCheckpointDiscard() override;
-
-    /** 
-     * Método abstrato. Método chamado imediatamente antes da execução de um rollback
-     * para realizar algum processamento, caso seja necessário.
-     * */
-    void beforeRollback() override;
 
     /** 
      * Método abstrato. Método chamado imediatamente após a execução de um rollback
@@ -278,6 +219,15 @@ class BatteryNodeApp : public CheckpointApp {
      * Indica em quais condições esta aplicação pode remover checkpoints ou não.
      * */
     bool mayRemoveCheckpoint() override;
+
+    /**
+     * Reseta os dados do nó e realiza um processo de rollback para um checkpoint específico, 
+     * quando solicitado por outro nó.
+     * 
+     * @param requester Nó que requisitou o rollback.
+     * @param cpId ID do checkpoint para o qual será feito rollback.
+     */
+    virtual void initiateRollback(Address requester, int cpId) override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

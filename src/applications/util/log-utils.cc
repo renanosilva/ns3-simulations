@@ -57,20 +57,21 @@ void logRegularMessageSent(string nodeName, Ptr<MessageData> md){
                                             ", Comando: " + md->GetCommand() : "")
                             << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE && md->GetData() > 0 ? 
                                             " " + to_string(md->GetData()) : "")
+                            << (md->GetCommand() == RESPONSE_VALUE ? (", m_seq: " + to_string(md->GetData())) : "")
                             << ")"); 
 
 }
 
-void logRegularMessageSent(string nodeName, Ptr<MessageData> md, uint64_t m_seq){
+// void logRegularMessageSent(string nodeName, Ptr<MessageData> md, uint64_t m_seq){
 
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName << " enviou " << md->GetSize()
-                            << " bytes para " << InetSocketAddress::ConvertFrom(md->GetTo()).GetIpv4()
-                            << " porta " << InetSocketAddress::ConvertFrom(md->GetTo()).GetPort()
-                            << " (Número de Sequência: " << md->GetSequenceNumber()
-                            << ", UId: " << md->GetUid() 
-                            << ", m_seq: " << m_seq << ")"); 
+//     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName << " enviou " << md->GetSize()
+//                             << " bytes para " << InetSocketAddress::ConvertFrom(md->GetTo()).GetIpv4()
+//                             << " porta " << InetSocketAddress::ConvertFrom(md->GetTo()).GetPort()
+//                             << " (Número de Sequência: " << md->GetSequenceNumber()
+//                             << ", UId: " << md->GetUid() 
+//                             << ", m_seq: " << m_seq << ")"); 
 
-}
+// }
 
 /*void logCommandSent(string nodeName, Ptr<MessageData> md){
 

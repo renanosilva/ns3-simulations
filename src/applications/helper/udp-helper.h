@@ -66,6 +66,58 @@ const static string CHECKPOINT_FINISHED_COMMAND = "CHECKPOINT_FINISHED_COMMAND";
 class UDPHelper : public Object
 {
 
+private:
+
+    void HandleRead(Ptr<Socket> socket);
+
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
+
+    /* 
+      Por questão de organização, aqui devem ser declarados os atributos que não devem ser armazenados em 
+      checkpoints. Exemplos desses tipos de atributos incluem atributos físicos, como, a carga atual da bateria, 
+      ou atributos fixos (que nunca mudam) de uma aplicação.
+    */
+
+    /// Traced Callback: transmitted packets.
+    TracedCallback<Ptr<const Packet>> m_txTrace;
+
+    /// Callbacks for tracing the packet Rx events
+    TracedCallback<Ptr<const Packet>> m_rxTrace;
+
+    /// Callbacks for tracing the packet Tx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_txTraceWithAddresses;
+
+    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
+
+    //!< Socket
+    Ptr<Socket> m_socket; 
+
+    //Callback a ser chamado ao receber uma mensagem referente às regras normais de negócio.
+    Callback<void, Ptr<MessageData>> receiveCallback;
+
+    //Callback de interceptação do protocolo de checkpointing a ser chamado ao receber uma mensagem.
+    Callback<bool, Ptr<MessageData>> protocolReceiveCallback;
+
+    //Callback de interceptação do protocolo de checkpointing a ser chamado ao enviar uma mensagem.
+    Callback<bool, Ptr<MessageData>> protocolSendCallback;
+
+    //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
+
+    //Somente atributos de aplicação serão armazenados em checkpoints
+
+    Address m_address;     //!< The node's address
+    uint16_t m_port;       //!< The node's port
+    Address m_local;       //!< local multicast address
+    uint64_t m_totalTx;    //!< Total bytes sent
+    uint32_t m_sent;       //!< Counter for sent messages
+    uint32_t m_received;   //!< Contador de mensagens recebidas (não necessariamente processadas)
+    string m_nodeName;     //nome do nó que está usando este helper
+
 public:
 
     /**
@@ -93,7 +145,7 @@ public:
      * @nodeName Nome do nó que está se conectando.
      * @port Porta através da qual as mensagens serão recebidas.
     */
-   void configureServer(Ptr<Node> node, string nodeName, uint16_t port);
+    void configureServer(Ptr<Node> node, string nodeName, uint16_t port);
 
     /** Encerra a conexão via socket.*/
     void terminateConnection();
@@ -144,53 +196,25 @@ public:
      * */
     void setReceiveCallback(Callback<void, Ptr<MessageData>> callback);
 
+    /** 
+     * Atribui um método de callback, a ser chamado quando um pacote for recebido 
+     * no socket que está sendo usado. Esse callback é referente ao protocolo que
+     * estiver sendo testado na simulação. A mensagem será processada primeiro pelo
+     * protocolo, e só depois pela aplicação.
+     * */
+    void setProtocolReceiveCallback(Callback<bool, Ptr<MessageData>> callback);
+
+    /** 
+     * Atribui um método de callback, a ser chamado quando um pacote for enviado 
+     * no socket que está sendo usado. Esse callback é referente ao protocolo que
+     * estiver sendo testado na simulação. Toda mensagem enviada será interceptada
+     * pelo protocolo para análise.
+     * */
+    void setProtocolSendCallback(Callback<bool, Ptr<MessageData>> callback);
+
     void setAddress(const ns3::Address& address);
     void setPort(uint16_t port);
     void setNodeName(const std::string& name);
-
-private:
-
-    void HandleRead(Ptr<Socket> socket);
-
-    ////////////////////////////////////////////////
-    //////          ATRIBUTOS NATIVOS         //////
-    ////////////////////////////////////////////////
-
-    /* 
-      Atributos nativos são aqueles que não são armazenados em checkpoints. Podem ser 
-      atributos físicos, como, por exemplo, a carga atual da bateria, ou atributos fixos 
-      (que nunca mudam) de uma aplicação.
-    */
-
-    /// Traced Callback: transmitted packets.
-    TracedCallback<Ptr<const Packet>> m_txTrace;
-
-    /// Callbacks for tracing the packet Rx events
-    TracedCallback<Ptr<const Packet>> m_rxTrace;
-
-    /// Callbacks for tracing the packet Tx events, includes source and destination addresses
-    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_txTraceWithAddresses;
-
-    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
-    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
-
-    Ptr<Socket> m_socket;                             //!< Socket
-    Callback<void, Ptr<MessageData>> receiveCallback; //Callback a ser chamado ao receber uma mensagem
-
-    ////////////////////////////////////////////////
-    //////       ATRIBUTOS DE APLICAÇÃO       //////
-    ////////////////////////////////////////////////
-
-    Address m_address;     //!< The node's address
-    uint16_t m_port;       //!< The node's port
-    Address m_local;       //!< local multicast address
-    uint64_t m_totalTx;    //!< Total bytes sent
-    uint32_t m_sent;       //!< Counter for sent messages
-    uint32_t m_received;   //!< Contador de mensagens recebidas (não necessariamente processadas)
-    string m_nodeName;     //nome do nó que está usando este helper
-
-    // Address m_peerAddress; //!< Remote peer address
-    // uint16_t m_peerPort;   //!< Remote peer port. This port will be used to send packets.
 
 };
 

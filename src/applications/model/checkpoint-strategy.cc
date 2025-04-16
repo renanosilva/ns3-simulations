@@ -16,6 +16,8 @@
  */
 
 #include "checkpoint-strategy.h"
+#include "ns3/log-utils.h"
+
 using namespace std;
 
 namespace ns3
@@ -35,19 +37,16 @@ CheckpointStrategy::GetTypeId()
             .SetParent<Object>()
             .SetGroupName("Sensor");
 
-    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 CheckpointStrategy::CheckpointStrategy(){
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 CheckpointStrategy::~CheckpointStrategy()
 {
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void CheckpointStrategy::startCheckpointing(){
@@ -70,11 +69,15 @@ void CheckpointStrategy::discardLastCheckpoint(){
     
 }
 
-void CheckpointStrategy::startRollbackToLastCheckpoint(){
+void CheckpointStrategy::rollbackToLastCheckpoint(){
     
 }
 
-void CheckpointStrategy::startRollback(int checkpointId){
+void CheckpointStrategy::rollback(int checkpointId){
+    
+}
+
+void CheckpointStrategy::rollback(Address requester, int checkpointId){
     
 }
 
@@ -82,35 +85,87 @@ void CheckpointStrategy::confirmLastCheckpoint(){
     
 }
 
+void CheckpointStrategy::addAddress(vector<Address> &v, Address a){
+    NS_LOG_FUNCTION(this);
+    
+    auto it = find(v.begin(), v.end(), a);
+
+    if (it == v.end()) {
+        //Endereço não foi encontrado
+        //Adiciona endereço ao vetor de endereços
+        v.push_back(a);
+    }
+}
+
+void CheckpointStrategy::addDependentAddress(Address a){
+    NS_LOG_FUNCTION(this);
+    
+    auto it = find(dependentAddresses.begin(), dependentAddresses.end(), a);
+
+    if (it == dependentAddresses.end()) {
+        //Endereço não foi encontrado
+        //Adiciona endereço ao vetor de endereços
+        dependentAddresses.push_back(a);
+    }
+}
+
+void CheckpointStrategy::removeAddress(vector<Address> &v, Address a){
+    // Função de comparação para encontrar o endereço exato
+    auto it = std::remove_if(v.begin(), v.end(),
+                             [a](const Address &addr)
+                             {
+                                 return InetSocketAddress::ConvertFrom(addr).GetIpv4() ==
+                                        InetSocketAddress::ConvertFrom(a).GetIpv4();
+                             });
+
+    // Remove efetivamente o elemento do vetor
+    if (it != v.end()){
+        v.erase(it, v.end());
+    }
+}
+
+bool CheckpointStrategy::isCheckpointInProgress(){
+    return checkpointInProgress;
+}
+
+bool CheckpointStrategy::isRollbackInProgress(){
+    return rollbackInProgress;
+}
+
+bool CheckpointStrategy::interceptRead(Ptr<MessageData> md){
+    return true;
+}
+
+bool CheckpointStrategy::interceptSend(Ptr<MessageData> md){
+    return false;
+}
+
+vector<Address> CheckpointStrategy::getDependentAddresses(){
+    return dependentAddresses;
+}
+
 int CheckpointStrategy::getLastCheckpointId(){
     NS_LOG_FUNCTION(this);
     return checkpointHelper->getLastCheckpointId();
 }
 
-void CheckpointStrategy::setApp(Ptr<CheckpointApp> application){
-    NS_LOG_FUNCTION(this);
-    app = application;
-    NS_LOG_FUNCTION("Fim do método");
+void CheckpointStrategy::confirmCheckpointCreation(bool confirm) {
+
 }
 
 void to_json(json& j, const CheckpointStrategy& obj) {
     NS_LOG_FUNCTION("CheckpointStrategy::to_json");
     
     j = json{
-        {"checkpointHelper", *obj.checkpointHelper}, 
-        {"logData", obj.logData}
+        {"dependentAddresses", obj.dependentAddresses}
     };
     
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, CheckpointStrategy& obj) {
     NS_LOG_FUNCTION("CheckpointStrategy::from_json");
     
-    j.at("checkpointHelper").get_to(*obj.checkpointHelper);
-    j.at("logData").get_to(obj.logData);
-
-    NS_LOG_FUNCTION("Fim do método");
+    j.at("dependentAddresses").get_to(obj.dependentAddresses); 
 }
 
 void CheckpointStrategy::setLogData(string data){

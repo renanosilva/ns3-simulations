@@ -24,6 +24,7 @@
 #include <ns3/double.h>
 #include "ns3/checkpoint-app.h"
 #include "ns3/checkpoint-helper.h"
+#include "ns3/message-data.h"
 #include <string>
 
 using namespace std;
@@ -37,7 +38,118 @@ class CheckpointHelper;
 /** Classe base para as classes que implementam estratégias de checkpointing. */
 class CheckpointStrategy : public Object
 {
+  protected:
+
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
+
+    /* 
+      Por questão de organização, aqui devem ser declarados os atributos que não devem ser armazenados em 
+      checkpoints. Exemplos desses tipos de atributos incluem atributos físicos, como, a carga atual da bateria, 
+      ou atributos fixos (que nunca mudam) de uma aplicação.
+    */
+
+    /** Aplicação na qual deverá ser feito o checkpoint. */
+    Ptr<CheckpointApp> app;
+
+    /** Auxilia a manipular os arquivos de checkpoint e logs. */
+    Ptr<CheckpointHelper> checkpointHelper;
+
+    /** 
+     * Dados a serem armazenados em log, de forma a complementar os dados do 
+     * checkpoint, se necessário. 
+     * */
+    string logData = "";
+
+    /** Endereço IP do nó que iniciou o último procedimento de rollback */
+    Ipv4Address rollbackStarterIp;
+
+    /** ID do checkpoint para o qual deve ser feito rollback */
+    int checkpointId;
+
+    /**
+     * Indica se um procedimento de rollback está em progresso. Quando um rollback
+     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
+     * que a comunicação possa ser restabelecida.
+     */
+    bool rollbackInProgress;
+
+    /**
+     * Indica se um procedimento de criação de checkpoints está em progresso. Quando 
+     * um checkpoint é criado, é necessário aguardar que todos os nós envolvidos 
+     * comuniquem sua conclusão para que o funcionamento normal da aplicação seja
+     * retomado.
+     */
+    bool checkpointInProgress;
+
+    /** Indica quais nós dependentes ainda precisam fazer rollback. */
+    vector<Address> pendingRollbackAddresses;
+
+    /** Indica quais nós dependentes ainda precisam confirmar criação de checkpoint. */
+    vector<Address> pendingCheckpointAddresses;
+
+     //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
+
+    /** 
+     * Endereços dos nós para os quais este nó enviou mensagens desde o último checkpoint.
+     * Indica quais nós têm dependência com este nó, em caso de criação de checkpoints e 
+     * de realização de rollbacks.
+     */
+    vector<Address> dependentAddresses;
+
+    /** 
+     * Adiciona um endereço a um vetor de endereços. Não permite elementos repetidos.
+     * @param v Vetor no qual o elemento será inserido.
+     * @param a Endereço que será inserido no vetor.
+     */
+    void addAddress(vector<Address> &v, Address a);
+
+     /** 
+     * Adiciona um endereço ao vetor de endereços dependentes. Não permite elementos repetidos.
+     * @param a Endereço que será inserido no vetor.
+     */
+    void addDependentAddress(Address a);
+
+    /** 
+     * Remove um endereço de um vetor de endereços, mantendo a ordenação dos elementos. 
+     * @param v Vetor do qual o elemento será removido.
+     * @param a Endereço que será removido do vetor.
+     * */
+    void removeAddress(vector<Address> &v, Address a);
+
+    /** Verifica se um determinado vetor de endereços possui um determinado elemento. */
+    bool addressVectorContain(vector<Address> &v, const Address& a) {
+      return find(v.begin(), v.end(), a) != v.end();
+    }
+
+    /** 
+     * Método abstrato. Utilizado para criação de checkpoints de fato. 
+     * Serão armazenados no checkpoint os estados dos objetos de interesse.
+     * A implementação irá depender da estratégia adotada.
+     * */
+    virtual void writeCheckpoint();
+
+    /** Confirma a criação do último checkpoint. */
+    virtual void confirmLastCheckpoint();
+
+     /** 
+     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,
+     * ou o cancela. 
+     * @param confirm Indica se o checkpoint será confirmado ou descartado.
+    */
+    virtual void confirmCheckpointCreation(bool confirm);
+
+    /** Método abstrato. Utilizado para descarte do último checkpoint criado. */
+    virtual void discardLastCheckpoint();
+
+    /** Obtém o identificador do último checkpoint criado. */
+    int getLastCheckpointId();
+
   public:
+
     /**
      * \brief Get the type ID.
      * \return the object TypeId
@@ -45,6 +157,7 @@ class CheckpointStrategy : public Object
     static TypeId GetTypeId();
 
     CheckpointStrategy();
+    
     ~CheckpointStrategy() override;
 
     /** 
@@ -60,16 +173,6 @@ class CheckpointStrategy : public Object
     virtual void stopCheckpointing();
 
     /** 
-     * Método abstrato. Utilizado para criação de checkpoints de fato. 
-     * Serão armazenados no checkpoint os estados dos objetos de interesse.
-     * A implementação irá depender da estratégia adotada.
-     * */
-    virtual void writeCheckpoint();
-
-    /** Método abstrato. Utilizado para descarte do último checkpoint criado. */
-    virtual void discardLastCheckpoint();
-
-    /** 
      * Método abstrato. Utilizado para criação de logs. 
      * Logs são uma forma de complemento aos checkpoints. Logs podem armazenar, por exemplo,
      * eventos ocorridos, como mensagens enviadas/recebidas, enquanto checkpoints armazenam
@@ -80,24 +183,61 @@ class CheckpointStrategy : public Object
     virtual void writeLog();
 
     /** 
-     * Método abstrato. Utilizado para iniciar um processo de rollback, após a recuperação
-     * de um nó. A implementação irá depender da estratégia adotada. 
+     * Método abstrato. Utilizado para iniciar um processo de rollback para o último
+     * checkpoint criado, após a recuperação de um nó. A implementação irá depender 
+     * da estratégia adotada. 
      * */
-    virtual void startRollbackToLastCheckpoint();
+    virtual void rollbackToLastCheckpoint();
 
     /** 
      * Utilizado para iniciar um processo de rollback, após a recuperação
-     * de um nó. O nó faz o rollback para o checkpoint identificado como
+     * do próprio nó. O rollback é feito para o checkpoint identificado como
      * parâmetro.
      * Método abstrato. A implementação irá depender da estratégia adotada. 
      * */
-    virtual void startRollback(int checkpointId);
+    virtual void rollback(int checkpointId);
 
-    /** Confirma a criação do último checkpoint. */
-    virtual void confirmLastCheckpoint();
+    /** 
+     * Utilizado para iniciar um processo de rollback, após a solicitação
+     * de um outro nó. O requisitor ficará armazenado para posterior comunicação
+     * de conclusão. 
+     * O rollback será feito para o checkpoint identificado como
+     * parâmetro.
+     * Método abstrato. A implementação irá depender da estratégia adotada. 
+     * @param requester Nó que solicitou o rollback.
+     * @param checkpointId ID do checkpoint para o qual deverá ser feito rollback.
+     * */
+    virtual void rollback(Address requester, int checkpointId);
 
-    /** Obtém o identificador do último checkpoint criado. */
-    int getLastCheckpointId();
+    /**
+     * Intercepta a leitura de um pacote. Dessa forma, a estratégia de checkpoint
+     * tem a oportunidade de processar a leitura antes da aplicação.
+     *
+     * \param md Dados da mensagem recebida.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    virtual bool interceptRead(Ptr<MessageData> md);
+
+    /**
+     * Intercepta o envio de um pacote. Dessa forma, a estratégia de checkpoint
+     * tem a oportunidade de analisar pacotes enviados pela aplicação.
+     *
+     * \param md Dados da mensagem enviada.
+     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
+     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
+     * não tiver sido processada, o que deverá ser feito pela aplicação.
+     */
+    virtual bool interceptSend(Ptr<MessageData> md);
+
+    /** Indica se existe um procedimento de criação de checkpoint em progresso. */
+    bool isCheckpointInProgress();
+
+    /** Indica se existe um procedimento de rollback em progresso. */
+    bool isRollbackInProgress();
+
+    
 
     /** Especifica os dados a serem armazenados em log. */
     void setLogData(string data);
@@ -108,29 +248,19 @@ class CheckpointStrategy : public Object
     /** Obtém os dados a serem armazenados no próximo log. */
     string getLogData();
 
-    void setApp(Ptr<CheckpointApp> application);
+    /** 
+     * Retorna o vetor de endereços que possuem dependência com este nó.
+     * São endereços dos nós para os quais este nó enviou mensagens desde o último checkpoint.
+     * Indica quais nós têm dependência com este nó, em caso de criação de checkpoints e 
+     * de realização de rollbacks.
+     */
+    vector<Address> getDependentAddresses();
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointStrategy& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, CheckpointStrategy& obj);
-
-    //friend class BatteryNodeAp; 
-
-  protected:
-
-    /** Auxilia a manipular os arquivos de checkpoint e logs. */
-    Ptr<CheckpointHelper> checkpointHelper;
-
-    /** 
-     * Dados a serem armazenados em log, de forma a complementar os dados do 
-     * checkpoint, se necessário. 
-     * */
-    string logData = "";
-
-    /** Aplicação na qual deverá ser feito o checkpoint. */
-    Ptr<CheckpointApp> app;
 
 };
 

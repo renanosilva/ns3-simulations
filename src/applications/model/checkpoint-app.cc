@@ -17,6 +17,8 @@
 
 #include "checkpoint-app.h"
 #include "ns3/inet-socket-address.h"
+#include "ns3/global-sync-clocks-strategy.h"
+#include "ns3/log-utils.h"
 
 namespace ns3
 {
@@ -35,26 +37,51 @@ CheckpointApp::GetTypeId()
             .SetGroupName("Applications")
             .AddConstructor<CheckpointApp>();
     
-    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
 CheckpointApp::CheckpointApp()
 {
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 CheckpointApp::~CheckpointApp()
 {
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void CheckpointApp::configureCheckpointStrategy() {
     NS_LOG_FUNCTION(this);
     
-    NS_LOG_FUNCTION("Fim do método");
+    string property = "simulation.checkpoint-strategy";
+    string checkpointStrategyName = configHelper->GetStringProperty(property);
+
+    if (checkpointStrategyName == "GlobalSyncClocksStrategy"){
+        
+        string intervalProperty = "simulation.checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        string timeoutProperty = "simulation.checkpoint-timeout";
+        double checkpointTimeout = configHelper->GetDoubleProperty(timeoutProperty);
+
+        checkpointStrategy = Create<GlobalSyncClocksStrategy>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
+        checkpointStrategy->startCheckpointing();
+    
+    } else {
+        NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
+    }
+}
+
+Ptr<MessageData> CheckpointApp::send(string command, int d, Address to){
+    Ptr<MessageData> md = udpHelper->send(command, d, to);
+    utils::logRegularMessageSent(getNodeName(), md);
+    return md;
+}
+
+Ptr<MessageData> CheckpointApp::send(string command, int d, Ipv4Address ip, uint16_t port){
+    Ptr<MessageData> md = udpHelper->send(command, d, ip, port);
+    utils::logRegularMessageSent(getNodeName(), md);
+    return md;
 }
 
 bool CheckpointApp::mayCheckpoint(){
@@ -77,14 +104,6 @@ CheckpointApp::StopApplication()
     NS_LOG_FUNCTION(this);
 }
 
-void CheckpointApp::beforePartialCheckpoint(){
-    
-}
-
-void CheckpointApp::afterPartialCheckpoint(){
-    
-}
-
 void CheckpointApp::beforeCheckpointDiscard(){
     
 }
@@ -101,44 +120,48 @@ void CheckpointApp::afterRollback(){
     
 }
 
-void CheckpointApp::addAddress(vector<Address> &v, Address a){
-    NS_LOG_FUNCTION(this);
-    
-    auto it = find(v.begin(), v.end(), a);
+void CheckpointApp::initiateRollback(Address requester, int cpId){
 
-    if (it == v.end()) {
-        //Endereço não foi encontrado
-        //Adiciona endereço ao vetor de endereços
-        v.push_back(a);
-    }
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
-void CheckpointApp::removeAddress(vector<Address> &v, Address a){
-    // Função de comparação para encontrar o endereço exato
-    auto it = std::remove_if(v.begin(), v.end(),
-                             [a](const Address &addr)
-                             {
-                                 return InetSocketAddress::ConvertFrom(addr).GetIpv4() ==
-                                        InetSocketAddress::ConvertFrom(a).GetIpv4();
-                             });
+void CheckpointApp::decreaseEnergy(double amount) {
+    NS_LOG_FUNCTION(this);
+    //Por padrão, não faz nada. Nós a bateria devem sobrescrever o método.
+}
 
-    // Remove efetivamente o elemento do vetor
-    if (it != v.end()){
-        v.erase(it, v.end());
-    }
+void CheckpointApp::decreaseCheckpointEnergy(){
+    NS_LOG_FUNCTION(this);
+    //Por padrão, não faz nada. Nós a bateria devem sobrescrever o método.
+}
+
+void CheckpointApp::decreaseRollbackEnergy(){
+    NS_LOG_FUNCTION(this);
+    //Por padrão, não faz nada. Nós a bateria devem sobrescrever o método.
+}
+
+void CheckpointApp::decreaseReadEnergy(){
+    NS_LOG_FUNCTION(this);
+    //Por padrão, não faz nada. Nós a bateria devem sobrescrever o método.
+}
+
+void CheckpointApp::decreaseSendEnergy(){
+    NS_LOG_FUNCTION(this);
+    //Por padrão, não faz nada. Nós a bateria devem sobrescrever o método.
+}
+
+ApplicationType CheckpointApp::getApplicationType(){
+    return applicationType;
 }
 
 json CheckpointApp::to_json() const {
     NS_LOG_FUNCTION(this);
     
     json j = Application::to_json();
+    j["udpHelper"] = *udpHelper;
+    j["checkpointStrategy"] = *checkpointStrategy;
     j["nodeName"] = nodeName;
     j["configFilename"] = configFilename;
-    j["dependentAddresses"] = dependentAddresses;
     
-    NS_LOG_FUNCTION("Fim do método");
     return j;
 }
 
@@ -146,11 +169,13 @@ void CheckpointApp::from_json(const json& j) {
     NS_LOG_FUNCTION(this);
 
     Application::from_json(j);
-    j.at("nodeName").get_to(nodeName);
-    j.at("configFilename").get_to(configFilename); 
-    j.at("dependentAddresses").get_to(dependentAddresses); 
 
-    NS_LOG_FUNCTION("Fim do método");
+    udpHelper = Create<UDPHelper>();
+
+    j.at("udpHelper").get_to(*udpHelper); 
+    j.at("checkpointStrategy").get_to(*checkpointStrategy);
+    j.at("nodeName").get_to(nodeName);
+    j.at("configFilename").get_to(configFilename);
 }
 
 string CheckpointApp::getNodeName(){

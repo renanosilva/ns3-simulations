@@ -83,8 +83,6 @@ UDPHelper::GetTypeId()
                             MakeTraceSourceAccessor(&UDPHelper::m_txTraceWithAddresses),
                             "ns3::Packet::TwoAddressTracedCallback");
 
-    NS_LOG_FUNCTION("Fim do método");
-
     return tid;
 }
 
@@ -100,8 +98,6 @@ UDPHelper::UDPHelper()
     m_totalTx = 0;
     m_sent = 0;
     m_received = 0;
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 UDPHelper::~UDPHelper()
@@ -109,8 +105,6 @@ UDPHelper::~UDPHelper()
     NS_LOG_FUNCTION(this);
 
     m_socket = nullptr;
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
@@ -139,8 +133,6 @@ void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
     }
 
     m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
@@ -169,8 +161,6 @@ void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
     // }
 
     m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void UDPHelper::terminateConnection(){
@@ -178,8 +168,6 @@ void UDPHelper::terminateConnection(){
     
     m_socket->ShutdownRecv();
     m_socket->Close();
-    
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
@@ -210,13 +198,6 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     m_txTraceWithAddresses(p, from, to);
 
     p->AddHeader(seqTs);
-    
-    //Enviando pacote
-    if (m_socket->SendTo(p, 0, to)){
-        
-        ++m_sent;
-        m_totalTx += p->GetSize();
-    }
 
     Ptr<MessageData> md = Create<MessageData>();
     md->SetUid(p->GetUid());
@@ -227,7 +208,22 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     md->SetData(d);
     md->SetSize(p->GetSize());
 
-    NS_LOG_FUNCTION("Fim do método");
+    bool intercepted = false;
+
+    if (!protocolSendCallback.IsNull()){
+        //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem
+        intercepted = protocolSendCallback(md);
+    }
+    
+    //Só envia o pacote caso o protocolo de checkpointing permita
+    if (!intercepted){
+        //Enviando pacote
+        if (m_socket->SendTo(p, 0, to)){
+            
+            ++m_sent;
+            m_totalTx += p->GetSize();
+        }
+    }
 
     return md;
 }
@@ -285,9 +281,19 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
     }
 
     m_received++;
-    receiveCallback(md);
-
-    NS_LOG_FUNCTION("Fim do método");
+    
+    if (!protocolReceiveCallback.IsNull()){
+        //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem antes da aplicação
+        bool result = protocolReceiveCallback(md);
+        
+        //Se o protocolo de checkpointing não tiver processado a mensagem
+        if (!result){
+            //Então dá oportunidade à aplicação de processar a mensagem
+            receiveCallback(md);
+        }
+    } else {
+        receiveCallback(md);
+    }
 }
 
 void UDPHelper::printData(){
@@ -306,8 +312,6 @@ void UDPHelper::printData(){
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
         << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
         << "\n ");
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void to_json(json& j, const UDPHelper& obj) {
@@ -319,10 +323,9 @@ void to_json(json& j, const UDPHelper& obj) {
         {"m_local", obj.m_local},
         {"m_totalTx", obj.m_totalTx}, 
         {"m_sent", obj.m_sent},
-        {"m_received", obj.m_received}
+        {"m_received", obj.m_received},
+        {"m_nodeName", obj.m_nodeName}
     };
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, UDPHelper& obj) {
@@ -334,8 +337,7 @@ void from_json(const json& j, UDPHelper& obj) {
     j.at("m_totalTx").get_to(obj.m_totalTx);
     j.at("m_sent").get_to(obj.m_sent);
     j.at("m_received").get_to(obj.m_received);
-
-    NS_LOG_FUNCTION("Fim do método");
+    j.at("m_nodeName").get_to(obj.m_nodeName);
 }
 
 // Getters
@@ -354,6 +356,14 @@ void UDPHelper::setNodeName(const std::string& name) { m_nodeName = name; }
 
 void UDPHelper::setReceiveCallback(Callback<void, Ptr<MessageData>> callback){
     receiveCallback = callback;
+}
+
+void UDPHelper::setProtocolReceiveCallback(Callback<bool, Ptr<MessageData>> callback){
+    protocolReceiveCallback = callback;
+}
+
+void UDPHelper::setProtocolSendCallback(Callback<bool, Ptr<MessageData>> callback){
+    protocolSendCallback = callback;
 }
 
 

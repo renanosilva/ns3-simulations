@@ -21,7 +21,9 @@
 #include "ns3/application.h"
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/ptr.h"
+#include "ns3/udp-helper.h"
 #include "ns3/config-helper.h"
+#include "ns3/application-type.h"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
@@ -40,7 +42,7 @@ class CheckpointStrategy;
  */
 
 /**
- * \ingroup sensor
+ * \ingroup applications
  * \brief Aplicação referente a um nó que realiza checkpoint.
  */
 class CheckpointApp : public Application
@@ -48,12 +50,10 @@ class CheckpointApp : public Application
   private:
 
     virtual void StartApplication();
+
     virtual void StopApplication();
 
   protected:
-
-    /** Define a estratégia de checkpointing a ser utilizada por este nó. */
-    virtual void configureCheckpointStrategy();
 
     /////////////////////////////////////////////////////////////////////////////
     //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
@@ -65,109 +65,89 @@ class CheckpointApp : public Application
       ou atributos fixos (que nunca mudam) de uma aplicação.
     */
 
-    /** Estratégia de checkpoint escolhida para este nó. */
-    Ptr<CheckpointStrategy> checkpointStrategy;
+    /** Indica o tipo desta aplicação. Ex.: CLIENT ou SERVER. */
+    ApplicationType applicationType;
 
     /** Helper que auxilia no gerenciamento das configurações do nó. */
     Ptr<ConfigHelper> configHelper;
-
-    //Endereço IP do nó que iniciou o último procedimento de rollback
-    Ipv4Address rollbackStarterIp;
-
-    //ID do checkpoint para o qual deve ser feito rollback
-    int checkpointId;
-
-    /** Indica quais nós dependentes ainda precisam fazer rollback. */
-    vector<Address> pendingRollbackAddresses;
-
-    /** Indica quais nós dependentes ainda precisam confirmar criação de checkpoint. */
-    vector<Address> pendingCheckpointAddresses;
-
-    /**
-     * Indica se um procedimento de rollback está em progresso. Quando um rollback
-     * é iniciado, é necessário aguardar que todos os nós envolvidos o conclua para
-     * que a comunicação possa ser restabelecida.
-     */
-    bool rollbackInProgress;
-
-    /**
-     * Indica se um procedimento de criação de checkpoints está em progresso. Quando 
-     * um checkpoint é criado, é necessário aguardar que todos os nós envolvidos 
-     * comuniquem sua conclusão para que o funcionamento normal da aplicação seja
-     * retomado.
-     */
-    bool checkpointInProgress;
 
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
-    
-    string nodeName;       //nome deste nó
-    string configFilename; //nome do arquivo de configuração
 
-    /** 
-     * Endereços dos nós para os quais este nó enviou mensagens desde o último checkpoint.
-     * Indica quais nós têm dependência com este nó, em caso de criação de checkpoints e 
-     * de realização de rollbacks.
-     */
-    vector<Address> dependentAddresses;
+    Ptr<UDPHelper> udpHelper; //Auxilia a conexão de um nó com outro
+    Ptr<CheckpointStrategy> checkpointStrategy; // Estratégia de checkpoint escolhida para este nó.
+    string nodeName;          //nome deste nó
+    string configFilename;    //nome do arquivo de configuração
 
-    public:
+    /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
+    virtual void decreaseEnergy(double amount);
+
+    /** Define a estratégia de checkpointing a ser utilizada por este nó. */
+    virtual void configureCheckpointStrategy();
+
+  public:
 
     /**
      * \brief Get the type ID.
      * \return the object TypeId
      */
     static TypeId GetTypeId();
+
+    /** Construtor padrão */
     CheckpointApp();
+    
+    /** Destrutor padrão */
     ~CheckpointApp() override;
 
-    string getNodeName();
-
     /** 
-     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
-     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     * Envia um pacote genérico para um nó.
+     * 
+     * @param command comando que indica o tipo de mensagem.
+     * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
+     * @param to Indica para qual endereço o pacote será enviado.
      * */
-    virtual json to_json() const;
-    
-    /** 
-     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
-     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
-    */
-    virtual void from_json(const json& j);
+    virtual Ptr<MessageData> send(string command, int d, Address to);
 
     /** 
-     * Método abstrato. Método chamado imediatamente antes da criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
+     * Envia um pacote para um nó.
+     * 
+     * @param command comando que indica o tipo de mensagem.
+     * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
+     * @param ip IP de destino.
+     * @param port Porta de destino.
      * */
-    virtual void beforePartialCheckpoint();
+    virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port);
 
-     /** 
-     * Método abstrato. Método chamado imediatamente após a criação de um checkpoint
-     * (parcial, ainda não confirmado) para realizar algum processamento, caso seja necessário.
-     * */
-    virtual void afterPartialCheckpoint();
+    /**
+     * Reseta os dados do nó e realiza um processo de rollback para um checkpoint específico, 
+     * quando solicitado por outro nó.
+     * 
+     * @param requester Nó que requisitou o rollback.
+     * @param cpId ID do checkpoint para o qual será feito rollback.
+     */
+    virtual void initiateRollback(Address requester, int cpId);
 
     /** 
-     * Método abstrato. Método chamado imediatamente antes do cancelamento de um checkpoint.
+     * Método abstrato chamado imediatamente antes do cancelamento de um checkpoint.
      * */
     virtual void beforeCheckpointDiscard();
 
     /** 
-     * Método abstrato. Método chamado imediatamente após o cancelamento de um checkpoint.
+     * Método abstrato chamado imediatamente após o cancelamento de um checkpoint.
      * */
     virtual void afterCheckpointDiscard();
 
     /** 
-     * Método abstrato. Método chamado imediatamente antes da execução de um rollback
+     * Método abstrato chamado imediatamente antes da execução de um rollback
      * para realizar algum processamento, caso seja necessário.
      * */
     virtual void beforeRollback();
 
     /** 
-     * Método abstrato. Método chamado imediatamente após a execução de um rollback
+     * Método abstrato chamado imediatamente após a execução de um rollback
      * para realizar algum processamento, caso seja necessário.
      * */
     virtual void afterRollback();
@@ -188,25 +168,34 @@ class CheckpointApp : public Application
      */
     virtual bool mayRemoveCheckpoint();
 
-    /** 
-     * Adiciona um endereço a um vetor de endereços. Não permite elementos repetidos.
-     * @param v Vetor no qual o elemento será inserido.
-     * @param a Endereço que será inserido no vetor.
-     */
-    void addAddress(vector<Address> &v, Address a);
-
-    /** 
-     * Remove um endereço de um vetor de endereços, mantendo a ordenação dos elementos. 
-     * @param v Vetor do qual o elemento será removido.
-     * @param a Endereço que será removido do vetor.
-     * */
-    void removeAddress(vector<Address> &v, Address a);
-
-    /** Verifica se um determinado vetor de endereços possui um determinado elemento. */
-    bool addressVectorContain(vector<Address> &v, const Address& a) {
-      return find(v.begin(), v.end(), a) != v.end();
-    }
+    /** Diminui a energia do nó referente ao recebimento de um pacote. */
+    virtual void decreaseReadEnergy(); 
     
+    /** Diminui a energia do nó referente ao envio de um pacote. */
+    virtual void decreaseSendEnergy();
+    
+    /** Diminui a energia do nó referente à criação de um checkpoint. */
+    virtual void decreaseCheckpointEnergy();
+
+    /** Diminui a energia do nó referente ao processo de rollback. */
+    virtual void decreaseRollbackEnergy();
+
+    ApplicationType getApplicationType();
+
+    string getNodeName();
+
+    /** 
+     * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+     * */
+    virtual json to_json() const;
+    
+    /** 
+     * Especifica como esta classe deve ser convertida de JSON para objeto (para fins de rollback). 
+     * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
+    */
+    virtual void from_json(const json& j);
+
 };
 
 } // namespace ns3
