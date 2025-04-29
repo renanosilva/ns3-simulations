@@ -166,8 +166,10 @@ void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
 void UDPHelper::terminateConnection(){
     NS_LOG_FUNCTION(this);
     
-    m_socket->ShutdownRecv();
-    m_socket->Close();
+    if (m_socket != nullptr){
+        m_socket->ShutdownRecv();
+        m_socket->Close();
+    }
 }
 
 Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
@@ -214,7 +216,7 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
         //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem
         intercepted = protocolSendCallback(md);
     }
-    
+
     //Só envia o pacote caso o protocolo de checkpointing permita
     if (!intercepted){
         //Enviando pacote
@@ -222,10 +224,12 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
             
             ++m_sent;
             m_totalTx += p->GetSize();
+
+            return md;
         }
     }
 
-    return md;
+    return nullptr;
 }
 
 Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port){
@@ -310,7 +314,7 @@ void UDPHelper::printData(){
         << ", m_address = " << Ipv4Address::ConvertFrom(m_address)
         << ", m_port = " << m_port
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
-        << ", m_socket->GetAllowBroadcast() = " << m_socket->GetAllowBroadcast()
+        << (m_socket == nullptr ? "" : ", m_socket->GetAllowBroadcast() = " + to_string(m_socket->GetAllowBroadcast()))
         << "\n ");
 }
 

@@ -18,6 +18,10 @@
 #ifndef CHECKPOINT_APP_H
 #define CHECKPOINT_APP_H
 
+#include "ns3/enum.h"
+#include "ns3/battery.h"
+#include "fixed-energy-generator.h"
+#include "circular-energy-generator.h"
 #include "ns3/application.h"
 #include "ns3/checkpoint-strategy.h"
 #include "ns3/ptr.h"
@@ -34,7 +38,17 @@ using namespace std;
 namespace ns3
 {
 
+enum EnergyMode
+{
+  NORMAL,
+  SLEEP,
+  DEPLETED
+};
+
+
 class CheckpointStrategy; 
+class Socket;
+class Packet;
 
 /**
  * \ingroup applications
@@ -71,6 +85,26 @@ class CheckpointApp : public Application
     /** Helper que auxilia no gerenciamento das configurações do nó. */
     Ptr<ConfigHelper> configHelper;
 
+    //Bateria do nó
+    Ptr<Battery> battery;
+
+    /** Gerador de energia da bateria do nó */
+    Ptr<EnergyGenerator> energyGenerator;
+
+    //Modo atual do nó
+    enum EnergyMode currentMode;
+    
+    Time energyUpdateInterval; //Intervalo de atualização da energia (geração e modo idle)
+    double sleepEnergyConsumption; //Consumo de energia em modo sleep
+    double idleEnergyConsumption; //Consumo de energia em modo idle
+    double rollbackEnergyConsumption; //Consumo de energia para se realizar um rolback
+    double createCheckpointConsumption; //Consumo de energia para se criar um checkpoint
+    double receivePacketConsumption; //Consumo de energia para o recebimento de um pacote
+    double sendPacketConsumption; //Consumo de energia para o envio de um pacote
+    double connectConsumption; //Consumo de energia para conectar um socket
+    double sleepModePercentage; //Porcentagem da bateria a partir da qual se entra no modo sleep
+    double normalModePercentage; //Porcentagem da bateria a partir da qual se volta para o modo normal (estando no modo sleep)
+
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
@@ -82,11 +116,63 @@ class CheckpointApp : public Application
     string nodeName;          //nome deste nó
     string configFilename;    //nome do arquivo de configuração
 
-    /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
-    virtual void decreaseEnergy(double amount);
-
     /** Define a estratégia de checkpointing a ser utilizada por este nó. */
     virtual void configureCheckpointStrategy();
+
+    /** 
+     * Carrega as configurações do arquivo de configurações referentes a esta classe.
+    */
+    void loadConfigurations();
+
+    /** Define o gerador de energia a ser utilizado por este nó. */
+    void configureEnergyGenerator();
+
+    /**
+     * Realiza um processo de rollback para o último checkpoint criado, por iniciativa do 
+     * próprio nó. Não reseta os dados do nó (isso já deve ter sido feito antes).
+     */
+    void initiateRollbackToLastCheckpoint();
+
+    /** 
+     * MÉTODO ABSTRATO. A implementação fica a cargo da classe derivada.
+     * Apaga os dados deste nó quando ele entra em modo SLEEP, DEPLETED ou quando ocorre
+    algum erro.
+    */
+    virtual void resetNodeData();
+
+    /** 
+     * MÉTODO ABSTRATO. A implementação fica a cargo da classe derivada.
+     * Imprime os dados dos atributos desta classe (para fins de debug). 
+     * */
+    virtual void printNodeData();
+
+    /** Retorna se o nó possui energia suficiente para realizar determinada ação sem entrar em modo SLEEP. */
+    virtual bool hasEnoughEnergy(double requiredEnergy);
+
+     /** Diminui a energia da bateria referente ao seu funcionamento básico */
+     void decreaseIdleEnergy(); 
+    
+     /** Diminui a energia da bateria quando em modo sleep */
+     void decreaseSleepEnergy();
+     
+     /** Diminui a energia da bateria referente ao modo atual em que ela se encontra */
+     void decreaseCurrentModeEnergy();
+     
+     /** Diminui a energia da bateria referente à conexão de um socket */
+     void decreaseConnectEnergy();
+ 
+     /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
+     void decreaseEnergy(double amount);
+     
+     /** Verifica se a bateria deve mudar de modo, com base na energia restante */
+     void checkModeChange();
+ 
+     /** Gera energia para a bateria, ou seja, a recarrega. */
+     void generateEnergy();
+ 
+     EnergyMode getCurrentMode();
+     
+     Time getEnergyUpdateInterval();
 
   public:
 
@@ -108,6 +194,7 @@ class CheckpointApp : public Application
      * @param command comando que indica o tipo de mensagem.
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param to Indica para qual endereço o pacote será enviado.
+     * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
     virtual Ptr<MessageData> send(string command, int d, Address to);
 
@@ -118,6 +205,7 @@ class CheckpointApp : public Application
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param ip IP de destino.
      * @param port Porta de destino.
+     * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
     virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port);
 
@@ -183,6 +271,19 @@ class CheckpointApp : public Application
     ApplicationType getApplicationType();
 
     string getNodeName();
+
+    /** Retorna se o nó possui energia suficiente para enviar um pacote sem entrar em modo SLEEP. */
+    virtual bool hasEnoughEnergyToSendPacket();
+
+    /** Retorna se o nó possui energia suficiente para receber um pacote sem entrar em modo SLEEP. */
+    virtual bool hasEnoughEnergyToReceivePacket();
+
+    /** Retorna se o nó possui energia suficiente para criar um checkpoint sem entrar em modo SLEEP. */
+    virtual bool hasEnoughEnergyToCheckpoint();
+
+    bool isSleeping();
+    
+    bool isDepleted();
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

@@ -42,8 +42,31 @@ class CheckpointApp;
  * \ingroup checkpoint
  * \brief Classe que auxilia no processo de gerenciamento de checkpoints.
  */
-class CheckpointHelper : public Object
-{
+class CheckpointHelper : public Object {
+
+  private:
+
+    string checkpointBaseName;       //nome de base do arquivo referente ao checkpoint
+    int lastCheckpointId = 0;        //contador que identifica o ID do último checkpoint criado
+
+    /** Remove todos os checkpoints existentes. */
+    bool cleanDirectory(const std::string &path);
+
+    /** 
+     * Dado um vetor de strings (com o padrão de nomenclatura dos arquivos de checkpoint), retorna
+     * o maior ID de checkpoint.
+     */
+    int findMaxIdFromFilenames(const vector<std::string>& filenames);
+
+    /** Obtém o conteúdo de um arquivo. */
+    string getFileContent(string filename);
+
+    /** Lista os arquivos de uma determinada pasta, de acordo com um padrão de busca. */
+    vector<string> listFiles(const string& pasta, const string& padrao);
+
+    /** Escreve em um arquivo */
+    void writeFile(string filename, nlohmann::json j);
+
   public:
 
     /** Construtor padrão. */
@@ -66,15 +89,33 @@ class CheckpointHelper : public Object
     /** Remove todos os checkpoints existentes. */
     void removeAllCheckpointsAndLogs();
 
-    /** Cria um novo checkpoint */
+    /** 
+     * Cria um novo checkpoint.
+     * @param data Dados a serem escritos no checkpoint (em formato JSON).
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
+     * */
     void writeCheckpoint(string data, int checkpointId);
 
     /** 
      * Cria um novo checkpoint, transformando um objeto em JSON. 
      * @param app Aplicação do nó que irá criar o checkpoint
-     * @param CheckpointId ID do checkpoint a ser criado
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
     */
     void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId);
+
+    /** 
+     * Cria um novo checkpoint, transformando um objeto em JSON. 
+     * @param app Aplicação do nó que irá criar o checkpoint
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
+     * @param confirmed Indica se o checkpoint deve ser criado já com o status de confirmado ou não.
+    */
+    void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed);
+
+    /** 
+     * Confirma um checkpoint temporário, tornando-o permanente. 
+     * @param checkpointId ID do checkpoint que será confirmado.
+    */
+   void confirmCheckpoint(int checkpointId);
 
     /** 
      * Remove um checkpoint de determinado nome.
@@ -120,36 +161,17 @@ class CheckpointHelper : public Object
      * */
     int getLastCheckpointId();
 
+    /** Retorna o ID de checkpoint imediatamente anterior ao ID passado como parâmetro. */
+    int getPreviousCheckpointId(int checkpointId);
+
     //Especifica como deve ser feita a conversão desta classe em JSON
     friend void to_json(json& j, const CheckpointHelper& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, CheckpointHelper& obj);
 
-    friend class BatteryNodeApp;
+    friend class ServerNodeApp;
 
-  private:
-
-    string checkpointBaseName;       //nome de base do arquivo referente ao checkpoint
-    int lastCheckpointId = 0;        //contador que identifica o ID do último checkpoint criado
-
-    /** Remove todos os checkpoints existentes. */
-    bool cleanDirectory(const std::string &path);
-
-    /** 
-     * Dado um vetor de strings (com o padrão de nomenclatura dos arquivos de checkpoint), retorna
-     * o maior ID de checkpoint.
-     */
-    int findMaxIdFromFilenames(const vector<std::string>& filenames);
-
-    /** Obtém o conteúdo de um arquivo. */
-    string getFileContent(string filename);
-
-    /** Lista os arquivos de uma determinada pasta, de acordo com um padrão de busca. */
-    vector<string> listFiles(const string& pasta, const string& padrao);
-
-    /** Escreve em um arquivo */
-    void writeFile(string filename, nlohmann::json j);
 };
 
 } // namespace ns3

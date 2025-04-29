@@ -34,16 +34,16 @@ namespace ns3
  * \ingroup server
  * \brief Cria uma aplicação referente a um nó que opera a bateria (como, por exemplo, um sensor).
  */
-class BatteryNodeAppHelper : public ApplicationHelper
+class ServerNodeAppHelper : public ApplicationHelper
 {
   public:
     /**
-     * Create BatteryNodeAppHelper which will make life easier for people trying
+     * Create ServerNodeAppHelper which will make life easier for people trying
      * to set up simulations with nodes that operate with batteries.
      *
      * \param port The port the server will wait on for incoming packets
      */
-    BatteryNodeAppHelper(uint16_t port, string nodeName, string configFilename);
+    ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename);
 };
 
 /**

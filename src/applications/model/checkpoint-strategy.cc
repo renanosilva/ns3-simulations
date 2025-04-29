@@ -73,8 +73,8 @@ void CheckpointStrategy::rollbackToLastCheckpoint(){
     
 }
 
-void CheckpointStrategy::rollback(int checkpointId){
-    
+bool CheckpointStrategy::rollback(int checkpointId){
+    return false;
 }
 
 void CheckpointStrategy::rollback(Address requester, int checkpointId){

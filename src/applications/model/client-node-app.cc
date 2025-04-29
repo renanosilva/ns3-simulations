@@ -17,25 +17,17 @@
 
 #include "client-node-app.h"
 
-#include "seq-ts-header.h"
-
-#include "ns3/inet-socket-address.h"
-#include "ns3/inet6-socket-address.h"
-#include "ns3/ipv4-address.h"
 #include "ns3/log.h"
 #include "ns3/nstime.h"
-#include "ns3/packet.h"
 #include "ns3/simulator.h"
-#include "ns3/socket-factory.h"
-#include "ns3/socket.h"
 #include "ns3/uinteger.h"
-#include "ns3/ipv4.h"
-#include "ns3/ipv4-address.h"
 #include "ns3/core-module.h"
 #include "ns3/address.h"
 #include "ns3/log-utils.h"
 #include "ns3/json-utils.h"
 #include "ns3/utils.h"
+#include "ns3/node-depleted-exception.h"
+#include "ns3/node-asleep-exception.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -99,6 +91,7 @@ ClientNodeApp::ClientNodeApp()
 {
     NS_LOG_FUNCTION(this);
     
+    currentMode = NORMAL;
     udpHelper = Create<UDPHelper>();
     m_sendEvent = EventId();
     applicationType = CLIENT;
@@ -133,15 +126,10 @@ ClientNodeApp::StartApplication() {
     //Agendando envio de mensagens
     m_sendEvent = Simulator::Schedule(Seconds(0.0), &ClientNodeApp::Send, this);
 
-    NS_LOG_INFO(getNodeName() << " conectado.");
-}
+    NS_LOG_INFO("Iniciando " << getNodeName() << "..." 
+                << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
 
-void ClientNodeApp::loadConfigurations() {
-    NS_LOG_FUNCTION(this);
-    
-    if (!checkpointStrategy){
-        configureCheckpointStrategy();
-    }
+    NS_LOG_INFO(getNodeName() << " conectado.");
 }
 
 void
@@ -159,42 +147,51 @@ ClientNodeApp::Send()
     NS_LOG_FUNCTION(this);
     NS_ASSERT(m_sendEvent.IsExpired());
 
-    for (Ipv4Address ip : m_peerAddresses){
-        Ptr<MessageData> md = send(REQUEST_VALUE, 0, ip, m_peerPort);
+    if (isSleeping() || isDepleted()){
+        //ignora mensagens se estiver em modo sleep ou descarregado
+        return;
     }
 
-    if (udpHelper->getSentMessagesCounter() < m_count || m_count == 0){
-        //Agendando próximo envio
-        m_sendEvent = Simulator::Schedule(m_interval, &ClientNodeApp::Send, this);
+    try {
+
+        for (Ipv4Address ip : m_peerAddresses){
+            send(REQUEST_VALUE, 0, ip, m_peerPort);
+        }
+
+        scheduleSendEvent();
+
+    } catch (NodeAsleepException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
+        return;
+    } catch (NodeDepletedException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
+        return;
     }
 }
 
 void ClientNodeApp::HandleRead(Ptr<MessageData> md){
     NS_LOG_FUNCTION(this << md);
 
-    utils::logMessageReceived(getNodeName(), md);
-
-    if (md->GetCommand() == RESPONSE_VALUE){
-        last_seq = md->GetData();
+    if (isSleeping() || isDepleted()){
+        //ignora mensagens se estiver em modo sleep ou descarregado
+        return;
     }
-}
 
-void ClientNodeApp::initiateRollback(Address requester, int cpId){
-    NS_LOG_FUNCTION(this);
+    try {
+        utils::logMessageReceived(getNodeName(), md);
 
-    resetNodeData();
-    configureCheckpointStrategy();
-    checkpointStrategy->rollback(requester, cpId);
-}
+        if (md->GetCommand() == RESPONSE_VALUE){
+            last_seq = md->GetData();
+        }
 
-void ClientNodeApp::afterRollback(){
-    NS_LOG_FUNCTION(this);
-
-    //Reiniciando aplicação...
-    StartApplication();
-
-    NS_LOG_INFO("\nApós o rollback...");
-    printNodeData();
+        decreaseReadEnergy();
+    } catch (NodeAsleepException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
+        return;
+    } catch (NodeDepletedException& e) {
+        NS_LOG_LOGIC("Tarefa incompleta por estar em modo DEPLETED.");
+        return;
+    }
 }
 
 void ClientNodeApp::resetNodeData() {
@@ -215,10 +212,11 @@ void ClientNodeApp::resetNodeData() {
     m_peerPort = 0;
 }
 
-bool ClientNodeApp::mayCheckpoint(){
-    NS_LOG_FUNCTION(this);
-    
-    return !checkpointStrategy->isRollbackInProgress();
+void ClientNodeApp::scheduleSendEvent(){
+    if (udpHelper->getSentMessagesCounter() < m_count || m_count == 0){
+        //Agendando próximo envio
+        m_sendEvent = Simulator::Schedule(m_interval, &ClientNodeApp::Send, this);
+    }
 }
 
 uint64_t ClientNodeApp::GetTotalTx() const
@@ -227,39 +225,16 @@ uint64_t ClientNodeApp::GetTotalTx() const
     return udpHelper->getTotalBytesSent();
 }
 
-json ClientNodeApp::to_json() const {
-    NS_LOG_FUNCTION(this);
-
-    json j = CheckpointApp::to_json();
-    j["m_peerAddresses"] = m_peerAddresses;
-    j["m_peerPort"] = m_peerPort;
-    j["m_count"] = m_count;
-    j = utils::timeToJson(j, "m_interval", m_interval);
-    j["last_seq"] = last_seq;
-
-    // j["udpHelper"] = *udpHelper;
-    
-    return j;
-}
-
-void ClientNodeApp::from_json(const json& j) {
-    NS_LOG_FUNCTION(this);
-    
-    CheckpointApp::from_json(j);
-
-    j.at("m_peerAddresses").get_to(m_peerAddresses); 
-    j.at("m_peerPort").get_to(m_peerPort); 
-    j.at("m_count").get_to(m_count); 
-    m_interval = utils::jsonToTime(j, "m_interval"); 
-    j.at("last_seq").get_to(last_seq);
-}
-
 void ClientNodeApp::printNodeData(){
     NS_LOG_FUNCTION(this);
 
     NS_LOG_INFO("Dados de " << getNodeName() << ":" );
     NS_LOG_INFO(
-        "m_count = " << m_count
+        "currentMode = " << currentMode
+        << (battery == nullptr ? "" : ", battery.getBatteryPercentage() = " + to_string(battery->getBatteryPercentage()))
+        << (energyGenerator == nullptr ?   
+            "" : ", energyGenerator->GetTypeId().GetName() = " + energyGenerator->GetTypeId().GetName())
+        << ", m_count = " << m_count
         << ", m_interval = " << m_interval.As(Time::S)
         << ", m_peerAddresses = " << utils::convertAddressesToString(m_peerAddresses)
         << ", m_peerPort = " << m_peerPort
@@ -307,6 +282,33 @@ string ClientNodeApp::GetPeerAddresses() const {
 
 uint16_t ClientNodeApp::getPeerPort() {
     return m_peerPort;
+}
+
+json ClientNodeApp::to_json() const {
+    NS_LOG_FUNCTION(this);
+
+    json j = CheckpointApp::to_json();
+    j["m_peerAddresses"] = m_peerAddresses;
+    j["m_peerPort"] = m_peerPort;
+    j["m_count"] = m_count;
+    j = utils::timeToJson(j, "m_interval", m_interval);
+    j["last_seq"] = last_seq;
+
+    // j["udpHelper"] = *udpHelper;
+    
+    return j;
+}
+
+void ClientNodeApp::from_json(const json& j) {
+    NS_LOG_FUNCTION(this);
+    
+    CheckpointApp::from_json(j);
+
+    j.at("m_peerAddresses").get_to(m_peerAddresses); 
+    j.at("m_peerPort").get_to(m_peerPort); 
+    j.at("m_count").get_to(m_count); 
+    m_interval = utils::jsonToTime(j, "m_interval"); 
+    j.at("last_seq").get_to(last_seq);
 }
 
 } // Namespace ns3

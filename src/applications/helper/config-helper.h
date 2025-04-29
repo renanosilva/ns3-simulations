@@ -80,8 +80,13 @@ public:
             }
         }
      * 
+     * Nesse caso, essa função pode ser útil para se descobrir os valores associados
+     * à chave "nodes", por exemplo.
      * */
     vector<string> GetPropertyValues(const string& propertyPath);
+
+    /** Retorna os nós que possuem determinado papel (ex.: client ou server) */
+    vector<string> GetNodesWithRole(const string& role);
 
     /** 
      * Obtém o valor, do tipo inteiro, associado a uma propriedade.
@@ -101,6 +106,12 @@ public:
      * do parâmetro defaultValue.
      */
     double GetDoubleProperty(const string key, double defaultValue);
+
+    /** 
+     * Obtém o valor, do tipo bool, associado a uma propriedade.
+     */
+    bool GetBoolProperty(const string key, bool defaultValue);
+
 
     /** 
      * Obtém o valor, do tipo string, associado a uma propriedade.

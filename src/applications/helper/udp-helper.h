@@ -56,6 +56,9 @@ const static string RESPONSE_VALUE = "RESPONSE_VALUE";
 /** Payload referente a um aviso de rollback concluído. */
 const static string ROLLBACK_FINISHED_COMMAND = "ROLLBACK_FINISHED_COMMAND";
 
+/** Payload referente a um aviso de rollback concluído por todos os nós. */
+const static string ROLLBACK_FINISHED_BY_ALL_NODES_COMMAND = "ROLLBACK_FINISHED_BY_ALL_NODES_COMMAND";
+
 /** Payload referente a um aviso de checkpoint concluído. */
 const static string CHECKPOINT_FINISHED_COMMAND = "CHECKPOINT_FINISHED_COMMAND";
 

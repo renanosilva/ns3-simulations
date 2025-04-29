@@ -63,7 +63,7 @@ class CheckpointStrategy : public Object
     string logData = "";
 
     /** Endereço IP do nó que iniciou o último procedimento de rollback */
-    Ipv4Address rollbackStarterIp;
+    Address rollbackStarter;
 
     /** ID do checkpoint para o qual deve ser feito rollback */
     int checkpointId;
@@ -193,9 +193,11 @@ class CheckpointStrategy : public Object
      * Utilizado para iniciar um processo de rollback, após a recuperação
      * do próprio nó. O rollback é feito para o checkpoint identificado como
      * parâmetro.
-     * Método abstrato. A implementação irá depender da estratégia adotada. 
+     * Método abstrato. A implementação irá depender da estratégia adotada.
+     * @param checkpointId ID do checkpoint para o qual deverá ser feito rollback.
+     * @return Retorna se foi possível realizar o rollback ou não.
      * */
-    virtual void rollback(int checkpointId);
+    virtual bool rollback(int checkpointId);
 
     /** 
      * Utilizado para iniciar um processo de rollback, após a solicitação
@@ -236,8 +238,6 @@ class CheckpointStrategy : public Object
 
     /** Indica se existe um procedimento de rollback em progresso. */
     bool isRollbackInProgress();
-
-    
 
     /** Especifica os dados a serem armazenados em log. */
     void setLogData(string data);

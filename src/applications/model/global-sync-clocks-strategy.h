@@ -144,7 +144,7 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
     
     virtual void rollbackToLastCheckpoint() override; 
 
-    virtual void rollback(int checkpointId) override;
+    virtual bool rollback(int checkpointId) override;
 
     /** 
      * Utilizado para iniciar um processo de rollback, após a solicitação
@@ -181,10 +181,13 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
     /** 
      * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
      */
-    void notifyNodesAboutCheckpointConcluded();
+    void notifyNodesAboutCheckpointCreated();
 
-    /** Avisa aos nós interessados que este nó concluiu seu procedimento de rollback. */
-    void notifyNodesAboutRollbackConcluded();
+    /** 
+     * Avisa ao iniciador de um rollback que este nó e seus dependentes concluíram seus procedimentos de rollback.
+     * Marca o rollback como concluído, saindo do modo de bloqueio de comunicação.
+     * */
+    void concludeRollback();
     
     /** 
      * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,

@@ -24,10 +24,15 @@
 #include <fstream>
 #include <dirent.h>
 #include <vector>
+#include <string>
 #include "ns3/simulator.h"
-#include "ns3/battery-node-app.h"
+#include "ns3/server-node-app.h"
 #include <regex>
 #include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <algorithm>
+
 
 using namespace std;
 
@@ -66,8 +71,6 @@ TypeId CheckpointHelper::GetTypeId() {
                       MakeUintegerAccessor(&CheckpointHelper::lastCheckpointId),
                       MakeUintegerChecker<int>());
     
-    NS_LOG_FUNCTION("Fim do método");
-
     return tid;
 }
 
@@ -85,7 +88,6 @@ void CheckpointHelper::removeAllCheckpointsAndLogs()
 {
     NS_LOG_FUNCTION(this);
     cleanDirectory(CHECKPOINTS_FOLDER);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 bool CheckpointHelper::cleanDirectory(const std::string &path){
@@ -104,7 +106,6 @@ bool CheckpointHelper::cleanDirectory(const std::string &path){
         return false;
     }
 
-    NS_LOG_FUNCTION("Fim do método");
     return true;
 }
 
@@ -129,8 +130,6 @@ vector<string> CheckpointHelper::listFiles(const string& pasta, const string& pa
 
     closedir(dir);
 
-    NS_LOG_FUNCTION("Fim do método");
-
     return arquivos;
 }
 
@@ -144,20 +143,42 @@ void CheckpointHelper::writeCheckpoint(string data, int checkpointId){
     lastCheckpointId = checkpointId;
     
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId){
     NS_LOG_FUNCTION(this);
 
-    //nlohmann::json j = to_json(app);
     json j = app->to_json();
 
     writeFile(getCheckpointFilename(checkpointId), j);
     lastCheckpointId = checkpointId;
     
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
-    NS_LOG_FUNCTION("Fim do método");
+}
+
+void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed){
+    NS_LOG_FUNCTION(this);
+
+    json j = app->to_json();
+    j["confirmed"] = confirmed;
+
+    writeFile(getCheckpointFilename(checkpointId), j);
+    lastCheckpointId = checkpointId;
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
+}
+
+void CheckpointHelper::confirmCheckpoint(int checkpointId){
+    NS_LOG_FUNCTION(this);
+
+    //nlohmann::json j = to_json(app);
+    json j = readCheckpoint(checkpointId);
+    j["confirmed"] = true;
+
+    removeCheckpoint(checkpointId);
+    writeFile(getCheckpointFilename(checkpointId), j);
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CONFIRMADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::removeCheckpoint(int checkpointId){
@@ -165,8 +186,11 @@ void CheckpointHelper::removeCheckpoint(int checkpointId){
 
     string filename = getCheckpointFilename(checkpointId);
     std::remove(filename.c_str());
-    
-    NS_LOG_FUNCTION("Fim do método");
+
+    if (checkpointId == lastCheckpointId){
+        //Reseta o valor do último checkpoint para forçar seu recarregamento
+        lastCheckpointId = 0;
+    }
 }  
 
 void CheckpointHelper::writeFile(string filename, nlohmann::json j){
@@ -180,8 +204,6 @@ void CheckpointHelper::writeFile(string filename, nlohmann::json j){
     logFile << content << j;
 
     logFile.close();
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 string CheckpointHelper::getFileContent(string filename)
@@ -192,7 +214,6 @@ string CheckpointHelper::getFileContent(string filename)
     stringstream buffer;
     buffer << t.rdbuf();
 
-    NS_LOG_FUNCTION("Fim do método");
     return buffer.str();
 }
 
@@ -200,7 +221,6 @@ json CheckpointHelper::readCheckpoint(int index)
 {   
     NS_LOG_FUNCTION(this);
     string c = getFileContent(getCheckpointFilename(index));
-    NS_LOG_FUNCTION("Fim do método");
     return json::parse(c);
 }
 
@@ -214,7 +234,6 @@ json CheckpointHelper::readLastCheckpoint()
         content = getFileContent(getCheckpointFilename(getLastCheckpointId()-1));
     }*/
 
-    NS_LOG_FUNCTION("Fim do método");
     return json::parse(content);
 }
 
@@ -243,9 +262,6 @@ int CheckpointHelper::getLastCheckpointId(){
 
     lastCheckpointId = findMaxIdFromFilenames(nomes);
 
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CONTADOR DE CHECKPOINT RESTAURADO: " << lastCheckpointId << "\n");
-    NS_LOG_FUNCTION("Fim do método");
-
     //retorna o valor do último checkpoint válido
     return lastCheckpointId;
     
@@ -270,10 +286,53 @@ int CheckpointHelper::findMaxIdFromFilenames(const vector<std::string>& filename
         }
     }
 
-    NS_LOG_FUNCTION("Fim do método");
-
     return maxNumber;
     
+}
+
+int CheckpointHelper::getPreviousCheckpointId(int checkpointId) {
+    DIR* dir;
+    struct dirent* entry;
+    std::vector<int> ids;
+
+    dir = opendir(CHECKPOINTS_FOLDER.c_str());
+    
+    if (!dir) {
+        NS_ABORT_MSG("Erro ao abrir diretório dos checkpoints");
+        return -1;
+    }
+
+    while ((entry = readdir(dir)) != nullptr) {
+        string filename = entry->d_name;
+
+        // Verifica se termina com ".json"
+        if (filename.length() >= 5 && filename.substr(filename.length() - 5) == ".json") {
+            string nameWithoutExt = filename.substr(0, filename.length() - 5);
+
+            size_t pos = nameWithoutExt.find_last_of('-');
+            if (pos != string::npos && pos + 1 < nameWithoutExt.length()) {
+                string idPart = nameWithoutExt.substr(pos + 1);
+                
+                bool isNumber = !idPart.empty() && std::all_of(idPart.begin(), idPart.end(), ::isdigit);
+                
+                if (isNumber) {
+                    int id = atoi(idPart.c_str());
+                    
+                    if (id < checkpointId) {
+                        ids.push_back(id);
+                    }
+                }
+            }
+        }
+    }
+
+    closedir(dir);
+
+    if (ids.empty()) {
+        return -1; // Nenhum ID anterior encontrado
+    }
+
+    return *max_element(ids.begin(), ids.end());
 }
 
 void to_json(json& j, const CheckpointHelper& obj) {
@@ -283,8 +342,6 @@ void to_json(json& j, const CheckpointHelper& obj) {
         {"checkpointBaseName", obj.checkpointBaseName}, 
         {"lastCheckpointId", obj.lastCheckpointId}
     };
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, CheckpointHelper& obj) {
@@ -292,8 +349,6 @@ void from_json(const json& j, CheckpointHelper& obj) {
 
     j.at("checkpointBaseName").get_to(obj.checkpointBaseName);
     j.at("lastCheckpointId").get_to(obj.lastCheckpointId);
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 } // namespace ns3

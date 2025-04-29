@@ -29,7 +29,7 @@ build_lib(
     model/udp-echo-server.cc
     model/udp-server.cc
     model/udp-trace-client.cc
-    model/battery-node-app.cc
+    model/server-node-app.cc
     model/client-node-app.cc
     model/battery.cc
     model/energy-generator.cc
@@ -72,7 +72,7 @@ build_lib(
     model/udp-echo-server.h
     model/udp-server.h
     model/udp-trace-client.h
-    model/battery-node-app.h
+    model/server-node-app.h
     model/client-node-app.h
     model/battery.h
     model/energy-generator.h

@@ -20,15 +20,15 @@
 #include "node-app-helper.h"
 
 #include "ns3/udp-echo-client.h"
-#include "ns3/battery-node-app.h"
+#include "ns3/server-node-app.h"
 #include "ns3/client-node-app.h"
 #include "ns3/uinteger.h"
 
 namespace ns3
 {
 
-BatteryNodeAppHelper::BatteryNodeAppHelper(uint16_t port, string nodeName, string configFilename)
-    : ApplicationHelper(BatteryNodeApp::GetTypeId())
+ServerNodeAppHelper::ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename)
+    : ApplicationHelper(ServerNodeApp::GetTypeId())
 {
     SetAttribute("Port", UintegerValue(port));
     SetAttribute("NodeName", StringValue(nodeName));

@@ -83,6 +83,35 @@ vector<string> ConfigHelper::GetPropertyValues(const string& propertyPath) {
     return keys;
 }
 
+// Retorna os nomes dos nós que possuem um valor específico na chave "energy-generator"
+vector<string> ConfigHelper::GetNodesWithRole(const string& role) {
+    
+    vector<string> matchingNodes;
+
+    try {
+        const auto& nodes = propertyTree.get_child("nodes");
+
+        for (const auto& node : nodes) {
+            const std::string& nodeName = node.first;
+            const auto& properties = node.second;
+
+            auto it = properties.find("role");
+            
+            if (it != properties.not_found()) {
+                std::string roleValue = it->second.get_value<string>();
+                if (roleValue == role) {
+                    matchingNodes.push_back(nodeName);
+                }
+            }
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Erro ao acessar os nós: " << e.what() << std::endl;
+    }
+
+    return matchingNodes;
+}
+
 int ConfigHelper::GetIntProperty(const string key){
     try {
         return propertyTree.get<int>(key);
@@ -105,6 +134,16 @@ double ConfigHelper::GetDoubleProperty(const string key, double defaultValue){
     try {
         return propertyTree.get<double>(key);
     } catch (const std::exception &e) {
+        std::cerr << "Erro ao ler propriedade: " << key << " - " << e.what() 
+            << ". Atribuindo valor padrão: " << defaultValue << "." << std::endl;
+        return defaultValue;
+    }
+}
+
+bool ConfigHelper::GetBoolProperty(const string key, bool defaultValue){
+    try {
+        return propertyTree.get<bool>(key);
+    } catch (const std::exception &e) {
         return defaultValue;
     }
 }
@@ -114,7 +153,7 @@ string ConfigHelper::GetStringProperty(const string key){
         return propertyTree.get<string>(key);
     } catch (const std::exception &e) {
         std::cerr << "Erro ao ler propriedade: " << key << " - " << e.what() << std::endl;
-        return 0;
+        return "";
     }
 }
 

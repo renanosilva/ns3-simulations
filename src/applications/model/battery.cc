@@ -48,7 +48,6 @@ Battery::GetTypeId()
                             MakeDoubleAccessor(&Battery::maxCapacity),
                             MakeDoubleChecker<double>());
 
-    NS_LOG_FUNCTION("Fim do método");
     return tid;
 }
 
@@ -57,14 +56,11 @@ Battery::Battery(){
 
     maxCapacity = 2500.;
     remainingEnergy = maxCapacity;
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 Battery::~Battery()
 {
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 double Battery::getMaxCapacity(){
@@ -87,8 +83,6 @@ void Battery::rechargeEnergy(double amount){
     
     double newRemainingEnergy = remainingEnergy + amount;
     remainingEnergy = min(maxCapacity, newRemainingEnergy);
-    
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void Battery::decrementEnergy(double amount){
@@ -98,8 +92,6 @@ void Battery::decrementEnergy(double amount){
     
     double newRemainingEnergy = remainingEnergy - amount;
     remainingEnergy = max(0., newRemainingEnergy);
-    
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void to_json(json& j, const Battery& obj) {
@@ -109,8 +101,6 @@ void to_json(json& j, const Battery& obj) {
         {"maxCapacity", obj.maxCapacity}, 
         {"remainingEnergy", obj.remainingEnergy}
     };
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, Battery& obj) {
@@ -118,8 +108,6 @@ void from_json(const json& j, Battery& obj) {
     
     j.at("maxCapacity").get_to(obj.maxCapacity);
     j.at("remainingEnergy").get_to(obj.remainingEnergy);
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 } // Namespace ns3

@@ -50,7 +50,7 @@ main(int argc, char* argv[])
     
     LogComponentEnable("Application", LOG_INFO);
     LogComponentEnable("CheckpointApp", LOG_INFO);
-    LogComponentEnable("BatteryNodeApp", LOG_INFO);
+    LogComponentEnable("ServerNodeApp", LOG_INFO);
     LogComponentEnable("ClientApp", LOG_INFO);
     LogComponentEnable("Battery", LOG_INFO);
     LogComponentEnable("CheckpointStrategy", LOG_INFO);
@@ -75,7 +75,7 @@ main(int argc, char* argv[])
     
     // LogComponentEnable("Application", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointApp", LOG_LEVEL_ALL);
-    // LogComponentEnable("BatteryNodeApp", LOG_LEVEL_ALL);
+    // LogComponentEnable("ServerNodeApp", LOG_LEVEL_ALL);
     // LogComponentEnable("ClientApp", LOG_LEVEL_ALL);
     // LogComponentEnable("Battery", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointStrategy", LOG_LEVEL_ALL);
@@ -94,9 +94,16 @@ main(int argc, char* argv[])
     double distanceToRx = config.GetDoubleProperty("simulation.distance-to-rx-in-meters");
     UintegerValue maxPackets = UintegerValue(config.GetIntProperty("simulation.max-packets"));
     TimeValue interval = TimeValue(Seconds(config.GetDoubleProperty("simulation.interval")));
-    int batteryNodesQuantity = config.GetIntProperty("nodes.battery-nodes.amount");
-    int clientNodesQuantity = config.GetIntProperty("nodes.client-nodes.amount");
-    int totalNodesQuantity = batteryNodesQuantity + clientNodesQuantity;
+    vector<string> serverNodesNames = config.GetNodesWithRole("server");
+    vector<string> clientNodesNames = config.GetNodesWithRole("client");
+    int serverNodesQuantity = serverNodesNames.size();
+    int clientNodesQuantity = clientNodesNames.size();
+    int totalNodesQuantity = serverNodesQuantity + clientNodesQuantity;
+    
+    //vector<string> nodesNames = config.GetPropertyValues("nodes");
+    // int totalNodesQuantity = batteryNodesQuantity + clientNodesQuantity;
+    // int batteryNodesQuantity = config.GetIntProperty("nodes.battery-nodes.amount");
+    // int clientNodesQuantity = config.GetIntProperty("nodes.client-nodes.amount");
 
     // simulation parameters
     //double distanceToRx = 10.0; // meters
@@ -124,13 +131,15 @@ main(int argc, char* argv[])
     // networkNodes.Add(c.Get(1));
 
     NodeContainer clientNodes;
-    NodeContainer batteryServerNodes;
+    NodeContainer serverNodes;
 
-    for (int i = 0; i < batteryNodesQuantity; i++){
-        batteryServerNodes.Add(nodes.Get(i));
+    //Os primeiros nós registrados serão os servidores
+    for (int i = 0; i < serverNodesQuantity; i++){
+        serverNodes.Add(nodes.Get(i));
     }
 
-    for (int i = batteryNodesQuantity; i < totalNodesQuantity; i++){
+    //Os demais serão os clientes
+    for (int i = serverNodesQuantity; i < totalNodesQuantity; i++){
         clientNodes.Add(nodes.Get(i));
     }
 
@@ -197,28 +206,26 @@ main(int argc, char* argv[])
 
     vector<Ipv4Address> serverAddresses;
 
-    //Iniciando aplicações a bateria
-    for (int j = 0; j < batteryNodesQuantity; j++){
+    //Iniciando servidores
+    for (int j = 0; j < serverNodesQuantity; j++){
         
-        //Cria uma aplicação de servidor a bateria, de forma a gerar tráfego de dados. 9 é a porta.
-        BatteryNodeAppHelper batteryServerAppHelper(9, "battery-node-" + to_string(j), CONFIG_FILENAME);
+        //Cria uma aplicação de servidor, de forma a gerar tráfego de dados. 9 é a porta.
+        ServerNodeAppHelper serverAppHelper(9, serverNodesNames[j], CONFIG_FILENAME);
         
         //Instala a aplicação no nó i e agenda sua inicialização
-        batteryServerAppHelper.Install(batteryServerNodes.Get(j)).Start(Seconds(1.0));
-        
+        serverAppHelper.Install(serverNodes.Get(j)).Start(Seconds(1.0));
         serverAddresses.push_back(i.GetAddress(j));
     }
 
     //Iniciando aplicações clientes
     for (int j = 0; j < clientNodesQuantity; j++){
         
-        ClientNodeAppHelper clientAppHelper(serverAddresses, 9, "client-node-" + to_string(j), CONFIG_FILENAME); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+        ClientNodeAppHelper clientAppHelper(serverAddresses, 9, clientNodesNames[j], CONFIG_FILENAME); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
         clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
         clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
         //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
 
         clientAppHelper.Install(clientNodes.Get(j)).Start(Seconds(2.0)); //instala a aplicação cliente no nó e agenda sua inicialização
-
     }
 
     /** simulation setup **/

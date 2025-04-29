@@ -16,7 +16,7 @@
  */
 
 #include "global-sync-clocks-strategy.h"
-#include "ns3/battery-node-app.h"
+#include "ns3/server-node-app.h"
 #include "ns3/simulator.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -63,6 +63,7 @@ GlobalSyncClocksStrategy::GlobalSyncClocksStrategy(Time timeInterval, Time tout,
     dependentAddresses.clear();
     pendingRollbackAddresses.clear();
     pendingCheckpointAddresses.clear();
+    rollbackStarter = Ipv4Address::GetAny();
 }
 
 GlobalSyncClocksStrategy::GlobalSyncClocksStrategy(){
@@ -72,6 +73,7 @@ GlobalSyncClocksStrategy::GlobalSyncClocksStrategy(){
     dependentAddresses.clear();
     pendingRollbackAddresses.clear();
     pendingCheckpointAddresses.clear();
+    rollbackStarter = Ipv4Address::GetAny();
 }
 
 GlobalSyncClocksStrategy::~GlobalSyncClocksStrategy()
@@ -84,8 +86,6 @@ GlobalSyncClocksStrategy::~GlobalSyncClocksStrategy()
 
     stopCheckpointing();
 }
-
-//VERIFICAR COMO FORÇAR A EXCLUSÃO DE UM PTR
 
 void GlobalSyncClocksStrategy::startCheckpointing() {
     NS_LOG_FUNCTION(this);
@@ -100,42 +100,45 @@ void GlobalSyncClocksStrategy::stopCheckpointing() {
 
 void GlobalSyncClocksStrategy::writeCheckpoint() {
     NS_LOG_FUNCTION(this);
+
+    if (!app->mayCheckpoint()){
+        scheduleNextCheckpoint();
+        return;
+    }
     
     try {
+        int time = round(Simulator::Now().GetSeconds());
+
+        checkpointInProgress = true;
+        pendingCheckpointAddresses = vector<Address>(dependentAddresses);
+
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
+                                        << " entrou no modo de bloqueio de comunicação para"
+                                        << " iniciar procedimento de criação de CHECKPOINT.");
         
-        if (app->mayCheckpoint()){
-            int time = Simulator::Now().GetSeconds();
+        checkpointHelper->writeCheckpoint(app, time, false);
 
-            checkpointInProgress = true;
-            pendingCheckpointAddresses = vector<Address>(dependentAddresses);
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
+            << checkpointHelper->getCheckpointBasename() << ".");
 
-            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
-                                            << " entrou no modo de bloqueio de comunicação para"
-                                            << " iniciar procedimento de criação de CHECKPOINT.");
+        app->decreaseCheckpointEnergy();
 
-            checkpointHelper->writeCheckpoint(app, time);
+        //Abordagem pessimista: agenda a remoção do checkpoint dentro de um timeout.
+        //Caso o checkpoint seja confirmado, esse agendamento é cancelado.
+        scheduleLastCheckpointDiscard();
 
-            NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint criado por " 
-                << checkpointHelper->getCheckpointBasename() << ".");
+        //Se não houver nós dependentes, confirma o checkpoint
+        //Caso contrário, fica aguardando o recebimento das confirmações dos outros nós
+        if (pendingCheckpointAddresses.size() == 0){
+            confirmCheckpointCreation(true);
+        }
 
-            app->decreaseCheckpointEnergy();
-
-            //Se não houver nós dependentes, confirma o checkpoint
-            //Caso contrário, fica aguardando o recebimento das confirmações dos outros nós
-            if (pendingCheckpointAddresses.size() == 0){
-                confirmCheckpointCreation(true);
-            }
-
-            if (pendingCheckpointAddresses.size() > 0 && app->getApplicationType() == SERVER){
-                notifyNodesAboutCheckpointConcluded();
-            }
-
-            //Abordagem pessimista: agenda a remoção do checkpoint caso o timeout seja atingido
-            //Caso o checkpoint seja confirmado, esse agendamento é cancelado
-            scheduleLastCheckpointDiscard();
-        
-        } else {
-            scheduleNextCheckpoint();
+        /* Apenas os servidores comunicam inicialmente a criação de seus checkpoints.
+        Os clientes irão aguardar o recebimento das notificações de todos os servidores.
+        Somente quando receberem de todos os nós servidores, eles irão comunicar
+        que terminaram. */
+        if (pendingCheckpointAddresses.size() > 0 && app->getApplicationType() == SERVER){
+            notifyNodesAboutCheckpointCreated();
         }
 
     } catch (NodeAsleepException& e) {
@@ -143,8 +146,6 @@ void GlobalSyncClocksStrategy::writeCheckpoint() {
     } catch (NodeDepletedException& e) {
         //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
     } 
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void GlobalSyncClocksStrategy::discardLastCheckpoint() {
@@ -169,8 +170,6 @@ void GlobalSyncClocksStrategy::discardLastCheckpoint() {
     } catch (NodeDepletedException& e) {
         //Operações interrompidas... Nó irá entrar em modo depleted. Nada mais a fazer.
     } 
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void GlobalSyncClocksStrategy::confirmLastCheckpoint() {
@@ -179,6 +178,8 @@ void GlobalSyncClocksStrategy::confirmLastCheckpoint() {
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", checkpoint CONFIRMADO por " 
             << checkpointHelper->getCheckpointBasename() << ".");
     
+    checkpointHelper->confirmCheckpoint(checkpointHelper->getLastCheckpointId());
+
     //Cancela agendamento da remoção do checkpoint
     Simulator::Cancel(discardScheduling);
 
@@ -194,7 +195,7 @@ Time GlobalSyncClocksStrategy::getDelayToNextCheckpoint(){
     double mod = std::fmod(now, intervalSec);
     double nextCheckpointing = intervalSec - mod;
     Time delay = Time(to_string(nextCheckpointing) + "s");
-
+    
     return delay;
 }
 
@@ -210,7 +211,6 @@ void GlobalSyncClocksStrategy::scheduleNextCheckpoint(){
     creationScheduling = Simulator::Schedule(delay,
                                 &GlobalSyncClocksStrategy::writeCheckpoint,
                                 this);
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void GlobalSyncClocksStrategy::scheduleLastCheckpointDiscard(){
@@ -226,10 +226,46 @@ void GlobalSyncClocksStrategy::rollbackToLastCheckpoint() {
     NS_LOG_FUNCTION(this);   
     
     checkpointId = getLastCheckpointId();
-    rollback(checkpointId);
+    
+    //Se o rollback não for bem-sucedido
+    while (!rollback(checkpointId)){
+
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
+                                    << " encontrou um checkpoint NÃO confirmado. Descartando-o...");
+        
+        /*
+         * Isso significa que o checkpoint em questão não estava confirmado
+         * ou que há um problema com o checkpoint.
+         * Nesse caso, deve-se descartar esse checkpoint e tentar rollback para
+         * o checkpoint imediatamente anterior.
+         */
+
+        checkpointHelper->removeCheckpoint(checkpointId);
+        checkpointId = checkpointHelper->getLastCheckpointId();
+    }
 }
 
-void GlobalSyncClocksStrategy::rollback(int checkpointId) {
+void GlobalSyncClocksStrategy::rollback(Address requester, int cpId) {
+    NS_LOG_FUNCTION(this);
+    
+    rollbackStarter = requester;
+    checkpointId = cpId;
+    bool rolledBack = rollback(checkpointId);
+
+    if (!rolledBack){
+        //Será necessário fazer um novo rollback. Este nó será o novo iniciador.
+        rollbackStarter = Ipv4Address::GetAny();
+
+        //Remove o checkpoint, pois ele é inútil
+        checkpointHelper->removeCheckpoint(checkpointId);
+
+        //Tenta um novo rollback, desta vez para um checkpoint anterior
+        checkpointId = checkpointHelper->getPreviousCheckpointId(cpId);
+        rollback(checkpointId);
+    }
+}
+
+bool GlobalSyncClocksStrategy::rollback(int checkpointId) {
     NS_LOG_FUNCTION(this);
     
     app->beforeRollback();
@@ -239,11 +275,23 @@ void GlobalSyncClocksStrategy::rollback(int checkpointId) {
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
                                     << " entrou no modo de bloqueio de comunicação para iniciar procedimento de ROLLBACK.");
     
-    
-    //lendo checkpoint
-    NS_LOG_LOGIC("Checkpoint ID: " << checkpointId);
-    json j = checkpointHelper->readCheckpoint(checkpointId);
+    json j;
 
+    try {                              
+        //lendo checkpoint
+        j = checkpointHelper->readCheckpoint(checkpointId);
+
+        //Se o checkpoint não havia sido confirmado
+        if (!j["confirmed"]){
+            //Não será possível fazer rolback para ele
+            return false;
+        }
+    } catch (const json::parse_error& e){
+        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
+                                    << " FALHOU ao tentar realizar ROLLBACK. Checkpoint inválido.");
+        return false;
+    }
+    
     // std::cout << "\nDados do JSON lido:\n" << j.dump(4) << std::endl;
 
     //iniciando recuperação das informações presentes no checkpoint
@@ -261,22 +309,60 @@ void GlobalSyncClocksStrategy::rollback(int checkpointId) {
 
     if (pendingRollbackAddresses.size() > 0){
        
-        //Enviando mensagem de rollback para os outros nós envolvidos
+        //Enviando mensagem de requisição de rollback para os nós dependentes
         notifyNodesAboutRollback();
         
     } else {
        
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
                             << " saiu do modo de bloqueio de comunicação.");
-            
+        
         rollbackInProgress = false;
+        rollbackStarter = Ipv4Address::GetAny();
+    }
+
+    return true;
+}
+
+void GlobalSyncClocksStrategy::notifyNodesAboutRollback(){
+    NS_LOG_FUNCTION(this);
+
+    //Se o rollback tiver sido solicitado por outro nó
+    if (rollbackStarter != Ipv4Address::GetAny()){
+        
+        //Remove-o da lista de rollbacks pendentes, pois ele já o fez
+        removeAddress(pendingRollbackAddresses, rollbackStarter);
+    }
+
+    // Enviando notificação para os nós com os quais houve comunicação
+    if (pendingRollbackAddresses.size() > 0){
+
+        for (Address a : pendingRollbackAddresses){
+            
+            // Enviando o pacote para o destino
+            Ptr<MessageData> md = app->send(REQUEST_TO_START_ROLLBACK_COMMAND, checkpointId, a);
+        }
+    
+    } else if (pendingRollbackAddresses.size() == 0){
+
+        concludeRollback();
+
     }
 }
 
-void GlobalSyncClocksStrategy::rollback(Address requester, int cpId) {
-    rollbackStarterIp = InetSocketAddress::ConvertFrom(requester).GetIpv4();
-    checkpointId = cpId;
-    rollback(checkpointId);
+void GlobalSyncClocksStrategy::concludeRollback(){
+    NS_LOG_FUNCTION(this);
+
+    //Avisa o requisitor deste rollback que este nó o concluiu
+    if (rollbackStarter != Ipv4Address::GetAny())
+        Ptr<MessageData> md = app->send(ROLLBACK_FINISHED_COMMAND, 0, Address(rollbackStarter));
+
+    rollbackInProgress = false;
+    rollbackStarter = Ipv4Address::GetAny();
+
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
+        << " saiu do modo de bloqueio de comunicação.");
+
 }
 
 bool GlobalSyncClocksStrategy::interceptRead(Ptr<MessageData> md){
@@ -288,13 +374,19 @@ bool GlobalSyncClocksStrategy::interceptRead(Ptr<MessageData> md){
                 return interceptServerReadInCheckpointMode(md);
             }
             
-            if (rollbackInProgress){
-                return interceptServerReadInRollbackMode(md);
+            if (rollbackInProgress && interceptServerReadInRollbackMode(md)){
+                return true;
             }
 
             if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
                 utils::logMessageReceived(app->getNodeName(), md);
                 app->decreaseReadEnergy();
+
+                /* Se já havia um checkpoint em andamento, remove o checkpoint, pois
+                ele era inválido */
+                if (rollbackInProgress){
+                    checkpointHelper->removeCheckpoint(checkpointId);
+                }
 
                 app->initiateRollback(md->GetFrom(), md->GetData());
                 return true;
@@ -306,12 +398,20 @@ bool GlobalSyncClocksStrategy::interceptRead(Ptr<MessageData> md){
                 return interceptClientReadInCheckpointMode(md);
             }
             
-            if (rollbackInProgress){
-                return interceptClientReadInRollbackMode(md);
+            if (rollbackInProgress && interceptClientReadInRollbackMode(md)){
+                return true;
             }
 
             if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
                 utils::logMessageReceived(app->getNodeName(), md);
+                app->decreaseReadEnergy();
+
+                /* Se já havia um checkpoint em andamento, remove o checkpoint, pois
+                ele era inválido */
+                if (rollbackInProgress){
+                    checkpointHelper->removeCheckpoint(checkpointId);
+                }
+
                 app->initiateRollback(md->GetFrom(), md->GetData());
                 return true;
             }
@@ -332,26 +432,43 @@ bool GlobalSyncClocksStrategy::interceptServerReadInRollbackMode(Ptr<MessageData
 
     if (rollbackInProgress){
         
-        if (md->GetCommand() != ROLLBACK_FINISHED_COMMAND){
+        if (md->GetCommand() == REQUEST_VALUE){
             //Ignora pacotes até a conclusão do rollback dos outros nós
             return true;
         }
 
-        utils::logMessageReceived(app->getNodeName(), md);
-
+        //Se receber uma notificação de término de rollback de outro nó
         if (md->GetCommand() == ROLLBACK_FINISHED_COMMAND){
+            utils::logMessageReceived(app->getNodeName(), md);
+            app->decreaseReadEnergy();
+
             removeAddress(pendingRollbackAddresses, md->GetFrom());
 
             //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
             if (pendingRollbackAddresses.empty()){
-
-                NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
-                                << " saiu do modo de bloqueio de comunicação.");
-                
-                rollbackInProgress = false;
+                concludeRollback();
             }
 
+            return true;
+        }
+
+        //Se receber uma requisição para voltar ao estado no qual já se encontra
+        if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND &&
+            addressVectorContain(pendingRollbackAddresses, md->GetFrom()) &&
+            checkpointId == md->GetData()){
+            
+            utils::logMessageReceived(app->getNodeName(), md);
             app->decreaseReadEnergy();
+
+            app->send(ROLLBACK_FINISHED_COMMAND, 0, md->GetFrom());
+
+            removeAddress(pendingRollbackAddresses, md->GetFrom());
+
+            //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
+            if (pendingRollbackAddresses.empty()){
+                concludeRollback();
+            }
+
             return true;
         }
 
@@ -371,6 +488,7 @@ bool GlobalSyncClocksStrategy::interceptServerReadInCheckpointMode(Ptr<MessageDa
         }
 
         utils::logMessageReceived(app->getNodeName(), md);
+        app->decreaseReadEnergy();
 
         if (md->GetCommand() == CHECKPOINT_FINISHED_COMMAND){
             removeAddress(pendingCheckpointAddresses, md->GetFrom());
@@ -379,8 +497,7 @@ bool GlobalSyncClocksStrategy::interceptServerReadInCheckpointMode(Ptr<MessageDa
             if (pendingCheckpointAddresses.empty()){
                 confirmCheckpointCreation(true);
             }
-
-            app->decreaseReadEnergy();
+            
             return true;
         }
 
@@ -388,6 +505,7 @@ bool GlobalSyncClocksStrategy::interceptServerReadInCheckpointMode(Ptr<MessageDa
         //confirmação de checkpoint. Nesse caso, cancela-se o checkpoint e faz-se o rollback
         if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
             discardLastCheckpoint();
+
             app->initiateRollback(md->GetFrom(), md->GetData());
             return true;
         }
@@ -399,32 +517,47 @@ bool GlobalSyncClocksStrategy::interceptServerReadInCheckpointMode(Ptr<MessageDa
 bool GlobalSyncClocksStrategy::interceptClientReadInRollbackMode(Ptr<MessageData> md){
     NS_LOG_FUNCTION(this);
 
-    if (md->GetCommand() == RESPONSE_VALUE){
-        //Ignora pacotes até a conclusão do rollback dos outros nós
-        return true;
-    }
+    if (rollbackInProgress){
 
-    utils::logMessageReceived(app->getNodeName(), md);
+        if (md->GetCommand() == RESPONSE_VALUE || md->GetCommand() == CHECKPOINT_FINISHED_COMMAND){
+            //Ignora pacotes até a conclusão do rollback dos outros nós
+            return true;
+        }
+    
+        //Se receber uma notificação de término de rollback de outro nó
+        if (md->GetCommand() == ROLLBACK_FINISHED_COMMAND){
+            utils::logMessageReceived(app->getNodeName(), md);
+            app->decreaseReadEnergy();
 
-    //Se receber uma notificação de término de rollback de outro nó
-    //OU se receber uma requisição para voltar ao estado no qual já se encontra
-    if (md->GetCommand() == ROLLBACK_FINISHED_COMMAND || 
-        (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND &&
-        addressVectorContain(pendingRollbackAddresses, md->GetFrom()) &&
-        checkpointId == md->GetData())){
-        
-        //Avisando o nó emissor que o rollback foi concluído
-        Ptr<MessageData> mSent = app->send(ROLLBACK_FINISHED_COMMAND, 0, md->GetFrom());
-        // utils::logRegularMessageSent(app->getNodeName(), mSent);
+            removeAddress(pendingRollbackAddresses, md->GetFrom());
 
-        removeAddress(pendingRollbackAddresses, md->GetFrom());
+            //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
+            if (pendingRollbackAddresses.empty()){
+                concludeRollback();
+            }
 
-        //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
-        if (pendingRollbackAddresses.empty()){
-            notifyNodesAboutRollbackConcluded();
+            return true;
         }
 
-        return true;
+        //Se receber uma requisição para voltar ao estado no qual já se encontra
+        if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND &&
+            addressVectorContain(pendingRollbackAddresses, md->GetFrom()) &&
+            checkpointId == md->GetData()){
+            
+            utils::logMessageReceived(app->getNodeName(), md);
+            app->decreaseReadEnergy();
+            
+            app->send(ROLLBACK_FINISHED_COMMAND, 0, md->GetFrom());
+
+            removeAddress(pendingRollbackAddresses, md->GetFrom());
+
+            //Só sai do rollback caso todos os nós tenham terminado seus rollbacks
+            if (pendingRollbackAddresses.empty()){
+                concludeRollback();
+            }
+
+            return true;
+        }
     }
 
     return false;
@@ -441,13 +574,15 @@ bool GlobalSyncClocksStrategy::interceptClientReadInCheckpointMode(Ptr<MessageDa
         }
 
         utils::logMessageReceived(app->getNodeName(), md);
+        app->decreaseReadEnergy();
 
         if (md->GetCommand() == CHECKPOINT_FINISHED_COMMAND){
+            
             removeAddress(pendingCheckpointAddresses, md->GetFrom());
 
             //Só termina o checkpointing caso todos os nós tenham terminado seus checkpoints
             if (pendingCheckpointAddresses.empty()){
-                notifyNodesAboutCheckpointConcluded();
+                notifyNodesAboutCheckpointCreated();
                 confirmCheckpointCreation(true);
             }
 
@@ -457,6 +592,7 @@ bool GlobalSyncClocksStrategy::interceptClientReadInCheckpointMode(Ptr<MessageDa
         /* Também é possível receber requisições de rollback enquanto se está aguardando 
         confirmação de checkpoint. Nesse caso, cancela-se o checkpoint e faz-se o rollback */
         if (md->GetCommand() == REQUEST_TO_START_ROLLBACK_COMMAND){
+            
             discardLastCheckpoint();
             app->initiateRollback(md->GetFrom(), md->GetData());
             return true;
@@ -467,9 +603,10 @@ bool GlobalSyncClocksStrategy::interceptClientReadInCheckpointMode(Ptr<MessageDa
 }
 
 bool GlobalSyncClocksStrategy::interceptSend(Ptr<MessageData> md){
+    NS_LOG_FUNCTION(this);
+
     if ((rollbackInProgress || checkpointInProgress) && 
         (md->GetCommand() == REQUEST_VALUE || md->GetCommand() == RESPONSE_VALUE)){
-        
             return true;
     }
     
@@ -480,61 +617,13 @@ bool GlobalSyncClocksStrategy::interceptSend(Ptr<MessageData> md){
     return false;
 }
 
-void GlobalSyncClocksStrategy::notifyNodesAboutCheckpointConcluded(){
+void GlobalSyncClocksStrategy::notifyNodesAboutCheckpointCreated(){
     NS_LOG_FUNCTION(this);
 
     for (Address a : dependentAddresses){
         
         // Enviando o pacote para o destino
         Ptr<MessageData> md = app->send(CHECKPOINT_FINISHED_COMMAND, getLastCheckpointId(), a);
-        // utils::logRegularMessageSent(app->getNodeName(), md);
-    }
-    
-    app->decreaseSendEnergy();
-}
-
-void GlobalSyncClocksStrategy::notifyNodesAboutRollback(){
-    NS_LOG_FUNCTION(this);
-
-    if (app->getApplicationType() == CLIENT){
-        Ptr<ClientNodeApp> client = DynamicCast<ClientNodeApp>(app);
-        removeAddress(pendingRollbackAddresses, InetSocketAddress(rollbackStarterIp, client->getPeerPort()));
-    }
-
-    // Enviando notificação para os nós com os quais houve comunicação
-    if (pendingRollbackAddresses.size() > 0){
-
-        for (Address a : pendingRollbackAddresses){
-            
-            // Enviando o pacote para o destino
-            Ptr<MessageData> md = app->send(REQUEST_TO_START_ROLLBACK_COMMAND, checkpointId, a);
-            // utils::logRegularMessageSent(app->getNodeName(), md);
-        }
-    
-        app->decreaseSendEnergy();
-    }
-
-    if (pendingRollbackAddresses.size() == 0 && app->getApplicationType() == CLIENT){
-        //Se não existem outros nós a fazerem rollback, então o rollback está concluído 
-        notifyNodesAboutRollbackConcluded();
-    }
-}
-
-void GlobalSyncClocksStrategy::notifyNodesAboutRollbackConcluded(){
-    NS_LOG_FUNCTION(this);
-
-    Ptr<ClientNodeApp> client = DynamicCast<ClientNodeApp>(app);
-
-    if (client){
-        Ptr<MessageData> md = app->send(ROLLBACK_FINISHED_COMMAND, 0, rollbackStarterIp, client->getPeerPort());
-        // utils::logRegularMessageSent(getNodeName(), md);
-
-        rollbackInProgress = false;
-        rollbackStarterIp = Ipv4Address::GetAny();
-
-        NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
-        << " saiu do modo de bloqueio de comunicação.");
-
     }
 }
 
@@ -543,15 +632,14 @@ void GlobalSyncClocksStrategy::confirmCheckpointCreation(bool confirm) {
     
     checkpointInProgress = false;
 
-    //Removendo endereços com os quais este nó se comunicou no ciclo anterior
-    dependentAddresses.clear();
-
     if (confirm){
+        //Removendo endereços com os quais este nó se comunicou no ciclo anterior
+        dependentAddresses.clear();
+        
         confirmLastCheckpoint();
+        app->decreaseCheckpointEnergy();
     }
     
-    app->decreaseCheckpointEnergy();
-
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << app->getNodeName() 
         << " saiu do modo de bloqueio de comunicação.");
 }

@@ -15,30 +15,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef CLIENT_NODE_APP_H
-#define CLIENT_NODE_APP_H
+#ifndef BATTERY_NODE_APP_H
+#define BATTERY_NODE_APP_H
 
-#include "ns3/application.h"
+#include "packet-loss-counter.h"
+
+#include "ns3/checkpoint-app.h"
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
-#include "ns3/checkpoint-app.h"
+#include "ns3/energy-generator.h"
+#include "ns3/json-utils.h"
 #include <nlohmann/json.hpp>
+#include <algorithm>
 
 using json = nlohmann::json;
+using namespace std;
 
 namespace ns3
 {
 
-class Socket;
-class Packet;
-
 /**
  * \ingroup applications
- * \brief Aplicação referente a um nó que representa um cliente, que envia periodicamente
- * requisições a um ou mais servidores.
+ * \brief Aplicação referente a um nó que representa um servidor, respondendo a requisições que chegam.
  */
-class ClientNodeApp : public CheckpointApp
-{
+class ServerNodeApp : public CheckpointApp {
+
   private:
 
     /////////////////////////////////////////////////////////////////////////////
@@ -51,43 +52,40 @@ class ClientNodeApp : public CheckpointApp
       ou atributos fixos (que nunca mudam) de uma aplicação.
     */
 
-    EventId m_sendEvent;   //!< Event to send the next packet
+    /// Callbacks for tracing the packet Rx events
+    TracedCallback<Ptr<const Packet>> m_rxTrace;
 
+    /// Callbacks for tracing the packet Rx events, includes source and destination addresses
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_rxTraceWithAddresses;
+    
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
 
     //Somente atributos de aplicação serão armazenados em checkpoints
 
-    //!< Remote peer IP addresses. Packets will be sent to these addresses.
-    vector<Ipv4Address> m_peerAddresses;
-
-    //!< Remote peer port
-    uint16_t m_peerPort;
+    /** Port on which we listen for incoming packets. */
+    uint16_t m_port;
     
-    //!< Maximum number of messages the application will send
-    uint32_t m_count;
+    /** Numeração de sequência. Sempre que uma mensagem é processada, o número é incrementado. */
+    uint64_t m_seq;
     
-    //!< Message inter-send time
-    Time m_interval;
+    ////////////////////////////////////////////////
+    //////              MÉTODOS               //////
+    ////////////////////////////////////////////////
     
-    //!< Last sequence number received from the server
-    uint64_t last_seq;
-
     void StartApplication() override;
 
     void StopApplication() override;
 
-    /** Envia um pacote para os servidores. */
-    void Send();
-
     /**
-     * Método responsável pelo recebimento de pacotes. 
-     * @param md Dados da mensagem recebida.
+     * \brief Handle a packet reception.
+     *
+     * This function is called by lower layers.
+     *
+     * \param socket the socket the packet was received to.
      */
     void HandleRead(Ptr<MessageData> md);
-
-    void scheduleSendEvent();
 
   protected:
 
@@ -99,33 +97,18 @@ class ClientNodeApp : public CheckpointApp
 
     /** Imprime os dados dos atributos desta classe (para fins de debug). */
     virtual void printNodeData() override;
-
+  
   public:
+
     /**
      * \brief Get the type ID.
      * \return the object TypeId
      */
     static TypeId GetTypeId();
 
-    ClientNodeApp();
+    ServerNodeApp();
 
-    ~ClientNodeApp() override;
-
-    /**
-     * \return the total bytes sent by this app
-     */
-    uint64_t GetTotalTx() const;
-
-    /** 
-     * Converte uma string padronizada no formato 'IP;IP;IP...', adicionando os endereços
-     * ao vetor de endereços a enviar pacotes.
-     */
-    void SetPeerAddresses(string addressList);
-
-    /** Converte o vetor de endereços em uma string. */
-    string GetPeerAddresses() const;
-
-    uint16_t getPeerPort();
+    ~ServerNodeApp() override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
@@ -138,8 +121,9 @@ class ClientNodeApp : public CheckpointApp
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!
     */
     void from_json(const json& j);
+
 };
 
 } // namespace ns3
 
-#endif /* CLIENT_NODE_APP_H */
+#endif /* UDP_ECHO_SERVER_H */

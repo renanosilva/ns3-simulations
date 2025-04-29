@@ -81,7 +81,7 @@ Time jsonToTime(json j, string propertyName){
     return tempo;
 }
 
-/*json BatteryNodeApp::socketToJson(json j) const {
+/*json ServerNodeApp::socketToJson(json j) const {
     UdpSocket* us = dynamic_cast<UdpSocket*>(m_socket.operator->());
 
     if (us) {
