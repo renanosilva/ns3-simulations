@@ -89,7 +89,7 @@ class CheckpointStrategy : public Object
     /** Indica quais nós dependentes ainda precisam confirmar criação de checkpoint. */
     vector<Address> pendingCheckpointAddresses;
 
-     //////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
 
@@ -209,7 +209,7 @@ class CheckpointStrategy : public Object
      * @param requester Nó que solicitou o rollback.
      * @param checkpointId ID do checkpoint para o qual deverá ser feito rollback.
      * */
-    virtual void rollback(Address requester, int checkpointId);
+    virtual void rollback(Address requester, int checkpointId, string piggyBackedInfo = "");
 
     /**
      * Intercepta a leitura de um pacote. Dessa forma, a estratégia de checkpoint
@@ -256,11 +256,13 @@ class CheckpointStrategy : public Object
      */
     vector<Address> getDependentAddresses();
 
+    virtual void printData();
+
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const CheckpointStrategy& obj);
+    virtual json to_json();
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, CheckpointStrategy& obj);
+    virtual void from_json(const json& j);
 
 };
 

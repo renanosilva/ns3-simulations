@@ -111,7 +111,7 @@ ServerNodeApp::StartApplication(){
                 << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
 
 
-    NS_LOG_INFO(getNodeName() << " conectado.");
+    NS_LOG_INFO(getNodeName() << " iniciado.");
     decreaseConnectEnergy();
 }
 
@@ -182,6 +182,7 @@ void ServerNodeApp::printNodeData(){
         << ", configFilename = " << configFilename);
     
     udpHelper->printData();
+    checkpointStrategy->printData();
 }
 
 json ServerNodeApp::to_json() const {

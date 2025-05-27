@@ -64,8 +64,14 @@ class CheckpointHelper : public Object {
     /** Lista os arquivos de uma determinada pasta, de acordo com um padrão de busca. */
     vector<string> listFiles(const string& pasta, const string& padrao);
 
-    /** Escreve em um arquivo */
+    /** Escreve em um arquivo, mantendo seu conteúdo atual (caso exista) */
     void writeFile(string filename, nlohmann::json j);
+
+    /** 
+     * Edita um arquivo, sobrescrevendo-o, caso ele exista.
+     * Se não existir, é criado um novo.
+     */
+    void editFile(string filename, nlohmann::json j);
 
   public:
 
@@ -97,6 +103,15 @@ class CheckpointHelper : public Object {
     void writeCheckpoint(string data, int checkpointId);
 
     /** 
+     * Cria um novo checkpoint, especificando o nome do arquivo.
+     * Caso o arquivo já exista, os dados serão sobrescritos.
+     * 
+     * @param j Dados a serem escritos no checkpoint (em formato JSON).
+     * @param fileName Nome do arquivo do checkpoint.
+     * */
+    void writeCheckpoint(json j, string fileName);
+    
+    /** 
      * Cria um novo checkpoint, transformando um objeto em JSON. 
      * @param app Aplicação do nó que irá criar o checkpoint
      * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
@@ -110,6 +125,14 @@ class CheckpointHelper : public Object {
      * @param confirmed Indica se o checkpoint deve ser criado já com o status de confirmado ou não.
     */
     void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed);
+
+    /** 
+     * Edita um checkpoint, caso este já exista. Caso o arquivo não exista, é criado um novo.
+     * 
+     * @param j Dados a serem escritos no checkpoint (em formato JSON).
+     * @param checkpointId ID do checkpoint a ser editado.
+     * */
+    void editCheckpoint(json j, int checkpointId);
 
     /** 
      * Confirma um checkpoint temporário, tornando-o permanente. 
@@ -154,6 +177,8 @@ class CheckpointHelper : public Object {
      * @param index índice do checkpoint a ser lido.
      * */
     json readCheckpoint(int index);
+
+    bool existCheckpoint(int index);
 
     /** 
      * Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos, caso seja necessário. 

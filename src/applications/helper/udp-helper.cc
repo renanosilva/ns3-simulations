@@ -179,46 +179,52 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     Address from;
     m_socket->GetSockName(from);
     
-    /* Cabeçalho do pacote a ser enviado */
-    
+    //Cabeçalho do pacote a ser enviado
     SeqTsHeader seqTs;
     seqTs.SetSeq(m_sent);
 
-    /* Payload (corpo) do pacote */
+    //Payload (corpo) do pacote
 
-    // Serializando dados: comando (string) + número inteiro (int)
+    //Serializando dados: comando (string) + número inteiro (int)
     ostringstream oss;
     oss << command << " " << d;
-
     string data = oss.str();
 
-    /* Criação do pacote com o conteúdo a ser enviado */
-    Ptr<Packet> p = Create<Packet>((const uint8_t*) data.c_str(), data.length());
-
-    // Trace before adding header, for consistency with PacketSink
-    m_txTrace(p);
-    m_txTraceWithAddresses(p, from, to);
-
-    p->AddHeader(seqTs);
-
+    //Criando objeto que representa os dados da mensagem
     Ptr<MessageData> md = Create<MessageData>();
-    md->SetUid(p->GetUid());
     md->SetFrom(from);
     md->SetTo(to);
     md->SetSequenceNumber(seqTs.GetSeq());
     md->SetCommand(command);
     md->SetData(d);
-    md->SetSize(p->GetSize());
 
+    //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem
     bool intercepted = false;
 
     if (!protocolSendCallback.IsNull()){
-        //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem
         intercepted = protocolSendCallback(md);
     }
 
-    //Só envia o pacote caso o protocolo de checkpointing permita
+    //Só conclui o envio do pacote caso o protocolo de checkpointing permita
     if (!intercepted){
+        //Se o protocolo de checkpointing tiver acrescentado informações ao pacote
+        if (!md->GetPiggyBackedInfo().empty()){
+            data = data + " " + md->GetPiggyBackedInfo();
+        }
+
+        // Criação do pacote com o conteúdo a ser enviado
+        Ptr<Packet> p = Create<Packet>((const uint8_t*) data.c_str(), data.length());
+
+        // Trace before adding header, for consistency with PacketSink
+        m_txTrace(p);
+        m_txTraceWithAddresses(p, from, to);
+
+        p->AddHeader(seqTs);
+        
+        //Atribuindo informações restantes
+        md->SetUid(p->GetUid());
+        md->SetSize(p->GetSize());
+
         //Enviando pacote
         if (m_socket->SendTo(p, 0, to)){
             
@@ -248,8 +254,7 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
 
     while ((packet = socket->RecvFrom(from)))
     {
-        if (InetSocketAddress::IsMatchingType(from))
-        {
+        if (InetSocketAddress::IsMatchingType(from)){
             uint32_t receivedSize = packet->GetSize();
             
             SeqTsHeader seqTs;
@@ -268,6 +273,9 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
             int data;
             iss >> command >> data;
 
+            string piggyBackedInfo;
+            getline(iss >> std::ws, piggyBackedInfo);  // >> std::ws ignora espaços em branco à esquerda
+
             md = Create<MessageData>();
             md->SetUid(packet->GetUid());
             md->SetCommand(command);
@@ -275,6 +283,7 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
             md->SetFrom(from);
             md->SetSequenceNumber(currentSequenceNumber);
             md->SetSize(receivedSize);
+            md->SetPiggyBackedInfo(piggyBackedInfo);
         }
 
         socket->GetSockName(localAddress);
@@ -314,8 +323,7 @@ void UDPHelper::printData(){
         << ", m_address = " << Ipv4Address::ConvertFrom(m_address)
         << ", m_port = " << m_port
         << ", m_local.IsInvalid() = " << m_local.IsInvalid()
-        << (m_socket == nullptr ? "" : ", m_socket->GetAllowBroadcast() = " + to_string(m_socket->GetAllowBroadcast()))
-        << "\n ");
+        << (m_socket == nullptr ? "" : ", m_socket->GetAllowBroadcast() = " + to_string(m_socket->GetAllowBroadcast())));
 }
 
 void to_json(json& j, const UDPHelper& obj) {

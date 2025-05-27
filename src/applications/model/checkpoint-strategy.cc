@@ -77,7 +77,7 @@ bool CheckpointStrategy::rollback(int checkpointId){
     return false;
 }
 
-void CheckpointStrategy::rollback(Address requester, int checkpointId){
+void CheckpointStrategy::rollback(Address requester, int checkpointId, string piggyBackedInfo){
     
 }
 
@@ -153,19 +153,24 @@ void CheckpointStrategy::confirmCheckpointCreation(bool confirm) {
 
 }
 
-void to_json(json& j, const CheckpointStrategy& obj) {
-    NS_LOG_FUNCTION("CheckpointStrategy::to_json");
-    
-    j = json{
-        {"dependentAddresses", obj.dependentAddresses}
-    };
-    
+void CheckpointStrategy::printData(){
+    NS_LOG_INFO("");
 }
 
-void from_json(const json& j, CheckpointStrategy& obj) {
+json CheckpointStrategy::to_json() {
+    NS_LOG_FUNCTION("CheckpointStrategy::to_json");
+    
+    json j = json{
+        {"dependentAddresses", dependentAddresses}
+    };
+    
+    return j;
+}
+
+void CheckpointStrategy::from_json(const json& j) {
     NS_LOG_FUNCTION("CheckpointStrategy::from_json");
     
-    j.at("dependentAddresses").get_to(obj.dependentAddresses); 
+    j.at("dependentAddresses").get_to(dependentAddresses); 
 }
 
 void CheckpointStrategy::setLogData(string data){

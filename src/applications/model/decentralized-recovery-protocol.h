@@ -15,8 +15,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef SYNC_PREDEFINED_TIMES_CHECKPOINT_H
-#define SYNC_PREDEFINED_TIMES_CHECKPOINT_H
+#ifndef DECENTRALIZED_RECOVERY_PROTOCOL_H
+#define DECENTRALIZED_RECOVERY_PROTOCOL_H
 
 #include "ns3/object.h"
 #include "ns3/core-module.h"
@@ -34,29 +34,71 @@ namespace ns3
 {
 
 /** 
+ * Representa informações que precisam ser armazenadas sobre outros nós. 
+ * Essas informações são utilizadas pelo protocolo.
+*/
+class NodeInfo {
+  
+  private:
+    
+    Address address; //endereço do nó
+    int activeCheckpoint; //ID do último checkpoint do nó em questão
+
+  public:
+
+    NodeInfo(){};
+    
+    NodeInfo(const Address& addr, int ac)
+      : address(addr), activeCheckpoint(ac) {}
+
+    Address GetAddress() const { return address; }
+    int GetActiveCheckpoint() const { return activeCheckpoint; }
+
+    void SetAddress(const Address& a) { address = a; }
+    void SetActiveCheckpoint(const int& c) { activeCheckpoint = c; }
+
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const NodeInfo& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, NodeInfo& obj);
+};
+
+/** 
  * Estratégia de checkpointing síncrona, na qual são gerados checkpoints 
  * a cada período predefinido de tempo. Todos os nós possuem relógios
  * sincronizados e criam checkpoints no mesmo instante de tempo.
  */
-class GlobalSyncClocksStrategy : public CheckpointStrategy {
+class DecentralizedRecoveryProtocol : public CheckpointStrategy {
 
   private:
+
+    //////////////////////////////////////////////////////////////
+    //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
+    //////////////////////////////////////////////////////////////
+
+    /** Checkpoint sequence number. */
+    int csn;
+
+    /** 
+     * Utilizado para armazenar informações sobre outros nós com os quais este nó
+     * possua dependência, como seus endereços e ID de checkpoint ativo (último 
+     * checkpoint criado).
+     */
+    vector<NodeInfo> propList;
+
+    /////////////////////////////////////////////////////////////////////////////
+    //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
+    /////////////////////////////////////////////////////////////////////////////
+
+    /** Checkpoint ativo do nó. */
+    int activeCheckpoint;
 
     /** Intervalo de tempo no qual serão criados checkpoints. */
     Time interval;
 
-    /** 
-     * Timeout referente à criação do checkpoint. Se esse tempo for atingido e não houver
-     * confirmação dos outros nós com relação à criação de seus checkpoints, o checkpoint
-     * será excluído.
-     * */
-    Time timeout;
-
     /** Evento utilizado para criação de checkpoint. */
     EventId creationScheduling;
-
-    /** Evento utilizado para cancelamento do último checkpoint criado. */
-    EventId discardScheduling;
 
     /** Calcula a quantidade de segundos restantes até o próximo checkpoint. */
     Time getDelayToNextCheckpoint();
@@ -64,51 +106,24 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
     /** Agenda a criação do próximo checkpoint. */
     void scheduleNextCheckpoint();
 
-    /** Agenda a exclusão do último checkpoint. */
-    void scheduleLastCheckpointDiscard();
-
-    /** Confirma a criação do último checkpoint. */
-    void confirmLastCheckpoint();
-
-    /**
-     * Intercepta a recepção de um pacote de um servidor enquanto ele está no modo de rollback.
-     *
-     * \param md Dados da mensagem recebida.
-     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
-     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
-     * não tiver sido processada, o que deverá ser feito pela aplicação.
+    /** 
+     * Adiciona um novo elemento à propList, caso ele já não exista com a mesma informação
+     * de checkpoint ativo. Não adiciona caso o checkpoint que se está tentando adicionar
+     * seja posterior ao que já está presente. Isso é feito pois, caso seja necessário um
+     * rollback, ele deverá ser feito para o checkpoint mais antigo.
+     * 
+     * @param i Informações que se está tentando inserir na propList.
      */
-    bool interceptServerReadInRollbackMode(Ptr<MessageData> md);
+    void addToPropList(NodeInfo i);
 
-    /**
-     * Intercepta a recepção de um pacote de um servidor enquanto ele está no modo de criação de checkpoint.
-     *
-     * \param md Dados da mensagem recebida.
-     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
-     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
-     * não tiver sido processada, o que deverá ser feito pela aplicação.
-     */
-    bool interceptServerReadInCheckpointMode(Ptr<MessageData> md);
+    /** Atualiza a propList do último checkpoint para a propList atual do nó. */
+    void editActiveCheckpointPropList();
 
-    /**
-     * Intercepta a recepção de um pacote de um cliente enquanto ele está no modo de rollback.
-     *
-     * \param md Dados da mensagem recebida.
-     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
-     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
-     * não tiver sido processada, o que deverá ser feito pela aplicação.
-     */
-    bool interceptClientReadInRollbackMode(Ptr<MessageData> md);
-
-    /**
-     * Intercepta a recepção de um pacote de um cliente enquanto ele está no modo de criação de checkpoint.
-     *
-     * \param md Dados da mensagem recebida.
-     * \return Retorna true caso a mensagem seja interceptada e processada pela estratégia de checkpoint. 
-     * Nesse caso, a aplicação não deve processá-la. Retorna false caso contrário, ou seja, se a mensagem
-     * não tiver sido processada, o que deverá ser feito pela aplicação.
-     */
-    bool interceptClientReadInCheckpointMode(Ptr<MessageData> md);
+    /** 
+     * Busca um objeto NodeInfo na propList que possua um determinado Address. 
+     * @param addr Endereço que se está buscando na propList.
+    */
+    NodeInfo* findNodeInfoByAddress(const Address& addr);
 
   public:
     /**
@@ -127,12 +142,12 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */
-    GlobalSyncClocksStrategy(Time timeInterval, Time timeout, Ptr<CheckpointApp> application);
+    DecentralizedRecoveryProtocol(Time timeInterval, Ptr<CheckpointApp> application);
 
     /** Construtor padrão. */
-    GlobalSyncClocksStrategy();
+    DecentralizedRecoveryProtocol();
 
-    ~GlobalSyncClocksStrategy() override;
+    ~DecentralizedRecoveryProtocol() override;
 
     virtual void startCheckpointing() override;
     
@@ -140,11 +155,11 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
 
     virtual void writeCheckpoint() override; 
 
-    virtual void discardLastCheckpoint() override; 
-    
+    /** 
+     * Método utilizado para realizar um rollback para o último checkpoint válido após a recuperação
+     * de uma falha do próprio nó. Notifica nós dependentes.
+     */
     virtual void rollbackToLastCheckpoint() override; 
-
-    virtual bool rollback(int checkpointId) override;
 
     /** 
      * Utilizado para iniciar um processo de rollback, após a solicitação
@@ -155,6 +170,9 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
      * @param checkpointId ID do checkpoint para o qual deverá ser feito rollback.
      * */
     virtual void rollback(Address requester, int cpId, string piggyBackedInfo = "") override;
+
+    /** Realiza um rollback para um checkpoint específico. */
+    virtual bool rollback(int checkpointId) override;
 
     /**
      * Intercepta a leitura de um pacote. Dessa forma, a estratégia de checkpoint
@@ -179,28 +197,19 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
     virtual bool interceptSend(Ptr<MessageData> md) override;
 
     /** 
-     * Notifica os nós com os quais houve comunicação sobre a conclusão do checkpoint deste nó.
-     */
-    void notifyNodesAboutCheckpointCreated();
-
-    /** 
-     * Avisa ao iniciador de um rollback que este nó e seus dependentes concluíram seus procedimentos de rollback.
-     * Marca o rollback como concluído, saindo do modo de bloqueio de comunicação.
-     * */
-    void concludeRollback();
-    
-    /** 
-     * Conclui a criação de um checkpoint, após receber notificação dos outros nós dependentes,
-     * ou o cancela. 
-     * @param confirm Indica se o checkpoint será confirmado ou descartado.
-    */
-    virtual void confirmCheckpointCreation(bool confirm) override;
-
-    /** 
-     * Notifica os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
+     * Notifica todos os nós com os quais houve comunicação sobre a necessidade de realizarem rollback.
      * Método chamado quando este nó realiza seu próprio rollback.
      */
-    void notifyNodesAboutRollback();
+    void notifyAllNodesAboutRollback();
+
+    /** 
+     * Notifica outros nós sobre a necessidade de realizarem rollback.
+     * Não notifica o solicitante de um rollback, caso ele já tenha feito
+     * rollback para o checkpoint consistente.
+     */
+    void notifyNodesAboutRollback(Address requester, int requesterActiveCheckpoint);
+
+    virtual void printData() override;
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     virtual json to_json() override;
@@ -211,4 +220,4 @@ class GlobalSyncClocksStrategy : public CheckpointStrategy {
 
 } // namespace ns3
 
-#endif /* UDP_ECHO_SERVER_H */
+#endif /* DECENTRALIZED_RECOVERY_PROTOCOL */

@@ -36,6 +36,7 @@ build_lib(
     model/fixed-energy-generator.cc
     model/circular-energy-generator.cc
     model/checkpoint-strategy.cc
+    model/decentralized-recovery-protocol.cc
     model/global-sync-clocks-strategy.cc
     model/checkpoint-app.cc
     exception/node-asleep-exception.cc
@@ -80,6 +81,7 @@ build_lib(
     model/circular-energy-generator.h
     model/checkpoint-strategy.h
     model/global-sync-clocks-strategy.h
+    model/decentralized-recovery-protocol.h
     model/checkpoint-app.h
     model/application-type.h
     exception/node-asleep-exception.h

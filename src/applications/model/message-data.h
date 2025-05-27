@@ -53,6 +53,7 @@ class MessageData : public Object
     string command;          //indica o tipo de mensagem ou comando a ser executado pelo receptor
     int data;                //dado que complementa o comando da mensagem
     uint32_t size;           //tamanho em bytes da mensagem
+    string piggyBackedInfo;  //Informações de controle que podem ser enviadas junto de mensagens de aplicação
 
 
   public:
@@ -81,6 +82,7 @@ class MessageData : public Object
     uint32_t GetSequenceNumber() const { return sequenceNumber; }
     std::string GetCommand() const { return command; }
     std::string GetCompleteCommand() const { return command + (data > 0 ? " " + to_string(data) : ""); }
+    std::string GetPiggyBackedInfo() const { return piggyBackedInfo; }
     int GetData() const { return data; }
     uint32_t GetSize() const { return size; }
     uint64_t GetUid() const { return uid; }
@@ -91,6 +93,7 @@ class MessageData : public Object
     void SetSequenceNumber(uint32_t seqNum) { sequenceNumber = seqNum; }
     void SetCommand(const std::string& cmd) { command = cmd; }
     void SetData(int value) { data = value; }
+    void SetPiggyBackedInfo(std::string info) { piggyBackedInfo = info; }
     void SetSize(uint32_t msgSize) { size = msgSize; }
     void SetUid(uint64_t msgUid) { uid = msgUid; }
 

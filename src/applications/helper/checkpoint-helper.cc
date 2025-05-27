@@ -145,6 +145,14 @@ void CheckpointHelper::writeCheckpoint(string data, int checkpointId){
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
+void CheckpointHelper::writeCheckpoint(json j, string fileName){
+    NS_LOG_FUNCTION(this);
+    
+    editFile(fileName, j);
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
+}
+
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId){
     NS_LOG_FUNCTION(this);
 
@@ -168,6 +176,14 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId,
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
+void CheckpointHelper::editCheckpoint(json j, int checkpointId){
+    NS_LOG_FUNCTION(this);
+
+    editFile(getCheckpointFilename(checkpointId), j);
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT EDITADO. ID: " << lastCheckpointId << "\n");
+}
+
 void CheckpointHelper::confirmCheckpoint(int checkpointId){
     NS_LOG_FUNCTION(this);
 
@@ -183,6 +199,7 @@ void CheckpointHelper::confirmCheckpoint(int checkpointId){
 
 void CheckpointHelper::removeCheckpoint(int checkpointId){
     NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION("\nREMOVENDO CHECKPOINT...\n");
 
     string filename = getCheckpointFilename(checkpointId);
     std::remove(filename.c_str());
@@ -203,6 +220,15 @@ void CheckpointHelper::writeFile(string filename, nlohmann::json j){
 
     logFile << content << j;
 
+    logFile.close();
+}
+
+void CheckpointHelper::editFile(string filename, nlohmann::json j){
+    NS_LOG_FUNCTION(this);
+
+    // Create and open a text file
+    ofstream logFile(filename);
+    logFile << j;
     logFile.close();
 }
 
@@ -230,11 +256,11 @@ json CheckpointHelper::readLastCheckpoint()
 
     string content = getFileContent(getCheckpointFilename(getLastCheckpointId()));
 
-    /*if (content.length() == 0){
-        content = getFileContent(getCheckpointFilename(getLastCheckpointId()-1));
-    }*/
-
     return json::parse(content);
+}
+
+bool CheckpointHelper::existCheckpoint(int index){
+    return readCheckpoint(index) != nullptr;
 }
 
 string CheckpointHelper::getCheckpointBasename(){

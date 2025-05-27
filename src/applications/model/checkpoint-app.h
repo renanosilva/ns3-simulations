@@ -216,7 +216,7 @@ class CheckpointApp : public Application
      * @param requester Nó que requisitou o rollback.
      * @param cpId ID do checkpoint para o qual será feito rollback.
      */
-    virtual void initiateRollback(Address requester, int cpId);
+    virtual void initiateRollback(Address requester, int cpId, string piggyBackedInfo = "");
 
     /** 
      * Método abstrato chamado imediatamente antes do cancelamento de um checkpoint.

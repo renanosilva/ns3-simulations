@@ -41,6 +41,7 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md){
                                 << (md->GetCommand() == RESPONSE_VALUE ? 
                                                 ", m_seq: " + to_string(md->GetData()) 
                                                 : "")
+                                << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")
                                 << ")");
 
     NS_LOG_FUNCTION("Fim do método");
@@ -58,6 +59,7 @@ void logRegularMessageSent(string nodeName, Ptr<MessageData> md){
                             << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE && md->GetData() > 0 ? 
                                             " " + to_string(md->GetData()) : "")
                             << (md->GetCommand() == RESPONSE_VALUE ? (", m_seq: " + to_string(md->GetData())) : "")
+                            << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")
                             << ")"); 
 
 }

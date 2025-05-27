@@ -18,6 +18,7 @@
 #include "checkpoint-app.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/global-sync-clocks-strategy.h"
+#include "ns3/decentralized-recovery-protocol.h"
 #include "ns3/log-utils.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -134,22 +135,30 @@ void CheckpointApp::configureCheckpointStrategy() {
         checkpointStrategy = Create<GlobalSyncClocksStrategy>(Seconds(checkpointInterval), Seconds(checkpointTimeout), this);
         checkpointStrategy->startCheckpointing();
     
+    } else if (checkpointStrategyName == "DecentralizedRecoveryProtocol"){
+
+        string intervalProperty = "nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<DecentralizedRecoveryProtocol>(Seconds(checkpointInterval), this);
+        checkpointStrategy->startCheckpointing();
+
     } else {
         NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
     }
 }
 
-void CheckpointApp::initiateRollback(Address requester, int cpId){
+void CheckpointApp::initiateRollback(Address requester, int cpId, string piggyBackedInfo){
     NS_LOG_FUNCTION(this);
 
     resetNodeData();
     configureCheckpointStrategy();
-    checkpointStrategy->rollback(requester, cpId);
+    checkpointStrategy->rollback(requester, cpId, piggyBackedInfo);
 }
 
 void CheckpointApp::initiateRollbackToLastCheckpoint(){
     NS_LOG_FUNCTION(this);
-
+    
     configureCheckpointStrategy();
     checkpointStrategy->rollbackToLastCheckpoint();
 }
@@ -423,10 +432,11 @@ json CheckpointApp::to_json() const {
     NS_LOG_FUNCTION(this);
     
     json j = Application::to_json();
+
     j["udpHelper"] = *udpHelper;
-    j["checkpointStrategy"] = *checkpointStrategy;
     j["nodeName"] = nodeName;
     j["configFilename"] = configFilename;
+    j["checkpointStrategy"] = checkpointStrategy->to_json();
     
     return j;
 }
@@ -439,9 +449,10 @@ void CheckpointApp::from_json(const json& j) {
     udpHelper = Create<UDPHelper>();
 
     j.at("udpHelper").get_to(*udpHelper); 
-    j.at("checkpointStrategy").get_to(*checkpointStrategy);
     j.at("nodeName").get_to(nodeName);
     j.at("configFilename").get_to(configFilename);
+
+    checkpointStrategy->from_json(j.at("checkpointStrategy"));
 }
 
 string CheckpointApp::getNodeName(){

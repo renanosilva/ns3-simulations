@@ -245,7 +245,7 @@ void GlobalSyncClocksStrategy::rollbackToLastCheckpoint() {
     }
 }
 
-void GlobalSyncClocksStrategy::rollback(Address requester, int cpId) {
+void GlobalSyncClocksStrategy::rollback(Address requester, int cpId, string piggyBackedInfo) {
     NS_LOG_FUNCTION(this);
     
     rollbackStarter = requester;
@@ -644,16 +644,16 @@ void GlobalSyncClocksStrategy::confirmCheckpointCreation(bool confirm) {
         << " saiu do modo de bloqueio de comunicação.");
 }
 
-void to_json(json& j, const GlobalSyncClocksStrategy& obj) {
+json GlobalSyncClocksStrategy::to_json() {
     NS_LOG_FUNCTION("GlobalSyncClocksStrategy::to_json");
     
-    to_json(j, static_cast<const CheckpointStrategy&>(obj));
+    return CheckpointStrategy::to_json();
 }
 
-void from_json(const json& j, GlobalSyncClocksStrategy& obj) {
+void GlobalSyncClocksStrategy::from_json(const json& j) {
     NS_LOG_FUNCTION("GlobalSyncClocksStrategy::from_json");
     
-    from_json(j, static_cast<CheckpointStrategy&>(obj));
+    CheckpointStrategy::from_json(j);
 }
 
 } // Namespace ns3

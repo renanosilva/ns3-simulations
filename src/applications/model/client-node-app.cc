@@ -129,7 +129,7 @@ ClientNodeApp::StartApplication() {
     NS_LOG_INFO("Iniciando " << getNodeName() << "..." 
                 << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
 
-    NS_LOG_INFO(getNodeName() << " conectado.");
+    NS_LOG_INFO(getNodeName() << " iniciado.");
 }
 
 void
@@ -247,6 +247,7 @@ void ClientNodeApp::printNodeData(){
         << ", configFilename = " << configFilename);
 
     udpHelper->printData();
+    checkpointStrategy->printData();
 }
 
 void ClientNodeApp::SetPeerAddresses(string addressList)
@@ -294,8 +295,6 @@ json ClientNodeApp::to_json() const {
     j = utils::timeToJson(j, "m_interval", m_interval);
     j["last_seq"] = last_seq;
 
-    // j["udpHelper"] = *udpHelper;
-    
     return j;
 }
 

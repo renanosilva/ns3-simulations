@@ -40,7 +40,7 @@ using namespace utils;
 NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/01-sim-global-sync-clocks.json"; 
+static const string CONFIG_FILENAME = "scratch/02-decentralized-recovery-config.json"; 
 
 int
 main(int argc, char* argv[])
@@ -56,11 +56,26 @@ main(int argc, char* argv[])
     LogComponentEnable("CheckpointStrategy", LOG_INFO);
     LogComponentEnable("CheckpointHelper", LOG_INFO);
     LogComponentEnable("GlobalSyncClocksStrategy", LOG_INFO);
+    LogComponentEnable("DecentralizedRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);
     LogComponentEnable("LogUtils", LOG_INFO);
-    
+
+    // LogComponentEnable("Application", LOG_INFO);
+    // LogComponentEnable("CheckpointApp", LOG_ALL);
+    // LogComponentEnable("ServerNodeApp", LOG_ALL);
+    // LogComponentEnable("ClientApp", LOG_ALL);
+    // LogComponentEnable("Battery", LOG_INFO);
+    // LogComponentEnable("CheckpointStrategy", LOG_ALL);
+    // LogComponentEnable("CheckpointHelper", LOG_ALL);
+    // LogComponentEnable("GlobalSyncClocksStrategy", LOG_ALL);
+    // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_ALL);
+    // LogComponentEnable("EnergyGenerator", LOG_INFO);
+    // LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
+    // LogComponentEnable("UDPHelper", LOG_ALL);
+    // LogComponentEnable("LogUtils", LOG_INFO);
+
     // LogComponentEnable("Application", LOG_FUNCTION);
     // LogComponentEnable("CheckpointApp", LOG_FUNCTION);
     // LogComponentEnable("BatteryNodeApp", LOG_FUNCTION);
@@ -69,6 +84,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("CheckpointStrategy", LOG_FUNCTION);
     // LogComponentEnable("CheckpointHelper", LOG_FUNCTION);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_FUNCTION);
+    // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_FUNCTION);
     // LogComponentEnable("EnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("CircularEnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("UDPHelper", LOG_FUNCTION);
@@ -81,6 +97,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("CheckpointStrategy", LOG_LEVEL_ALL);
     // LogComponentEnable("CheckpointHelper", LOG_LEVEL_ALL);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_LEVEL_ALL);
+    // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_LEVEL_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("UDPHelper", LOG_LEVEL_ALL);
@@ -100,17 +117,6 @@ main(int argc, char* argv[])
     int clientNodesQuantity = clientNodesNames.size();
     int totalNodesQuantity = serverNodesQuantity + clientNodesQuantity;
     
-    //vector<string> nodesNames = config.GetPropertyValues("nodes");
-    // int totalNodesQuantity = batteryNodesQuantity + clientNodesQuantity;
-    // int batteryNodesQuantity = config.GetIntProperty("nodes.battery-nodes.amount");
-    // int clientNodesQuantity = config.GetIntProperty("nodes.client-nodes.amount");
-
-    // simulation parameters
-    //double distanceToRx = 10.0; // meters
-    //UintegerValue maxPackets = UintegerValue(0); //número máximo de pacotes que podem ser enviados na simulação (0 = ilimitado).
-    //TimeValue interval = TimeValue(Seconds(1.0)); //tempo que deve ser aguardado entre envio de pacotes
-    //UintegerValue packetSize = UintegerValue(1024);
-
     std::string phyMode("DsssRate1Mbps");
     bool verbose = false;
 
@@ -126,10 +132,6 @@ main(int argc, char* argv[])
     NodeContainer nodes;
     nodes.Create(totalNodesQuantity);
 
-    // NodeContainer networkNodes;
-    // networkNodes.Add(c.Get(0));
-    // networkNodes.Add(c.Get(1));
-
     NodeContainer clientNodes;
     NodeContainer serverNodes;
 
@@ -142,9 +144,6 @@ main(int argc, char* argv[])
     for (int i = serverNodesQuantity; i < totalNodesQuantity; i++){
         clientNodes.Add(nodes.Get(i));
     }
-
-    // Ptr<Node> clientNode = nodesContainer.Get(0);
-    // Ptr<Node> batteryServerNode = nodesContainer.Get(1);
 
     // The below set of helpers will help us to put together the wifi NICs we want
     WifiHelper wifi;
@@ -223,9 +222,8 @@ main(int argc, char* argv[])
         ClientNodeAppHelper clientAppHelper(serverAddresses, 9, clientNodesNames[j], CONFIG_FILENAME); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
         clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
         clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
-        //clientApp.SetAttribute("PacketSize", packetSize); //tamanho dos pacotes
 
-        clientAppHelper.Install(clientNodes.Get(j)).Start(Seconds(2.0)); //instala a aplicação cliente no nó e agenda sua inicialização
+        clientAppHelper.Install(clientNodes.Get(j)).Start(Seconds(1.0)); //instala a aplicação cliente no nó e agenda sua inicialização
     }
 
     /** simulation setup **/
