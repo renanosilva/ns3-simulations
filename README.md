@@ -5,4 +5,4 @@ Para executar o projeto:
 3) Instalar a biblioteca Boost.
 4) Clonar este repositório.
 5) Copiar os arquivos para a pasta do ns3 instalado.
-6) Executar alguns dos scripts de simulação.
+6) Executar algum script de simulação da pasta scratch.
