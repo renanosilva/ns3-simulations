@@ -43,7 +43,7 @@ class ServerNodeAppHelper : public ApplicationHelper
      *
      * \param port The port the server will wait on for incoming packets
      */
-    ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename);
+    ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename, int nodesQuantity);
 };
 
 /**
@@ -60,7 +60,7 @@ class ClientNodeAppHelper : public ApplicationHelper
      * \param ip The IP address of the remote sensor
      * \param port The port number of the remote sensor
      */
-    ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename);
+    ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename, int nodesQuantity);
 
     /**
      * Create ClientHelper which will make life easier for people trying

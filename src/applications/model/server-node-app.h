@@ -74,10 +74,6 @@ class ServerNodeApp : public CheckpointApp {
     //////              MÉTODOS               //////
     ////////////////////////////////////////////////
     
-    void StartApplication() override;
-
-    void StopApplication() override;
-
     /**
      * \brief Handle a packet reception.
      *
@@ -95,9 +91,6 @@ class ServerNodeApp : public CheckpointApp {
     */
     virtual void resetNodeData() override;
 
-    /** Imprime os dados dos atributos desta classe (para fins de debug). */
-    virtual void printNodeData() override;
-  
   public:
 
     /**
@@ -109,6 +102,13 @@ class ServerNodeApp : public CheckpointApp {
     ServerNodeApp();
 
     ~ServerNodeApp() override;
+
+    virtual void StartApplication();
+
+    virtual void StopApplication();
+
+    /** Imprime os dados dos atributos desta classe (para fins de debug). */
+    virtual void printNodeData() override;
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

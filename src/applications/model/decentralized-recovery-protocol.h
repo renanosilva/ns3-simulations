@@ -34,10 +34,11 @@ namespace ns3
 {
 
 /** 
- * Representa informações que precisam ser armazenadas sobre outros nós. 
- * Essas informações são utilizadas pelo protocolo.
+ * Decentralized Recovery Protocolo Node Info.
+ * Representa informações que precisam ser armazenadas sobre outros nós
+ * para que o protocolo funcione corretamente. 
 */
-class NodeInfo {
+class DRPNodeInfo {
   
   private:
     
@@ -46,9 +47,9 @@ class NodeInfo {
 
   public:
 
-    NodeInfo(){};
+    DRPNodeInfo(){};
     
-    NodeInfo(const Address& addr, int ac)
+    DRPNodeInfo(const Address& addr, int ac)
       : address(addr), activeCheckpoint(ac) {}
 
     Address GetAddress() const { return address; }
@@ -58,16 +59,15 @@ class NodeInfo {
     void SetActiveCheckpoint(const int& c) { activeCheckpoint = c; }
 
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const NodeInfo& obj);
+    friend void to_json(json& j, const DRPNodeInfo& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, NodeInfo& obj);
+    friend void from_json(const json& j, DRPNodeInfo& obj);
 };
 
 /** 
- * Estratégia de checkpointing síncrona, na qual são gerados checkpoints 
- * a cada período predefinido de tempo. Todos os nós possuem relógios
- * sincronizados e criam checkpoints no mesmo instante de tempo.
+ * Estratégia de checkpointing assíncrona, na qual são gerados checkpoints 
+ * a cada determinado período de tempo, que podem ser diferentes entre cada nó. 
  */
 class DecentralizedRecoveryProtocol : public CheckpointStrategy {
 
@@ -85,7 +85,7 @@ class DecentralizedRecoveryProtocol : public CheckpointStrategy {
      * possua dependência, como seus endereços e ID de checkpoint ativo (último 
      * checkpoint criado).
      */
-    vector<NodeInfo> propList;
+    vector<DRPNodeInfo> propList;
 
     /////////////////////////////////////////////////////////////////////////////
     //////          ATRIBUTOS    NÃO    ARMAZENADOS EM CHECKPOINTS         //////
@@ -114,16 +114,16 @@ class DecentralizedRecoveryProtocol : public CheckpointStrategy {
      * 
      * @param i Informações que se está tentando inserir na propList.
      */
-    void addToPropList(NodeInfo i);
+    void addToPropList(DRPNodeInfo i);
 
     /** Atualiza a propList do último checkpoint para a propList atual do nó. */
     void editActiveCheckpointPropList();
 
     /** 
-     * Busca um objeto NodeInfo na propList que possua um determinado Address. 
+     * Busca um objeto DRPNodeInfo na propList que possua um determinado Address. 
      * @param addr Endereço que se está buscando na propList.
     */
-    NodeInfo* findNodeInfoByAddress(const Address& addr);
+    DRPNodeInfo* findNodeInfoByAddress(const Address& addr);
 
   public:
     /**
@@ -135,10 +135,6 @@ class DecentralizedRecoveryProtocol : public CheckpointStrategy {
     /** 
      * Construtor. 
      * @param interval Define a periodicidade (em segundos) na qual serão criados checkpoints.
-     * @param timeout Timeout referente à criação do checkpoint. Se esse tempo for atingido e não houver
-     * confirmação dos outros nós com relação à criação de seus checkpoints, o checkpoint
-     * será excluído.
-     * @param nodeName Nome do nó. Utilizado para criação de checkpoints.
      * @param application Aplicação que está sendo executada no nó. Os dados dessa classe serão armazenados em checkpoint.
      * 
      * */

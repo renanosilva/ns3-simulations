@@ -74,10 +74,6 @@ class ClientNodeApp : public CheckpointApp
     //!< Last sequence number received from the server
     uint64_t last_seq;
 
-    void StartApplication() override;
-
-    void StopApplication() override;
-
     /** Envia um pacote para os servidores. */
     void Send();
 
@@ -97,9 +93,6 @@ class ClientNodeApp : public CheckpointApp
     */
     virtual void resetNodeData() override;
 
-    /** Imprime os dados dos atributos desta classe (para fins de debug). */
-    virtual void printNodeData() override;
-
   public:
     /**
      * \brief Get the type ID.
@@ -111,10 +104,17 @@ class ClientNodeApp : public CheckpointApp
 
     ~ClientNodeApp() override;
 
+    void StartApplication() override;
+
+    void StopApplication() override;
+
     /**
      * \return the total bytes sent by this app
      */
     uint64_t GetTotalTx() const;
+
+    /** Imprime os dados dos atributos desta classe (para fins de debug). */
+    virtual void printNodeData() override;
 
     /** 
      * Converte uma string padronizada no formato 'IP;IP;IP...', adicionando os endereços

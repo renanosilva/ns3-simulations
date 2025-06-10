@@ -76,6 +76,11 @@ ClientNodeApp::GetTypeId()
                             StringValue(""),
                             MakeStringAccessor(&ClientNodeApp::nodeName),
                             MakeStringChecker())
+            .AddAttribute("TotalNodesQuantity",
+                            "Quantidade total de nós do sistema. ",
+                            UintegerValue(0),
+                            MakeIntegerAccessor(&ClientNodeApp::totalNodesQuantity),
+                            MakeIntegerChecker<int>())
             .AddAttribute("ConfigFilename",
                             "This node's config filename. ",
                             StringValue(""),

@@ -164,6 +164,15 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId)
     NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
+void CheckpointHelper::writeCheckpoint(json j, int checkpointId){
+    NS_LOG_FUNCTION(this);
+
+    writeFile(getCheckpointFilename(checkpointId), j);
+    lastCheckpointId = checkpointId;
+    
+    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
+}
+
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed){
     NS_LOG_FUNCTION(this);
 

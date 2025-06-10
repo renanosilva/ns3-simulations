@@ -38,6 +38,7 @@ build_lib(
     model/checkpoint-strategy.cc
     model/decentralized-recovery-protocol.cc
     model/global-sync-clocks-strategy.cc
+    model/efficient-assync-recovery-protocol.cc
     model/checkpoint-app.cc
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
@@ -82,6 +83,7 @@ build_lib(
     model/checkpoint-strategy.h
     model/global-sync-clocks-strategy.h
     model/decentralized-recovery-protocol.h
+    model/efficient-assync-recovery-protocol.h
     model/checkpoint-app.h
     model/application-type.h
     exception/node-asleep-exception.h

@@ -127,6 +127,13 @@ class CheckpointHelper : public Object {
     void writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed);
 
     /** 
+     * Cria um novo checkpoint, armazendo o JSON informado em arquivo. 
+     * @param j JSON que deve ser armazenado no arquivo do checkpoint.
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
+    */
+    void writeCheckpoint(json j, int checkpointId);
+
+    /** 
      * Edita um checkpoint, caso este já exista. Caso o arquivo não exista, é criado um novo.
      * 
      * @param j Dados a serem escritos no checkpoint (em formato JSON).

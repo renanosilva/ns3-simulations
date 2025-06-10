@@ -172,7 +172,7 @@ void UDPHelper::terminateConnection(){
     }
 }
 
-Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
+Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay){
     NS_LOG_FUNCTION(this);
     NS_ASSERT_MSG(!to.IsInvalid(), "Endereço de envio de pacote inválido!");
 
@@ -206,7 +206,7 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     }
 
     //Só conclui o envio do pacote caso o protocolo de checkpointing permita
-    if (!intercepted){
+    if (!intercepted || replay){
         //Se o protocolo de checkpointing tiver acrescentado informações ao pacote
         if (!md->GetPiggyBackedInfo().empty()){
             data = data + " " + md->GetPiggyBackedInfo();
@@ -226,8 +226,7 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
         md->SetSize(p->GetSize());
 
         //Enviando pacote
-        if (m_socket->SendTo(p, 0, to)){
-            
+        if (replay || m_socket->SendTo(p, 0, to)){
             ++m_sent;
             m_totalTx += p->GetSize();
 
@@ -238,9 +237,13 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to){
     return nullptr;
 }
 
-Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port){
+Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay){
     InetSocketAddress destination = InetSocketAddress(ip, port);
-    return send(command, d, destination);
+    return send(command, d, destination, replay);
+}
+
+void UDPHelper::replayReceive(MessageData md){
+    m_received++;
 }
 
 void UDPHelper::HandleRead(Ptr<Socket> socket)
@@ -293,8 +296,6 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
         md->SetTo(localAddress);
     }
 
-    m_received++;
-    
     if (!protocolReceiveCallback.IsNull()){
         //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem antes da aplicação
         bool result = protocolReceiveCallback(md);
@@ -302,9 +303,11 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
         //Se o protocolo de checkpointing não tiver processado a mensagem
         if (!result){
             //Então dá oportunidade à aplicação de processar a mensagem
+            m_received++;
             receiveCallback(md);
         }
     } else {
+        m_received++;
         receiveCallback(md);
     }
 }

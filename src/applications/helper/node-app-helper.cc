@@ -27,21 +27,23 @@
 namespace ns3
 {
 
-ServerNodeAppHelper::ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename)
+ServerNodeAppHelper::ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename, int nodesQuantity)
     : ApplicationHelper(ServerNodeApp::GetTypeId())
 {
     SetAttribute("Port", UintegerValue(port));
     SetAttribute("NodeName", StringValue(nodeName));
     SetAttribute("ConfigFilename", StringValue(configFilename));
+    SetAttribute("TotalNodesQuantity", IntegerValue(nodesQuantity));
 }
 
-ClientNodeAppHelper::ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename)
+ClientNodeAppHelper::ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename, int nodesQuantity)
     : ApplicationHelper(ClientNodeApp::GetTypeId())
 {
     SetAttribute("RemoteAddresses", StringValue(utils::convertAddressesToString(addresses)));
     SetAttribute("RemotePort", UintegerValue(port));
     SetAttribute("NodeName", StringValue(nodeName));
     SetAttribute("ConfigFilename", StringValue(configFilename));
+    SetAttribute("TotalNodesQuantity", IntegerValue(nodesQuantity));
 }
 
 // ClientNodeAppHelper::ClientNodeAppHelper(vector<Ipv4Address>& addresses, string nodeName, string configFilename)

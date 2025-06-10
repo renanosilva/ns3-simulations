@@ -61,12 +61,6 @@ class Packet;
  */
 class CheckpointApp : public Application
 {
-  private:
-
-    virtual void StartApplication();
-
-    virtual void StopApplication();
-
   protected:
 
     /////////////////////////////////////////////////////////////////////////////
@@ -105,6 +99,8 @@ class CheckpointApp : public Application
     double sleepModePercentage; //Porcentagem da bateria a partir da qual se entra no modo sleep
     double normalModePercentage; //Porcentagem da bateria a partir da qual se volta para o modo normal (estando no modo sleep)
 
+    int totalNodesQuantity;   //Quantidade de nós da simulação. Utilizado por alguns protocolos.
+
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
@@ -139,12 +135,6 @@ class CheckpointApp : public Application
     algum erro.
     */
     virtual void resetNodeData();
-
-    /** 
-     * MÉTODO ABSTRATO. A implementação fica a cargo da classe derivada.
-     * Imprime os dados dos atributos desta classe (para fins de debug). 
-     * */
-    virtual void printNodeData();
 
     /** Retorna se o nó possui energia suficiente para realizar determinada ação sem entrar em modo SLEEP. */
     virtual bool hasEnoughEnergy(double requiredEnergy);
@@ -188,15 +178,21 @@ class CheckpointApp : public Application
     /** Destrutor padrão */
     ~CheckpointApp() override;
 
+    virtual void StartApplication();
+
+    virtual void StopApplication();
+
     /** 
      * Envia um pacote genérico para um nó.
      * 
      * @param command comando que indica o tipo de mensagem.
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param to Indica para qual endereço o pacote será enviado.
+     * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
+     * apenas registra novamente que ela havia sido enviada.
      * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
-    virtual Ptr<MessageData> send(string command, int d, Address to);
+    virtual Ptr<MessageData> send(string command, int d, Address to, bool replay = false);
 
     /** 
      * Envia um pacote para um nó.
@@ -205,9 +201,14 @@ class CheckpointApp : public Application
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param ip IP de destino.
      * @param port Porta de destino.
+     * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
+     * apenas registra novamente que ela havia sido enviada.
      * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
-    virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port);
+    virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false);
+
+    /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
+    void replayReceive(MessageData md);
 
     /**
      * Reseta os dados do nó e realiza um processo de rollback para um checkpoint específico, 
@@ -239,6 +240,12 @@ class CheckpointApp : public Application
      * para realizar algum processamento, caso seja necessário.
      * */
     virtual void afterRollback();
+
+    /** 
+     * MÉTODO ABSTRATO. A implementação fica a cargo da classe derivada.
+     * Imprime os dados dos atributos desta classe (para fins de debug). 
+     * */
+    virtual void printNodeData();
 
     /**
      * Método abstrato. Serve para indicar em quais condições uma aplicação pode criar

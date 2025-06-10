@@ -62,6 +62,11 @@ ServerNodeApp::GetTypeId()
                             StringValue(""),
                             MakeStringAccessor(&ServerNodeApp::configFilename),
                             MakeStringChecker())
+            .AddAttribute("TotalNodesQuantity",
+                            "Quantidade total de nós do sistema. ",
+                            UintegerValue(0),
+                            MakeIntegerAccessor(&ServerNodeApp::totalNodesQuantity),
+                            MakeIntegerChecker<int>())
             .AddTraceSource("Rx",
                             "A packet has been received",
                             MakeTraceSourceAccessor(&ServerNodeApp::m_rxTrace),

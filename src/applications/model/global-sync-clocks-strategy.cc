@@ -304,6 +304,9 @@ bool GlobalSyncClocksStrategy::rollback(int checkpointId) {
 
     app->afterRollback();
 
+    NS_LOG_INFO("\nDepois do rollback...");
+    app->printNodeData();
+
     //Copiando os endereços para o vetor de rollbacks pendentes
     pendingRollbackAddresses = vector<Address>(dependentAddresses);
 

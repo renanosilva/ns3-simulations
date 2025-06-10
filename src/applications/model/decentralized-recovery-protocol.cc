@@ -123,7 +123,6 @@ void DecentralizedRecoveryProtocol::writeCheckpoint() {
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", CHECKPOINT " << csn << " CRIADO POR " 
             << checkpointHelper->getCheckpointBasename() << ".");
 
-        //csn++;
         propList.clear();
 
         app->decreaseCheckpointEnergy();
@@ -267,6 +266,9 @@ bool DecentralizedRecoveryProtocol::rollback(int checkpointId) {
 
     app->afterRollback();
 
+    NS_LOG_INFO("\nDepois do rollback...");
+    app->printNodeData();
+
     return true;
 }
 
@@ -276,7 +278,7 @@ void DecentralizedRecoveryProtocol::notifyAllNodesAboutRollback(){
     // Enviando notificação para os nós com os quais houve comunicação
     if (propList.size() > 0){
 
-        for (NodeInfo i : propList){
+        for (DRPNodeInfo i : propList){
             
             // Enviando o pacote para o destino
             Ptr<MessageData> md = app->send(REQUEST_TO_START_ROLLBACK_COMMAND, i.GetActiveCheckpoint(), i.GetAddress());
@@ -291,7 +293,7 @@ void DecentralizedRecoveryProtocol::notifyNodesAboutRollback(Address requester, 
     // Enviando notificação para os nós com os quais houve comunicação
     if (propList.size() > 0){
 
-        for (NodeInfo i : propList){
+        for (DRPNodeInfo i : propList){
             
             //Não envia requisição de rollback caso o solicitante já esteja no checkpoint esperado
             if (i.GetAddress() == requester && i.GetActiveCheckpoint() == requesterActiveCheckpoint)
@@ -319,7 +321,7 @@ bool DecentralizedRecoveryProtocol::interceptRead(Ptr<MessageData> md){
             int activeCheckpointId;
             iss >> command >> activeCheckpointId;
 
-            NodeInfo i = NodeInfo(md->GetFrom(), activeCheckpointId);
+            DRPNodeInfo i = DRPNodeInfo(md->GetFrom(), activeCheckpointId);
 
             //adicionando informação à propList
             addToPropList(i);
@@ -352,11 +354,11 @@ bool DecentralizedRecoveryProtocol::interceptSend(Ptr<MessageData> md){
     if (md->GetCommand() == REQUEST_VALUE || md->GetCommand() == RESPONSE_VALUE){
         md->SetPiggyBackedInfo("activeCheckpoint " + to_string(checkpointHelper->getLastCheckpointId()));
      
-        NodeInfo* result = findNodeInfoByAddress(md->GetTo());
+        DRPNodeInfo* result = findNodeInfoByAddress(md->GetTo());
 
         if (result == nullptr){
             
-            NodeInfo i = NodeInfo();
+            DRPNodeInfo i = DRPNodeInfo();
             i.SetAddress(md->GetTo());
             i.SetActiveCheckpoint(-1); //não se sabe qual o checkpoint ativo do nó, então inicialmente atribui-se -1
 
@@ -372,10 +374,10 @@ bool DecentralizedRecoveryProtocol::interceptSend(Ptr<MessageData> md){
     return false;
 }
 
-void DecentralizedRecoveryProtocol::addToPropList(NodeInfo i){
+void DecentralizedRecoveryProtocol::addToPropList(DRPNodeInfo i){
     NS_LOG_FUNCTION(this);
     
-    NodeInfo* result = findNodeInfoByAddress(i.GetAddress());
+    DRPNodeInfo* result = findNodeInfoByAddress(i.GetAddress());
 
     if (result == nullptr) {
         
@@ -414,13 +416,13 @@ void DecentralizedRecoveryProtocol::editActiveCheckpointPropList(){
     checkpointHelper->editCheckpoint(j, active);
 }
 
-NodeInfo* DecentralizedRecoveryProtocol::findNodeInfoByAddress(const Address& addr) {
-    auto it = find_if(propList.begin(), propList.end(), [&addr](const NodeInfo& n) {
+DRPNodeInfo* DecentralizedRecoveryProtocol::findNodeInfoByAddress(const Address& addr) {
+    auto it = find_if(propList.begin(), propList.end(), [&addr](const DRPNodeInfo& n) {
         return n.GetAddress() == addr;
     });
 
     if (it != propList.end()) {
-        return &(*it); // Retorna ponteiro para o NodeInfo encontrado
+        return &(*it); // Retorna ponteiro para o DRPNodeInfo encontrado
     }
 
     return nullptr; // Não encontrado
@@ -430,14 +432,14 @@ void DecentralizedRecoveryProtocol::printData() {
     NS_LOG_INFO("csn = " << csn << ", propList.size() = " << propList.size() << "\n");
 }
 
-void to_json(json& j, const NodeInfo& obj) {
+void to_json(json& j, const DRPNodeInfo& obj) {
     j = json{
         {"activeCheckpoint", obj.activeCheckpoint}, 
         {"address", obj.address}
     };
 }
 
-void from_json(const json& j, NodeInfo& obj) {
+void from_json(const json& j, DRPNodeInfo& obj) {
     j.at("activeCheckpoint").get_to(obj.activeCheckpoint);
     j.at("address").get_to(obj.address);
 }

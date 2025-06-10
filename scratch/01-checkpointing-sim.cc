@@ -40,7 +40,7 @@ using namespace utils;
 NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/02-decentralized-recovery-config.json"; 
+static const string CONFIG_FILENAME = "scratch/03-efficient-assync-recovery.json"; 
 
 int
 main(int argc, char* argv[])
@@ -57,6 +57,7 @@ main(int argc, char* argv[])
     LogComponentEnable("CheckpointHelper", LOG_INFO);
     LogComponentEnable("GlobalSyncClocksStrategy", LOG_INFO);
     LogComponentEnable("DecentralizedRecoveryProtocol", LOG_INFO);
+    LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);
@@ -71,6 +72,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("CheckpointHelper", LOG_ALL);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_ALL);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_ALL);
+    // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_INFO);
     // LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     // LogComponentEnable("UDPHelper", LOG_ALL);
@@ -85,6 +87,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("CheckpointHelper", LOG_FUNCTION);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_FUNCTION);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_FUNCTION);
+    // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_FUNCTION);
     // LogComponentEnable("EnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("CircularEnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("UDPHelper", LOG_FUNCTION);
@@ -98,6 +101,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("CheckpointHelper", LOG_LEVEL_ALL);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_LEVEL_ALL);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_LEVEL_ALL);
+    // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_LEVEL_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("UDPHelper", LOG_LEVEL_ALL);
@@ -209,7 +213,7 @@ main(int argc, char* argv[])
     for (int j = 0; j < serverNodesQuantity; j++){
         
         //Cria uma aplicação de servidor, de forma a gerar tráfego de dados. 9 é a porta.
-        ServerNodeAppHelper serverAppHelper(9, serverNodesNames[j], CONFIG_FILENAME);
+        ServerNodeAppHelper serverAppHelper(9, serverNodesNames[j], CONFIG_FILENAME, totalNodesQuantity);
         
         //Instala a aplicação no nó i e agenda sua inicialização
         serverAppHelper.Install(serverNodes.Get(j)).Start(Seconds(1.0));
@@ -219,7 +223,8 @@ main(int argc, char* argv[])
     //Iniciando aplicações clientes
     for (int j = 0; j < clientNodesQuantity; j++){
         
-        ClientNodeAppHelper clientAppHelper(serverAddresses, 9, clientNodesNames[j], CONFIG_FILENAME); //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+        //cria uma aplicação cliente que irá enviar pacotes para a porta 9 do endereço do servidor
+        ClientNodeAppHelper clientAppHelper(serverAddresses, 9, clientNodesNames[j], CONFIG_FILENAME, totalNodesQuantity);
         clientAppHelper.SetAttribute("MaxPackets", maxPackets); //número máximo de pacotes que podem ser enviados na simulação.
         clientAppHelper.SetAttribute("Interval", interval); //tempo que deve ser aguardado entre envio de pacotes
 

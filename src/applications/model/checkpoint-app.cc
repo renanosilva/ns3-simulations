@@ -19,6 +19,7 @@
 #include "ns3/inet-socket-address.h"
 #include "ns3/global-sync-clocks-strategy.h"
 #include "ns3/decentralized-recovery-protocol.h"
+#include "ns3/efficient-assync-recovery-protocol.h"
 #include "ns3/log-utils.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -143,6 +144,14 @@ void CheckpointApp::configureCheckpointStrategy() {
         checkpointStrategy = Create<DecentralizedRecoveryProtocol>(Seconds(checkpointInterval), this);
         checkpointStrategy->startCheckpointing();
 
+    } else if (checkpointStrategyName == "EfficientAssyncRecoveryProtocol") {
+
+        string intervalProperty = "nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<EfficientAssyncRecoveryProtocol>(Seconds(checkpointInterval), totalNodesQuantity, this);
+        checkpointStrategy->startCheckpointing();
+
     } else {
         NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
     }
@@ -171,10 +180,10 @@ void CheckpointApp::printNodeData(){
 
 }
 
-Ptr<MessageData> CheckpointApp::send(string command, int d, Address to){
-    Ptr<MessageData> md = udpHelper->send(command, d, to);
-    
-    if (md != nullptr){
+Ptr<MessageData> CheckpointApp::send(string command, int d, Address to, bool replay){
+    Ptr<MessageData> md = udpHelper->send(command, d, to, replay);
+
+    if (md != nullptr && !replay){
         utils::logRegularMessageSent(getNodeName(), md);
         decreaseSendEnergy();
     }
@@ -182,15 +191,19 @@ Ptr<MessageData> CheckpointApp::send(string command, int d, Address to){
     return md;
 }
 
-Ptr<MessageData> CheckpointApp::send(string command, int d, Ipv4Address ip, uint16_t port){
-    Ptr<MessageData> md = udpHelper->send(command, d, ip, port);
-    
-    if (md != nullptr){
+Ptr<MessageData> CheckpointApp::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay){
+    Ptr<MessageData> md = udpHelper->send(command, d, ip, port, replay);
+
+    if (md != nullptr && !replay){
         utils::logRegularMessageSent(getNodeName(), md);
         decreaseSendEnergy();
     }
     
     return md;
+}
+
+void CheckpointApp::replayReceive(MessageData md){
+    udpHelper->replayReceive(md);
 }
 
 void
@@ -224,9 +237,6 @@ void CheckpointApp::afterRollback(){
 
         //Reiniciando aplicação...
         StartApplication();
-
-        NS_LOG_INFO("\nDepois do rollback...");
-        printNodeData();
 
     } catch (NodeAsleepException& e) {
         //Operações interrompidas... Nó irá entrar em modo sleep. Nada mais a fazer.
@@ -437,7 +447,7 @@ json CheckpointApp::to_json() const {
     j["nodeName"] = nodeName;
     j["configFilename"] = configFilename;
     j["checkpointStrategy"] = checkpointStrategy->to_json();
-    
+
     return j;
 }
 

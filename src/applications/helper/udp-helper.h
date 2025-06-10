@@ -159,8 +159,10 @@ public:
      * @param command comando que indica o tipo de mensagem.
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param to Indica para qual endereço o pacote será enviado.
+     * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
+     * apenas registra novamente que ela havia sido enviada.
      * */
-    Ptr<MessageData> send(string command, int d, Address to);
+    Ptr<MessageData> send(string command, int d, Address to, bool replay = false);
 
     /** 
      * Envia um pacote para um nó.
@@ -169,8 +171,13 @@ public:
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
      * @param ip IP de destino.
      * @param port Porta de destino.
+     * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
+     * apenas registra novamente que ela havia sido enviada.
      * */
-    Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port);
+    Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false);
+
+    /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
+    void replayReceive(MessageData md);
 
     /** Imprime os dados da classe para fins de debug. */
     void printData();
