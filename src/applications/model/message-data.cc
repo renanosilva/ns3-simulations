@@ -97,7 +97,14 @@ MessageData::MessageData(uint64_t uid, const ns3::Address& from, const ns3::Addr
 MessageData::~MessageData()
 {
     NS_LOG_FUNCTION(this);
-    NS_LOG_FUNCTION("Fim do método");
+}
+
+int MessageData::GetFirstPiggyBackedValue(){
+    istringstream iss(piggyBackedInfo);
+    string command;
+    int value;
+    iss >> command >> value;
+    return value;
 }
 
 void to_json(json& j, const MessageData& obj) {
@@ -112,8 +119,6 @@ void to_json(json& j, const MessageData& obj) {
         {"data", obj.data},
         {"size", obj.size}
     };
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
 void from_json(const json& j, MessageData& obj) {
@@ -126,8 +131,41 @@ void from_json(const json& j, MessageData& obj) {
     j.at("command").get_to(obj.command);
     j.at("data").get_to(obj.data);
     j.at("size").get_to(obj.size);
+}
 
-    NS_LOG_FUNCTION("Fim do método");
+void to_json(json& j, const Ptr<MessageData>& obj){
+    if (obj == nullptr){
+        j = nullptr;
+        return;
+    }
+    
+    j = nlohmann::json{
+        {"from", obj->from}, 
+        {"to", obj->to},
+        {"uid", obj->uid},
+        {"sequenceNumber", obj->sequenceNumber},
+        {"command", obj->command},
+        {"data", obj->data},
+        {"size", obj->size},
+        {"piggyBackedInfo", obj->piggyBackedInfo}
+    };
+}
+
+void from_json(const json& j, Ptr<MessageData>& obj){
+    if (j.is_null()){
+        obj = nullptr;
+        return;
+    }
+    
+    obj = CreateObject<MessageData>();
+    j.at("from").get_to(obj->from);
+    j.at("to").get_to(obj->to);
+    j.at("uid").get_to(obj->uid);
+    j.at("sequenceNumber").get_to(obj->sequenceNumber);
+    j.at("command").get_to(obj->command);
+    j.at("data").get_to(obj->data);
+    j.at("size").get_to(obj->size);
+    j.at("piggyBackedInfo").get_to(obj->piggyBackedInfo);
 }
 
 } // Namespace ns3

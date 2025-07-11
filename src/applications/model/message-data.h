@@ -75,17 +75,25 @@ class MessageData : public Object
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, MessageData& obj);
 
+    //Especifica como deve ser feita a conversão desta classe em JSON
+    friend void to_json(json& j, const Ptr<MessageData>& obj);
+
+    //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
+    friend void from_json(const json& j, Ptr<MessageData>& obj);
+
     // Getters
     Address GetFrom() const { return from; }
     Ipv4Address GetFromIpv4() const { return InetSocketAddress::ConvertFrom(from).GetIpv4(); }
     Address GetTo() const { return to; }
     uint32_t GetSequenceNumber() const { return sequenceNumber; }
-    std::string GetCommand() const { return command; }
-    std::string GetCompleteCommand() const { return command + (data > 0 ? " " + to_string(data) : ""); }
-    std::string GetPiggyBackedInfo() const { return piggyBackedInfo; }
+    string GetCommand() const { return command; }
+    string GetCompleteCommand() const { return command + (data > 0 ? " " + to_string(data) : ""); }
+    string GetPiggyBackedInfo() const { return piggyBackedInfo; }
     int GetData() const { return data; }
     uint32_t GetSize() const { return size; }
     uint64_t GetUid() const { return uid; }
+    int GetFirstPiggyBackedValue();
+
 
     // Setters
     void SetFrom(const Address& addr) { from = addr; }

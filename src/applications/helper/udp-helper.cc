@@ -91,7 +91,6 @@ UDPHelper::UDPHelper()
     NS_LOG_FUNCTION(this);
     
     m_socket = nullptr;
-
     m_address = Ipv4Address::GetAny();
     m_port = 0;
     m_local = Address();
@@ -103,8 +102,22 @@ UDPHelper::UDPHelper()
 UDPHelper::~UDPHelper()
 {
     NS_LOG_FUNCTION(this);
+}
 
+void UDPHelper::DisposeReferences(){
+    terminateConnection();
+    
+    receiveCallback.Nullify();
+    protocolReceiveCallback.Nullify();
+    protocolSendCallback.Nullify();
+    
     m_socket = nullptr;
+    m_address = Ipv4Address::GetAny();
+    m_port = 0;
+    m_local = Address();
+    m_totalTx = 0;
+    m_sent = 0;
+    m_received = 0;
 }
 
 void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
@@ -132,7 +145,7 @@ void UDPHelper::configureClient(Ptr<Node> node, string nodeName){
         m_socket->Bind(InetSocketAddress(Ipv4Address::ConvertFrom(m_address), m_port));
     }
 
-    m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
+    m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, Ptr<UDPHelper>(this)));
 }
 
 void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
@@ -160,7 +173,7 @@ void UDPHelper::configureServer(Ptr<Node> node, string nodeName, uint16_t port){
     //     }
     // }
 
-    m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, this));
+    m_socket->SetRecvCallback(MakeCallback(&UDPHelper::HandleRead, Ptr<UDPHelper>(this)));
 }
 
 void UDPHelper::terminateConnection(){
@@ -172,7 +185,7 @@ void UDPHelper::terminateConnection(){
     }
 }
 
-Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay){
+Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay, string piggyBackedInfo){
     NS_LOG_FUNCTION(this);
     NS_ASSERT_MSG(!to.IsInvalid(), "Endereço de envio de pacote inválido!");
 
@@ -187,7 +200,10 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay)
 
     //Serializando dados: comando (string) + número inteiro (int)
     ostringstream oss;
-    oss << command << " " << d;
+    if (piggyBackedInfo.empty())
+        oss << command << " " << d;
+    else
+        oss << command << " " << d << " " << piggyBackedInfo;
     string data = oss.str();
 
     //Criando objeto que representa os dados da mensagem
@@ -225,6 +241,9 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay)
         md->SetUid(p->GetUid());
         md->SetSize(p->GetSize());
 
+        if (!piggyBackedInfo.empty())
+            md->SetPiggyBackedInfo(piggyBackedInfo + " " + md->GetPiggyBackedInfo());
+
         //Enviando pacote
         if (replay || m_socket->SendTo(p, 0, to)){
             ++m_sent;
@@ -237,12 +256,57 @@ Ptr<MessageData> UDPHelper::send(string command, int d, Address to, bool replay)
     return nullptr;
 }
 
-Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay){
+Ptr<MessageData> UDPHelper::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay, string piggyBackedInfo){
     InetSocketAddress destination = InetSocketAddress(ip, port);
-    return send(command, d, destination, replay);
+    return send(command, d, destination, replay, piggyBackedInfo);
 }
 
-void UDPHelper::replayReceive(MessageData md){
+Ptr<MessageData> UDPHelper::resend(Ptr<MessageData> m){
+    NS_LOG_FUNCTION(this);
+    NS_ASSERT_MSG(!m->GetTo().IsInvalid(), "Endereço de envio de pacote inválido!");
+
+    Address from;
+    m_socket->GetSockName(from);
+    
+    //Cabeçalho do pacote a ser enviado
+    SeqTsHeader seqTs;
+    seqTs.SetSeq(m->GetSequenceNumber());
+
+    //Payload (corpo) do pacote
+
+    //Serializando dados: comando (string) + número inteiro (int)
+    ostringstream oss;
+    oss << m->GetCommand() << " " << m->GetData();
+    string data = oss.str();
+    
+    //Criando objeto que representa os dados da mensagem
+    Ptr<MessageData> md = Create<MessageData>();
+    md->SetFrom(from);
+    md->SetTo(m->GetTo());
+    md->SetSequenceNumber(seqTs.GetSeq());
+    md->SetCommand(m->GetCommand());
+    md->SetData(m->GetData());
+    md->SetPiggyBackedInfo(m->GetPiggyBackedInfo());
+
+    if (!md->GetPiggyBackedInfo().empty()){
+        data = data + " " + md->GetPiggyBackedInfo();
+    }
+
+    // Criação do pacote com o conteúdo a ser enviado
+    Ptr<Packet> p = Create<Packet>((const uint8_t*) data.c_str(), data.length());
+
+    p->AddHeader(seqTs);
+        
+    //Atribuindo informações restantes
+    md->SetUid(m->GetUid());
+    md->SetSize(p->GetSize());
+
+    m_socket->SendTo(p, 0, m->GetTo());
+
+    return md;
+}
+
+void UDPHelper::replayReceive(Ptr<MessageData> md){
     m_received++;
 }
 
@@ -297,6 +361,7 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
     }
 
     if (!protocolReceiveCallback.IsNull()){
+
         //Dando a oportunidade de o protocolo de checkpointing interceptar a mensagem antes da aplicação
         bool result = protocolReceiveCallback(md);
         
@@ -306,10 +371,12 @@ void UDPHelper::HandleRead(Ptr<Socket> socket)
             m_received++;
             receiveCallback(md);
         }
+
     } else {
         m_received++;
         receiveCallback(md);
     }
+
 }
 
 void UDPHelper::printData(){

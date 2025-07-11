@@ -33,7 +33,7 @@ namespace utils
  * @param nodeName nome do nó que recebeu a mensagem.
  * @param md mensagem recebida.
  */
-void logMessageReceived(string nodeName, Ptr<MessageData> md);
+void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay = false);
 
 /** 
  * Registra, em log, o envio de uma mensagem normal de negócio do sistema.

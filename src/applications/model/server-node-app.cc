@@ -108,9 +108,10 @@ ServerNodeApp::StartApplication(){
         udpHelper->configureServer(GetNode(), getNodeName(), m_port);
 
     //Atribuindo um callback de recebimento e envio de mensagens para o protocolo de checkpointing e para a aplicação
-    udpHelper->setProtocolSendCallback(MakeCallback(&CheckpointStrategy::interceptSend, checkpointStrategy));
-    udpHelper->setProtocolReceiveCallback(MakeCallback(&CheckpointStrategy::interceptRead, checkpointStrategy));
-    udpHelper->setReceiveCallback(MakeCallback(&ServerNodeApp::HandleRead, this));
+    udpHelper->setProtocolSendCallback(MakeCallback(&CheckpointStrategy::interceptSend, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    udpHelper->setProtocolReceiveCallback(MakeCallback(&CheckpointStrategy::interceptRead, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    setProtocolAfterReceiveCallback(MakeCallback(&CheckpointStrategy::afterMessageReceive, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    udpHelper->setReceiveCallback(MakeCallback(&ServerNodeApp::HandleRead, Ptr<ServerNodeApp>(this)));
 
     NS_LOG_INFO("Iniciando " << getNodeName() << "..." 
                 << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
@@ -135,8 +136,9 @@ void ServerNodeApp::HandleRead(Ptr<MessageData> md){
 
     try {
         utils::logMessageReceived(getNodeName(), md);
-
         decreaseReadEnergy();
+
+        protocolAfterReceiveCallback(md);
 
         if (md->GetCommand() == REQUEST_VALUE){
             //Respondendo a requisição
@@ -153,6 +155,26 @@ void ServerNodeApp::HandleRead(Ptr<MessageData> md){
     }
 }
 
+void ServerNodeApp::replayReceive(Ptr<MessageData> md, bool replayResponse) {
+    if (isSleeping() || isDepleted()){
+        //ignora mensagens se estiver em modo sleep ou descarregado
+        return;
+    }
+
+    utils::logMessageReceived(getNodeName(), md, true);
+    
+    if (md->GetCommand().find(REQUEST_VALUE) != string::npos){
+        m_seq++;
+
+        if (replayResponse){
+            //Simulando envio de resposta
+            Ptr<MessageData> mdResp = send(REPLAY_RESPONSE_VALUE, m_seq, md->GetFrom(), true);
+        }
+    }
+
+    udpHelper->replayReceive(md);
+}
+
 void ServerNodeApp::resetNodeData() {
     NS_LOG_FUNCTION(this);
 
@@ -161,9 +183,12 @@ void ServerNodeApp::resetNodeData() {
 
     StopApplication();
     
-    udpHelper = nullptr;
     m_port = 0;
     m_seq = 0;
+    udpHelper->DisposeReferences();
+    udpHelper = nullptr;
+    protocolAfterReceiveCallback.Nullify();
+    checkpointStrategy->DisposeReferences();
     checkpointStrategy = nullptr;
 }
 
@@ -175,7 +200,7 @@ void ServerNodeApp::printNodeData(){
         "currentMode = " << currentMode
         << (battery == nullptr ? "" : ", battery.getBatteryPercentage() = " + to_string(battery->getBatteryPercentage()))
         << (energyGenerator == nullptr ?   
-            "" : ", energyGenerator->GetInstanceTypeId().GetName() = " + energyGenerator->GetInstanceTypeId().GetName())
+            "" : ", energyGenerator->GetInstanceTypeId().GetName() = " + energyGenerator->GetTypeId().GetName())
         << ", idleEnergyConsumption = " << idleEnergyConsumption
         << ", sleepEnergyConsumption = " << sleepEnergyConsumption
         << ", energyUpdateInterval = " << energyUpdateInterval.As(Time::S)

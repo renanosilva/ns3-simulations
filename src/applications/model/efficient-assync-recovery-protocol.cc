@@ -637,8 +637,18 @@ void EfficientAssyncRecoveryProtocol::replayEvent(Ptr<Event> e){
         EARPNodeInfo* result = findAdjacentNodeByAddress(msgReceived.GetFrom());
         int quantReceived = result->GetMessagesReceived();
         result->SetMessagesReceived(quantReceived + 1);
+
+        Ptr<MessageData> md = CreateObject<MessageData>();
+        md->SetCommand(msgReceived.GetCommand());
+        md->SetData(msgReceived.GetData());
+        md->SetFrom(msgReceived.GetFrom());
+        md->SetPiggyBackedInfo(msgReceived.GetPiggyBackedInfo());
+        md->SetSequenceNumber(msgReceived.GetSequenceNumber());
+        md->SetSize(msgReceived.GetSize());
+        md->SetTo(msgReceived.GetTo());
+        md->SetUid(msgReceived.GetUid());
         
-        app->replayReceive(msgReceived);
+        app->replayReceive(md, false);
     }
 
     //Se houve alguma mensagem enviada no evento

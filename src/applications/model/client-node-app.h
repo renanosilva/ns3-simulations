@@ -108,6 +108,9 @@ class ClientNodeApp : public CheckpointApp
 
     void StopApplication() override;
 
+    /** Reexecuta o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
+    virtual void replayReceive(Ptr<MessageData> md, bool replayResponse) override;
+
     /**
      * \return the total bytes sent by this app
      */

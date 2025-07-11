@@ -125,13 +125,6 @@ class CheckpointStrategy : public Object
       return find(v.begin(), v.end(), a) != v.end();
     }
 
-    /** 
-     * Método abstrato. Utilizado para criação de checkpoints de fato. 
-     * Serão armazenados no checkpoint os estados dos objetos de interesse.
-     * A implementação irá depender da estratégia adotada.
-     * */
-    virtual void writeCheckpoint();
-
     /** Confirma a criação do último checkpoint. */
     virtual void confirmLastCheckpoint();
 
@@ -159,6 +152,16 @@ class CheckpointStrategy : public Object
     CheckpointStrategy();
     
     ~CheckpointStrategy() override;
+
+    /** Libera as referências armazenadas na classe. Idealmente, deve ser sobrescrito pela classe especializada. */
+    virtual void DisposeReferences();
+
+    /** 
+     * Método abstrato. Utilizado para criação de checkpoints de fato. 
+     * Serão armazenados no checkpoint os estados dos objetos de interesse.
+     * A implementação irá depender da estratégia adotada.
+     * */
+    virtual void writeCheckpoint();
 
     /** 
      * Método abstrato. Utilizado para realizar processamentos iniciais referente ao processo 
@@ -221,6 +224,13 @@ class CheckpointStrategy : public Object
      * não tiver sido processada, o que deverá ser feito pela aplicação.
      */
     virtual bool interceptRead(Ptr<MessageData> md);
+
+    /**
+     * Método chamado após o recebimento de uma mensagem pela aplicação.
+     *
+     * \param md Dados da mensagem recebida.
+     */
+    virtual void afterMessageReceive(Ptr<MessageData> md);
 
     /**
      * Intercepta o envio de um pacote. Dessa forma, a estratégia de checkpoint

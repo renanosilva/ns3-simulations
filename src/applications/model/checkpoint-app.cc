@@ -20,6 +20,7 @@
 #include "ns3/global-sync-clocks-strategy.h"
 #include "ns3/decentralized-recovery-protocol.h"
 #include "ns3/efficient-assync-recovery-protocol.h"
+#include "ns3/earp-without-rollback.h"
 #include "ns3/log-utils.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -152,6 +153,14 @@ void CheckpointApp::configureCheckpointStrategy() {
         checkpointStrategy = Create<EfficientAssyncRecoveryProtocol>(Seconds(checkpointInterval), totalNodesQuantity, this);
         checkpointStrategy->startCheckpointing();
 
+    } else if (checkpointStrategyName == "EfficientAssyncRecoveryProtocolWithoutRollback") {
+
+        string intervalProperty = "nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<EARPWithoutRollback>(Seconds(checkpointInterval), totalNodesQuantity, this);
+        checkpointStrategy->startCheckpointing();
+
     } else {
         NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
     }
@@ -180,30 +189,47 @@ void CheckpointApp::printNodeData(){
 
 }
 
-Ptr<MessageData> CheckpointApp::send(string command, int d, Address to, bool replay){
-    Ptr<MessageData> md = udpHelper->send(command, d, to, replay);
+Ptr<MessageData> CheckpointApp::send(string command, int d, Address to, bool replay, string piggyBackedInfo){
+    Ptr<MessageData> md = udpHelper->send(command, d, to, replay, piggyBackedInfo);
 
-    if (md != nullptr && !replay){
+    if (md != nullptr){
         utils::logRegularMessageSent(getNodeName(), md);
-        decreaseSendEnergy();
+        
+        if (!replay)
+            decreaseSendEnergy();
     }
 
     return md;
 }
 
-Ptr<MessageData> CheckpointApp::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay){
-    Ptr<MessageData> md = udpHelper->send(command, d, ip, port, replay);
+Ptr<MessageData> CheckpointApp::send(string command, int d, Ipv4Address ip, uint16_t port, bool replay, string piggyBackedInfo){
+    Ptr<MessageData> md = udpHelper->send(command, d, ip, port, replay, piggyBackedInfo);
 
-    if (md != nullptr && !replay){
+    if (md != nullptr){
         utils::logRegularMessageSent(getNodeName(), md);
-        decreaseSendEnergy();
+        
+        if (!replay)
+            decreaseSendEnergy();
     }
     
     return md;
 }
 
-void CheckpointApp::replayReceive(MessageData md){
-    udpHelper->replayReceive(md);
+Ptr<MessageData> CheckpointApp::resend(Ptr<MessageData> m){
+    string originalCommand = m->GetCommand();
+    m->SetCommand(RESEND_RESPONSE + "-" + originalCommand);
+
+    Ptr<MessageData> md = udpHelper->resend(m);
+    utils::logRegularMessageSent(getNodeName(), md);
+    decreaseEnergy(sendPacketConsumption*0.75); //Assume-se que o reenvio consome um pouco menos de energia que o envio
+   
+    m->SetCommand(originalCommand);
+
+    return md;
+}
+
+void CheckpointApp::replayReceive(Ptr<MessageData> md, bool replayResponse){
+    
 }
 
 void
@@ -390,6 +416,11 @@ bool CheckpointApp::isDepleted(){
     return currentMode == DEPLETED;
 }
 
+bool CheckpointApp::isAlive(){
+    NS_LOG_FUNCTION(this);
+    return !isSleeping() && !isDepleted();
+}
+
 Time CheckpointApp::getEnergyUpdateInterval(){
     NS_LOG_FUNCTION(this);
     return energyUpdateInterval;
@@ -432,6 +463,10 @@ bool CheckpointApp::hasEnoughEnergyToReceivePacket(){
 bool CheckpointApp::hasEnoughEnergyToSendPacket(){
     NS_LOG_FUNCTION(this);
     return hasEnoughEnergy(sendPacketConsumption);
+}
+
+void CheckpointApp::setProtocolAfterReceiveCallback(Callback<void, Ptr<MessageData>> callback){
+    protocolAfterReceiveCallback = callback;
 }
 
 ApplicationType CheckpointApp::getApplicationType(){

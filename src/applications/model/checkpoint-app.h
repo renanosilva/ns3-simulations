@@ -101,6 +101,10 @@ class CheckpointApp : public Application
 
     int totalNodesQuantity;   //Quantidade de nós da simulação. Utilizado por alguns protocolos.
 
+    /* Callback de interceptação do protocolo de checkpointing a ser chamado APÓS a aplicação receber 
+    uma mensagem. */
+    Callback<void, Ptr<MessageData>> protocolAfterReceiveCallback;
+
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
@@ -190,9 +194,10 @@ class CheckpointApp : public Application
      * @param to Indica para qual endereço o pacote será enviado.
      * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
      * apenas registra novamente que ela havia sido enviada.
+     * @param piggyBackedInfo Informações adicionais que serão enviadas junto à mensagem.
      * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
-    virtual Ptr<MessageData> send(string command, int d, Address to, bool replay = false);
+    virtual Ptr<MessageData> send(string command, int d, Address to, bool replay = false, string piggyBackedInfo = "");
 
     /** 
      * Envia um pacote para um nó.
@@ -203,12 +208,26 @@ class CheckpointApp : public Application
      * @param port Porta de destino.
      * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
      * apenas registra novamente que ela havia sido enviada.
+     * @param piggyBackedInfo Informações adicionais que serão enviadas junto à mensagem.
      * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
-    virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false);
+    virtual Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false, string piggyBackedInfo = "");
 
-    /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
-    void replayReceive(MessageData md);
+    /** 
+     * Reenvia uma mensagem previamente enviada.
+     * 
+     * @param m Mensagem que será reenviada.
+     * */
+    Ptr<MessageData> resend(Ptr<MessageData> m);
+
+    /** 
+     * Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha.
+     * 
+     * @param md Mensagem que terá seu recebimento reprocessado e registrado.
+     * @param replayResponse Indica se deve registrar uma possível resposta à mensagem recebida
+     * (se for o caso).
+     */
+    virtual void replayReceive(Ptr<MessageData> md, bool replayResponse);
 
     /**
      * Reseta os dados do nó e realiza um processo de rollback para um checkpoint específico, 
@@ -291,6 +310,18 @@ class CheckpointApp : public Application
     bool isSleeping();
     
     bool isDepleted();
+
+    /** Retorna true caso não esteja dormindo nem descarregado. */
+    bool isAlive();
+
+    /** 
+     * Atribui um método de callback, a ser chamado quando um pacote for recebido 
+     * no socket que está sendo usado. Esse callback é referente ao protocolo que
+     * estiver sendo testado na simulação. A mensagem será processada primeiro pelo
+     * protocolo, e só depois pela aplicação.
+     * */
+    void setProtocolAfterReceiveCallback(Callback<void, Ptr<MessageData>> callback);
+
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

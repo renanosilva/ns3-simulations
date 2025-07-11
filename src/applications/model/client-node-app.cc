@@ -124,12 +124,13 @@ ClientNodeApp::StartApplication() {
     }
 
     //Atribuindo um callback de recebimento de mensagens para o protocolo de checkpointing e para a aplicação
-    udpHelper->setProtocolSendCallback(MakeCallback(&CheckpointStrategy::interceptSend, checkpointStrategy));
-    udpHelper->setProtocolReceiveCallback(MakeCallback(&CheckpointStrategy::interceptRead, checkpointStrategy));
-    udpHelper->setReceiveCallback(MakeCallback(&ClientNodeApp::HandleRead, this));
+    udpHelper->setProtocolSendCallback(MakeCallback(&CheckpointStrategy::interceptSend, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    udpHelper->setProtocolReceiveCallback(MakeCallback(&CheckpointStrategy::interceptRead, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    setProtocolAfterReceiveCallback(MakeCallback(&CheckpointStrategy::afterMessageReceive, Ptr<CheckpointStrategy>(checkpointStrategy)));
+    udpHelper->setReceiveCallback(MakeCallback(&ClientNodeApp::HandleRead, Ptr<ClientNodeApp>(this)));
 
     //Agendando envio de mensagens
-    m_sendEvent = Simulator::Schedule(Seconds(0.0), &ClientNodeApp::Send, this);
+    m_sendEvent = Simulator::Schedule(Seconds(0.0), &ClientNodeApp::Send, Ptr<ClientNodeApp>(this));
 
     NS_LOG_INFO("Iniciando " << getNodeName() << "..." 
                 << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
@@ -190,6 +191,9 @@ void ClientNodeApp::HandleRead(Ptr<MessageData> md){
         }
 
         decreaseReadEnergy();
+
+        protocolAfterReceiveCallback(md);
+
     } catch (NodeAsleepException& e) {
         NS_LOG_LOGIC("Tarefa incompleta por estar em modo SLEEP.");
         return;
@@ -199,6 +203,21 @@ void ClientNodeApp::HandleRead(Ptr<MessageData> md){
     }
 }
 
+void ClientNodeApp::replayReceive(Ptr<MessageData> md, bool replayResponse){
+    if (isSleeping() || isDepleted()){
+        //ignora mensagens se estiver em modo sleep ou descarregado
+        return;
+    }
+
+    utils::logMessageReceived(getNodeName(), md, true);
+
+    if (md->GetCommand().find(RESPONSE_VALUE) != string::npos){
+        last_seq = md->GetData();
+    }
+    
+    udpHelper->replayReceive(md);
+}
+
 void ClientNodeApp::resetNodeData() {
     NS_LOG_FUNCTION(this);
 
@@ -206,7 +225,11 @@ void ClientNodeApp::resetNodeData() {
     printNodeData();
     
     StopApplication();
+
+    protocolAfterReceiveCallback.Nullify();
+    udpHelper->DisposeReferences();
     udpHelper = nullptr;
+    checkpointStrategy->DisposeReferences();
     checkpointStrategy = nullptr;
 
     m_sendEvent = EventId();
@@ -220,7 +243,7 @@ void ClientNodeApp::resetNodeData() {
 void ClientNodeApp::scheduleSendEvent(){
     if (udpHelper->getSentMessagesCounter() < m_count || m_count == 0){
         //Agendando próximo envio
-        m_sendEvent = Simulator::Schedule(m_interval, &ClientNodeApp::Send, this);
+        m_sendEvent = Simulator::Schedule(m_interval, &ClientNodeApp::Send, Ptr<ClientNodeApp>(this));
     }
 }
 

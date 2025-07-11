@@ -22,10 +22,10 @@ NS_LOG_COMPONENT_DEFINE("LogUtils");
 namespace utils
 {
 
-void logMessageReceived(string nodeName, Ptr<MessageData> md){
+void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay){
     NS_LOG_FUNCTION("LogUtils::logMessageReceived" << md);
 
-    if (md->GetCommand() == REQUEST_VALUE)
+    if (md->GetCommand() == REQUEST_VALUE && !replay)
         //Apenas para fins de organização, dá uma quebra de linha
         NS_LOG_INFO("");
 
@@ -35,9 +35,12 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md){
                                 << InetSocketAddress::ConvertFrom(md->GetFrom()).GetPort()
                                 << " (Número de Sequência: " << md->GetSequenceNumber()
                                 << ", UId: " << md->GetUid() 
-                                << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE ? 
+                                << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE
+                                    && md->GetCommand() != ACKNOWLEDGEMENT_COMMAND ? 
                                                 ", Comando: " + md->GetCompleteCommand()
                                                 : "")
+                                << (md->GetCommand() == ACKNOWLEDGEMENT_COMMAND ?
+                                                ", Comando : " + md->GetCommand() + " " + to_string(md->GetData()) : "")
                                 << (md->GetCommand() == RESPONSE_VALUE ? 
                                                 ", m_seq: " + to_string(md->GetData()) 
                                                 : "")
@@ -56,7 +59,10 @@ void logRegularMessageSent(string nodeName, Ptr<MessageData> md){
                             << ", UId: " << md->GetUid() 
                             << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE ? 
                                             ", Comando: " + md->GetCommand() : "")
-                            << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE && md->GetData() > 0 ? 
+                            << (md->GetCommand() != REQUEST_VALUE && md->GetCommand() != RESPONSE_VALUE 
+                                    && md->GetCommand() != ACKNOWLEDGEMENT_COMMAND && md->GetData() > 0 ? 
+                                            " " + to_string(md->GetData()) : "")
+                            << (md->GetCommand() == ACKNOWLEDGEMENT_COMMAND ?
                                             " " + to_string(md->GetData()) : "")
                             << (md->GetCommand() == RESPONSE_VALUE ? (", m_seq: " + to_string(md->GetData())) : "")
                             << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")

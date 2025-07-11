@@ -110,6 +110,9 @@ class ServerNodeApp : public CheckpointApp {
     /** Imprime os dados dos atributos desta classe (para fins de debug). */
     virtual void printNodeData() override;
 
+    /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
+    virtual void replayReceive(Ptr<MessageData> md, bool replayResponse) override;
+
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 
      * NÃO MEXER NA ASSINATURA DESTE MÉTODO!

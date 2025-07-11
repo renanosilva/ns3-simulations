@@ -49,6 +49,10 @@ CheckpointStrategy::~CheckpointStrategy()
     NS_LOG_FUNCTION(this);
 }
 
+void CheckpointStrategy::DisposeReferences(){
+    
+}
+
 void CheckpointStrategy::startCheckpointing(){
     
 }
@@ -133,7 +137,11 @@ bool CheckpointStrategy::isRollbackInProgress(){
 }
 
 bool CheckpointStrategy::interceptRead(Ptr<MessageData> md){
-    return true;
+    return false;
+}
+
+void CheckpointStrategy::afterMessageReceive(Ptr<MessageData> md){
+    
 }
 
 bool CheckpointStrategy::interceptSend(Ptr<MessageData> md){

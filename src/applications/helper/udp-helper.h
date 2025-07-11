@@ -62,6 +62,28 @@ const static string ROLLBACK_FINISHED_BY_ALL_NODES_COMMAND = "ROLLBACK_FINISHED_
 /** Payload referente a um aviso de checkpoint concluído. */
 const static string CHECKPOINT_FINISHED_COMMAND = "CHECKPOINT_FINISHED_COMMAND";
 
+/** Payload referente a uma mensagem de confirmação de recebimento (ack). */
+const static string ACKNOWLEDGEMENT_COMMAND = "ACKNOWLEDGEMENT";
+
+/** Payload referente a uma mensagem de verificação de disponibilidade de nós. */
+const static string CHECK_ALIVE_COMMAND = "CHECK_ALIVE_COMMAND";
+
+/** Payload referente a uma mensagem de confirmação de disponbilidade de um nó. */
+const static string I_AM_ALIVE_COMMAND = "I_AM_ALIVE_COMMAND";
+
+/** Payload referente a uma mensagem de requisição de reenvio de mensagens. */
+const static string REQUEST_RESEND = "REQUEST_RESEND";
+
+/** Payload referente a uma mensagem de resposta de reenvio de mensagens. */
+const static string RESEND_RESPONSE = "RESEND_RESPONSE";
+
+/** Payload referente a uma mensagem de replay de REQUEST-VALUE. */
+const static string REPLAY_REQUEST_VALUE = "REPLAY_REQUEST_VALUE";
+
+/** Payload referente a uma mensagem de replay de RESPONSE-VALUE. */
+const static string REPLAY_RESPONSE_VALUE = "REPLAY_RESPONSE_VALUE";
+
+
 /**
  * \ingroup helper
  * \brief Classe que auxilia no processo de gerenciamento de sockets e pacotes UDP.
@@ -133,6 +155,8 @@ public:
 
     ~UDPHelper() override;
 
+    void DisposeReferences();
+
     /** 
      * Configura um socket e atribui um endereço IP ao nó.
      * 
@@ -161,8 +185,10 @@ public:
      * @param to Indica para qual endereço o pacote será enviado.
      * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
      * apenas registra novamente que ela havia sido enviada.
+     * @param piggyBackedInfo Informações adicionais que serão enviadas junto à mensagem.
+     * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
-    Ptr<MessageData> send(string command, int d, Address to, bool replay = false);
+    Ptr<MessageData> send(string command, int d, Address to, bool replay = false, string piggyBackedInfo = "");
 
     /** 
      * Envia um pacote para um nó.
@@ -173,11 +199,19 @@ public:
      * @param port Porta de destino.
      * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
      * apenas registra novamente que ela havia sido enviada.
+     * @param piggyBackedInfo Informações adicionais que serão enviadas junto à mensagem.
      * */
-    Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false);
+    Ptr<MessageData> send(string command, int d, Ipv4Address ip, uint16_t port, bool replay = false, string piggyBackedInfo = "");
+
+    /** 
+     * Reenvia uma mensagem previamente enviada.
+     * 
+     * @param m Mensagem que será reenviada.
+     * */
+    Ptr<MessageData> resend(Ptr<MessageData> m);
 
     /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
-    void replayReceive(MessageData md);
+    void replayReceive(Ptr<MessageData> md);
 
     /** Imprime os dados da classe para fins de debug. */
     void printData();

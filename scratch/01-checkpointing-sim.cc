@@ -40,7 +40,7 @@ using namespace utils;
 NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/03-efficient-assync-recovery.json"; 
+static const string CONFIG_FILENAME = "scratch/04-efficient-assync-recovery-without-rollback.json"; 
 
 int
 main(int argc, char* argv[])
@@ -58,6 +58,7 @@ main(int argc, char* argv[])
     LogComponentEnable("GlobalSyncClocksStrategy", LOG_INFO);
     LogComponentEnable("DecentralizedRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_INFO);
+    LogComponentEnable("EARPWithoutRollback", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);
@@ -69,10 +70,11 @@ main(int argc, char* argv[])
     // LogComponentEnable("ClientApp", LOG_ALL);
     // LogComponentEnable("Battery", LOG_INFO);
     // LogComponentEnable("CheckpointStrategy", LOG_ALL);
-    // LogComponentEnable("CheckpointHelper", LOG_ALL);
+    // LogComponentEnable("CheckpointHelper", LOG_INFO);
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_ALL);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_ALL);
     // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_ALL);
+    // LogComponentEnable("EARPWithoutRollback", LOG_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_INFO);
     // LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     // LogComponentEnable("UDPHelper", LOG_ALL);
@@ -88,6 +90,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_FUNCTION);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_FUNCTION);
     // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_FUNCTION);
+    // LogComponentEnable("EARPWithoutRollback", LOG_FUNCTION);
     // LogComponentEnable("EnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("CircularEnergyGenerator", LOG_FUNCTION);
     // LogComponentEnable("UDPHelper", LOG_FUNCTION);
@@ -102,6 +105,7 @@ main(int argc, char* argv[])
     // LogComponentEnable("GlobalSyncClocksStrategy", LOG_LEVEL_ALL);
     // LogComponentEnable("DecentralizedRecoveryProtocol", LOG_LEVEL_ALL);
     // LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_LEVEL_ALL);
+    // LogComponentEnable("EARPWithoutRollback", LOG_LEVEL_ALL);
     // LogComponentEnable("EnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("CircularEnergyGenerator", LOG_LEVEL_ALL);
     // LogComponentEnable("UDPHelper", LOG_LEVEL_ALL);
