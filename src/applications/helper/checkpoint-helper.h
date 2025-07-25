@@ -49,7 +49,6 @@ class CheckpointHelper : public Object {
     string checkpointBaseName;       //nome de base do arquivo referente ao checkpoint
     int lastCheckpointId = 0;        //contador que identifica o ID do último checkpoint criado
 
-    /** Remove todos os checkpoints existentes. */
     bool cleanDirectory(const std::string &path);
 
     /** 
@@ -93,7 +92,7 @@ class CheckpointHelper : public Object {
     static TypeId GetTypeId();
 
     /** Remove todos os checkpoints existentes. */
-    void removeAllCheckpointsAndLogs();
+    void removeAllCheckpoints();
 
     /** 
      * Cria um novo checkpoint.
@@ -102,14 +101,18 @@ class CheckpointHelper : public Object {
      * */
     void writeCheckpoint(string data, int checkpointId);
 
+    /** Lê um registro de log presente em arquivo. */
+    json readLog(string fileName);   
+
     /** 
-     * Cria um novo checkpoint, especificando o nome do arquivo.
-     * Caso o arquivo já exista, os dados serão sobrescritos.
+     * Registra um novo log em arquivo.
+     * Caso o arquivo já exista, os dados podem ser sobrescritos ou acrescentados.
      * 
-     * @param j Dados a serem escritos no checkpoint (em formato JSON).
      * @param fileName Nome do arquivo do checkpoint.
+     * @param j Dados a serem escritos no checkpoint (em formato JSON).
+     * @param overwrite Indica se os dados devem ser sobrescritos ou acrescentados.
      * */
-    void writeCheckpoint(json j, string fileName);
+    void writeLog(string logName, json j, bool overwrite);
     
     /** 
      * Cria um novo checkpoint, transformando um objeto em JSON. 
@@ -164,20 +167,9 @@ class CheckpointHelper : public Object {
     string getCheckpointFilename(int i);
 
     /** 
-     * Retorna o nome do arquivo do iésimo log.
-     * @param i índice do log.
-     */
-    string getLogFilename(int i);
-
-    /** 
      * Retorna o nome de base dos arquivos de checkpoint, que representa o nome do nó.
      */
     string getCheckpointBasename();
-
-    /** 
-     * Retorna o nome de base dos arquivos de log de um nó.
-     */
-    string getLogBasename();
 
     /** 
      * Lê o conteúdo de um checkpoint. 

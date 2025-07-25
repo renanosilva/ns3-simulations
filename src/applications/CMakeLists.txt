@@ -19,7 +19,6 @@ build_lib(
     model/seq-ts-echo-header.cc
     model/seq-ts-header.cc
     model/seq-ts-size-header.cc
-    model/message-data.cc
     model/three-gpp-http-client.cc
     model/three-gpp-http-header.cc
     model/three-gpp-http-server.cc
@@ -29,18 +28,20 @@ build_lib(
     model/udp-echo-server.cc
     model/udp-server.cc
     model/udp-trace-client.cc
-    model/server-node-app.cc
-    model/client-node-app.cc
-    model/battery.cc
-    model/energy-generator.cc
-    model/fixed-energy-generator.cc
-    model/circular-energy-generator.cc
-    model/checkpoint-strategy.cc
-    model/decentralized-recovery-protocol.cc
-    model/global-sync-clocks-strategy.cc
-    model/efficient-assync-recovery-protocol.cc
-    model/earp-without-rollback.cc
-    model/checkpoint-app.cc
+    model/apps/server-node-app.cc
+    model/apps/client-node-app.cc
+    model/energy/battery.cc
+    model/energy/energy-generator.cc
+    model/energy/fixed-energy-generator.cc
+    model/energy/circular-energy-generator.cc
+    model/protocols/checkpoint-strategy.cc
+    model/protocols/decentralized-recovery-protocol.cc
+    model/protocols/global-sync-clocks-strategy.cc
+    model/protocols/efficient-assync-recovery-protocol.cc
+    model/protocols/earp-without-rollback.cc
+    model/protocols/earp-without-rollback-v2.cc
+    model/apps/checkpoint-app.cc
+    model/data/message-data.cc
     exception/node-asleep-exception.cc
     exception/node-depleted-exception.cc
     util/json-utils.cc
@@ -65,7 +66,6 @@ build_lib(
     model/seq-ts-echo-header.h
     model/seq-ts-header.h
     model/seq-ts-size-header.h
-    model/message-data.h
     model/three-gpp-http-client.h
     model/three-gpp-http-header.h
     model/three-gpp-http-server.h
@@ -75,18 +75,20 @@ build_lib(
     model/udp-echo-server.h
     model/udp-server.h
     model/udp-trace-client.h
-    model/server-node-app.h
-    model/client-node-app.h
-    model/battery.h
-    model/energy-generator.h
-    model/fixed-energy-generator.h
-    model/circular-energy-generator.h
-    model/checkpoint-strategy.h
-    model/global-sync-clocks-strategy.h
-    model/decentralized-recovery-protocol.h
-    model/efficient-assync-recovery-protocol.h
-    model/earp-without-rollback.h
-    model/checkpoint-app.h
+    model/data/message-data.h
+    model/apps/server-node-app.h
+    model/apps/client-node-app.h
+    model/apps/checkpoint-app.h
+    model/energy/battery.h
+    model/energy/energy-generator.h
+    model/energy/fixed-energy-generator.h
+    model/energy/circular-energy-generator.h
+    model/protocols/checkpoint-strategy.h
+    model/protocols/global-sync-clocks-strategy.h
+    model/protocols/decentralized-recovery-protocol.h
+    model/protocols/efficient-assync-recovery-protocol.h
+    model/protocols/earp-without-rollback.h
+    model/protocols/earp-without-rollback-v2.h
     model/application-type.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h

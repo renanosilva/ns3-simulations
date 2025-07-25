@@ -29,7 +29,8 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay){
         //Apenas para fins de organização, dá uma quebra de linha
         NS_LOG_INFO("");
 
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName << " recebeu "
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName 
+                                << (replay ? " registrou o recebimento de " : " recebeu ")
                                 << md->GetSize() << " bytes de "
                                 << InetSocketAddress::ConvertFrom(md->GetFrom()).GetIpv4() << " porta "
                                 << InetSocketAddress::ConvertFrom(md->GetFrom()).GetPort()
@@ -46,13 +47,13 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay){
                                                 : "")
                                 << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")
                                 << ")");
-
-    NS_LOG_FUNCTION("Fim do método");
 }
 
-void logRegularMessageSent(string nodeName, Ptr<MessageData> md){
+void logRegularMessageSent(string nodeName, Ptr<MessageData> md, bool replay){
 
-    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName << " enviou " << md->GetSize()
+    NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName 
+                            << (replay ? " registrou o envio de " : " enviou ")
+                            << md->GetSize()
                             << " bytes para " << InetSocketAddress::ConvertFrom(md->GetTo()).GetIpv4()
                             << " porta " << InetSocketAddress::ConvertFrom(md->GetTo()).GetPort()
                             << " (Número de Sequência: " << md->GetSequenceNumber()

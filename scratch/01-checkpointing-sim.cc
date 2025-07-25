@@ -40,7 +40,7 @@ using namespace utils;
 NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/04-efficient-assync-recovery-without-rollback.json"; 
+static const string CONFIG_FILENAME = "scratch/05-efficient-assync-recovery-without-rollback-v2.json"; 
 
 int
 main(int argc, char* argv[])
@@ -59,6 +59,7 @@ main(int argc, char* argv[])
     LogComponentEnable("DecentralizedRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EARPWithoutRollback", LOG_INFO);
+    LogComponentEnable("EARPWithoutRollbackV2", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);
@@ -209,7 +210,7 @@ main(int argc, char* argv[])
 
     //Removendo checkpoints criados em simulações anteriores
     CheckpointHelper ch;
-    ch.removeAllCheckpointsAndLogs();
+    ch.removeAllCheckpoints();
 
     vector<Ipv4Address> serverAddresses;
 

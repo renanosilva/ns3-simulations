@@ -1,0 +1,94 @@
+{
+    "simulation": {
+        "time-in-seconds": 60.0,
+        "distance-to-rx-in-meters": 10.0,
+        "max-packets": 0,
+        "interval": 1.0,
+        "checkpoint-strategy": "EfficientAssyncRecoveryProtocolWithoutRollbackV2"
+    },
+    "nodes": {
+        "server-node-0":{
+            "role": "server",
+            "checkpoint-interval": 4.0,
+            "has-battery": true,
+            "energy-update-interval": 1.0,
+            "sleep-energy": 1.0,
+            "idle-energy": 10.0,
+            "rollback-energy": 50.0,
+            "create-checkpoint-energy": 50.0,
+            "receive-packet-energy": 100.0,
+            "send-packet-energy": 100.0,
+            "connect-energy": 50.0,
+            "energy-generator": "CircularEnergyGenerator",
+            "sleep-mode-percentage": 10.0,
+            "normal-mode-percentage": 40.0
+        },
+        "client-node-0":{
+            "role": "client",
+            "checkpoint-interval": 11.0,
+            "has-battery": false
+        },
+        "client-node-1":{
+            "role": "client",
+            "checkpoint-interval": 10.0,
+            "has-battery": false
+        }
+    },
+    "comments": {
+        "server-node-0":{
+            "role": "server",
+            "checkpoint-interval": 5.0,
+            "has-battery": true,
+            "energy-update-interval": 1.0,
+            "sleep-energy": 1.0,
+            "idle-energy": 10.0,
+            "rollback-energy": 50.0,
+            "create-checkpoint-energy": 50.0,
+            "receive-packet-energy": 100.0,
+            "send-packet-energy": 100.0,
+            "connect-energy": 50.0,
+            "energy-generator": "CircularEnergyGenerator",
+            "sleep-mode-percentage": 10.0,
+            "normal-mode-percentage": 40.0
+        },
+        "server-node-1":{
+            "role": "server",
+            "has-battery": true,
+            "checkpoint-interval": 11.0,
+            "energy-update-interval": 1.0,
+            "sleep-energy": 1.0,
+            "idle-energy": 10.0,
+            "rollback-energy": 50.0,
+            "create-checkpoint-energy": 50.0,
+            "receive-packet-energy": 100.0,
+            "send-packet-energy": 100.0,
+            "connect-energy": 50.0,
+            "energy-generator": "FixedEnergyGenerator",
+            "energy-fixed-value": 70.0,
+            "sleep-mode-percentage": 10.0,
+            "normal-mode-percentage": 40.0
+        },
+        "client-node-0":{
+            "role": "client",
+            "has-battery": false,
+            "checkpoint-interval": 11.0
+        },
+        "client-node-1":{
+            "role": "client",
+            "has-battery": true,
+            "checkpoint-interval": 11.0,
+            "energy-update-interval": 1.0,
+            "sleep-energy": 1.0,
+            "idle-energy": 10.0,
+            "rollback-energy": 50.0,
+            "create-checkpoint-energy": 50.0,
+            "receive-packet-energy": 100.0,
+            "send-packet-energy": 100.0,
+            "connect-energy": 50.0,
+            "energy-generator": "FixedEnergyGenerator",
+            "energy-fixed-value": 70.0,
+            "sleep-mode-percentage": 10.0,
+            "normal-mode-percentage": 40.0
+        }
+    }
+}

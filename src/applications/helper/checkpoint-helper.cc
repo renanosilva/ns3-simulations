@@ -79,12 +79,7 @@ string CheckpointHelper::getCheckpointFilename(int i){
     return CHECKPOINTS_FOLDER + checkpointBaseName + "-" + to_string(i) + ".json";
 }
 
-string CheckpointHelper::getLogFilename(int i){
-    NS_LOG_FUNCTION(this);
-    return CHECKPOINTS_FOLDER + getLogBasename() + "-" + to_string(i) + ".json";
-}
-
-void CheckpointHelper::removeAllCheckpointsAndLogs()
+void CheckpointHelper::removeAllCheckpoints()
 {
     NS_LOG_FUNCTION(this);
     cleanDirectory(CHECKPOINTS_FOLDER);
@@ -141,16 +136,6 @@ void CheckpointHelper::writeCheckpoint(string data, int checkpointId){
 
     writeFile(getCheckpointFilename(checkpointId), j);
     lastCheckpointId = checkpointId;
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
-}
-
-void CheckpointHelper::writeCheckpoint(json j, string fileName){
-    NS_LOG_FUNCTION(this);
-    
-    editFile(fileName, j);
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId){
@@ -160,8 +145,6 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId)
 
     writeFile(getCheckpointFilename(checkpointId), j);
     lastCheckpointId = checkpointId;
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::writeCheckpoint(json j, int checkpointId){
@@ -169,8 +152,6 @@ void CheckpointHelper::writeCheckpoint(json j, int checkpointId){
 
     writeFile(getCheckpointFilename(checkpointId), j);
     lastCheckpointId = checkpointId;
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId, bool confirmed){
@@ -181,16 +162,31 @@ void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId,
 
     writeFile(getCheckpointFilename(checkpointId), j);
     lastCheckpointId = checkpointId;
+}
+
+json CheckpointHelper::readLog(string fileName) {   
+    NS_LOG_FUNCTION(this);
+    string c = getFileContent(CHECKPOINTS_FOLDER + fileName);
     
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CRIADO. ID: " << lastCheckpointId << "\n");
+    if (c.empty())
+        return json{};
+
+    return json::parse(c);
+}
+
+void CheckpointHelper::writeLog(string fileName, json j, bool overwrite){
+    NS_LOG_FUNCTION(this);
+
+    if (overwrite)
+        editFile(CHECKPOINTS_FOLDER + fileName, j);    
+    else
+        writeFile(CHECKPOINTS_FOLDER + fileName, j);
+        
 }
 
 void CheckpointHelper::editCheckpoint(json j, int checkpointId){
     NS_LOG_FUNCTION(this);
-
     editFile(getCheckpointFilename(checkpointId), j);
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT EDITADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::confirmCheckpoint(int checkpointId){
@@ -202,8 +198,6 @@ void CheckpointHelper::confirmCheckpoint(int checkpointId){
 
     removeCheckpoint(checkpointId);
     writeFile(getCheckpointFilename(checkpointId), j);
-    
-    NS_LOG_LOGIC("\n" << checkpointBaseName << " - CHECKPOINT CONFIRMADO. ID: " << lastCheckpointId << "\n");
 }
 
 void CheckpointHelper::removeCheckpoint(int checkpointId){
@@ -277,11 +271,6 @@ string CheckpointHelper::getCheckpointBasename(){
     return checkpointBaseName;
 }
 
-string CheckpointHelper::getLogBasename(){
-    NS_LOG_FUNCTION(this);
-    return checkpointBaseName + "-log";
-}
-
 int CheckpointHelper::getLastCheckpointId(){
     NS_LOG_FUNCTION(this);
 
@@ -309,15 +298,20 @@ int CheckpointHelper::findMaxIdFromFilenames(const vector<std::string>& filename
     int maxNumber = -1;
 
     for (const auto& filename : filenames) {
-        size_t lastDash = filename.rfind('-'); // Último '-'
-        size_t dotJson = filename.rfind(".json"); // Posição de ".json"
-        
-        if (lastDash != std::string::npos && dotJson != std::string::npos) {
-            int num = std::stoi(filename.substr(lastDash + 1, dotJson - lastDash - 1));
-            if (num > maxNumber) {
-                maxNumber = num;
-                maxStr = filename;
+        try {    
+            size_t lastDash = filename.rfind('-'); // Último '-'
+            size_t dotJson = filename.rfind(".json"); // Posição de ".json"
+            
+            if (lastDash != std::string::npos && dotJson != std::string::npos) {
+                int num = std::stoi(filename.substr(lastDash + 1, dotJson - lastDash - 1));
+                if (num > maxNumber) {
+                    maxNumber = num;
+                    maxStr = filename;
+                }
             }
+        } catch (std::exception& e){
+            //Se ocorreu erro, então o arquivo não era de um checkpoint
+            continue;
         }
     }
 

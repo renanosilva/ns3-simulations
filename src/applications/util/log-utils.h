@@ -40,14 +40,14 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay = fals
  * @param nodeName nome do nó que enviou a mensagem.
  * @param md mensagem enviada.
  */
-void logRegularMessageSent(string nodeName, Ptr<MessageData> md);
+void logRegularMessageSent(string nodeName, Ptr<MessageData> md, bool replay = false);
 
 /** 
  * Registra, em log, o envio de uma mensagem normal de negócio do sistema.
  * @param nodeName nome do nó que enviou a mensagem.
  * @param md mensagem enviada.
  */
-void logRegularMessageSent(string nodeName, Ptr<MessageData> md, uint64_t m_seq);
+// void logRegularMessageSent(string nodeName, Ptr<MessageData> md, uint64_t m_seq);
 
 /** 
  * Registra, em log, o envio de uma mensagem de comando.
