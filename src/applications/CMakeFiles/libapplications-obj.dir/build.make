@@ -615,10 +615,24 @@ src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s
 
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/model/protocols/earp-without-rollback-v2-optimized.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc
+
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc > CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i
+
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s
+
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o: src/applications/model/apps/checkpoint-app.cc
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o -MF CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/apps/checkpoint-app.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.i: cmake_force
@@ -632,7 +646,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc
 src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o: src/applications/model/data/message-data.cc
 src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o -MF CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/data/message-data.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.i: cmake_force
@@ -646,7 +660,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.s
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o: src/applications/exception/node-asleep-exception.cc
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o -MF CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o.d -o CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/exception/node-asleep-exception.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.i: cmake_force
@@ -660,7 +674,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-except
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o: src/applications/exception/node-depleted-exception.cc
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o -MF CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o.d -o CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/exception/node-depleted-exception.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exception.cc.i: cmake_force
@@ -674,7 +688,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/exception/node-depleted-exce
 src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o: src/applications/util/json-utils.cc
 src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o -MF CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o.d -o CMakeFiles/libapplications-obj.dir/util/json-utils.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/util/json-utils.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.i: cmake_force
@@ -688,7 +702,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/util/json-utils.cc.s: cmake_
 src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o: src/applications/util/log-utils.cc
 src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o -MF CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o.d -o CMakeFiles/libapplications-obj.dir/util/log-utils.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/util/log-utils.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.i: cmake_force
@@ -702,7 +716,7 @@ src/applications/CMakeFiles/libapplications-obj.dir/util/log-utils.cc.s: cmake_f
 src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o: src/applications/util/utils.cc
 src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.o -MF CMakeFiles/libapplications-obj.dir/util/utils.cc.o.d -o CMakeFiles/libapplications-obj.dir/util/utils.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/util/utils.cc
 
 src/applications/CMakeFiles/libapplications-obj.dir/util/utils.cc.i: cmake_force
@@ -752,6 +766,7 @@ libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/p
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o
+libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o

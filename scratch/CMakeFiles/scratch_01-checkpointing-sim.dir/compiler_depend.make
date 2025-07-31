@@ -69,6 +69,7 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
   build/include/ns3/double.h \
   build/include/ns3/drop-tail-queue.h \
   build/include/ns3/dynamic-queue-limits.h \
+  build/include/ns3/earp-without-rollback-v2-optimized.h \
   build/include/ns3/earp-without-rollback-v2.h \
   build/include/ns3/earp-without-rollback.h \
   build/include/ns3/efficient-assync-recovery-protocol.h \
@@ -413,6 +414,7 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
   src/applications/model/packet-sink.h \
   src/applications/model/protocols/checkpoint-strategy.h \
   src/applications/model/protocols/decentralized-recovery-protocol.h \
+  src/applications/model/protocols/earp-without-rollback-v2-optimized.h \
   src/applications/model/protocols/earp-without-rollback-v2.h \
   src/applications/model/protocols/earp-without-rollback.h \
   src/applications/model/protocols/efficient-assync-recovery-protocol.h \
@@ -3480,15 +3482,7 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
 
 /usr/include/boost/mpl/list/aux_/push_front.hpp:
 
-/usr/include/boost/units/base_units/angle/radian.hpp:
-
-build/include/ns3/ipv4-address-helper.h:
-
-/usr/include/boost/preprocessor/facilities/is_empty_variadic.hpp:
-
-/usr/include/boost/mpl/numeric_cast.hpp:
-
-/usr/include/boost/mpl/is_sequence.hpp:
+/usr/include/boost/mpl/list/aux_/push_back.hpp:
 
 /usr/include/boost/mpl/aux_/config/ctps.hpp:
 
@@ -3635,12 +3629,6 @@ build/include/ns3/constant-acceleration-mobility-model.h:
 /usr/include/boost/range/reverse_iterator.hpp:
 
 build/include/ns3/utils.h:
-
-src/internet/helper/ipv4-static-routing-helper.h:
-
-/usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
-
-src/network/utils/pcap-file.h:
 
 /usr/include/boost/units/base_units/cgs/gram.hpp:
 
@@ -4080,18 +4068,6 @@ build/include/ns3/wifi-standards.h:
 
 build/include/ns3/net-device-container.h:
 
-src/core/model/uniform-random-bit-generator.h:
-
-src/core/model/node-printer.h:
-
-build/include/ns3/ipv4-header.h:
-
-/usr/include/boost/type_traits/is_class.hpp:
-
-build/include/ns3/ipv4-global-routing-helper.h:
-
-src/internet/model/icmpv6-l4-protocol.h:
-
 /usr/include/boost/mpl/distance.hpp:
 
 build/include/ns3/integer.h:
@@ -4263,6 +4239,16 @@ build/include/ns3/earp-without-rollback.h:
 /usr/include/boost/units/physical_dimensions/momentum.hpp:
 
 build/include/ns3/queue-item.h:
+
+/usr/include/boost/units/base_units/angle/radian.hpp:
+
+build/include/ns3/ipv4-address-helper.h:
+
+/usr/include/boost/preprocessor/facilities/is_empty_variadic.hpp:
+
+/usr/include/boost/mpl/numeric_cast.hpp:
+
+/usr/include/boost/mpl/is_sequence.hpp:
 
 build/include/ns3/fd-reader.h:
 
@@ -4480,8 +4466,6 @@ build/include/ns3/icmpv6-header.h:
 
 build/include/ns3/packet-socket.h:
 
-/usr/include/boost/mpl/list/aux_/push_back.hpp:
-
 /usr/include/c++/13/debug/assertions.h:
 
 /usr/include/boost/mpl/placeholders.hpp:
@@ -4567,6 +4551,12 @@ build/include/ns3/int64x64-128.h:
 build/include/ns3/attribute-helper.h:
 
 build/include/ns3/pcap-file-wrapper.h:
+
+build/include/ns3/radiotap-header.h:
+
+build/include/ns3/traced-callback.h:
+
+build/include/ns3/global-sync-clocks-strategy.h:
 
 src/core/model/wall-clock-synchronizer.h:
 
@@ -4670,6 +4660,12 @@ build/include/ns3/command-line.h:
 
 build/include/ns3/config-helper.h:
 
+/usr/include/boost/range/distance.hpp:
+
+src/internet/model/udp-socket-factory.h:
+
+build/include/ns3/ipv6-raw-socket-factory.h:
+
 build/include/ns3/trace-helper.h:
 
 src/applications/model/udp-echo-server.h:
@@ -4682,9 +4678,31 @@ build/include/ns3/synchronizer.h:
 
 build/include/ns3/object-base.h:
 
+/usr/include/c++/13/bits/uniform_int_dist.h:
+
+/usr/include/boost/type_traits/detail/yes_no_type.hpp:
+
+/usr/include/boost/preprocessor/comparison/equal.hpp:
+
+/usr/include/boost/mpl/list/aux_/preprocessed/plain/list20.hpp:
+
+src/internet/model/ripng-header.h:
+
 /usr/include/boost/preprocessor/facilities/identity.hpp:
 
 build/include/ns3/header-serialization-test.h:
+
+src/core/model/uniform-random-bit-generator.h:
+
+src/core/model/node-printer.h:
+
+/usr/include/boost/type_traits/is_class.hpp:
+
+build/include/ns3/ipv4-global-routing-helper.h:
+
+src/internet/model/icmpv6-l4-protocol.h:
+
+build/include/ns3/ipv4-header.h:
 
 src/applications/model/application-type.h:
 
@@ -4830,6 +4848,8 @@ build/include/ns3/ipv6-extension-demux.h:
 
 build/include/ns3/node-container.h:
 
+src/applications/model/protocols/earp-without-rollback-v2-optimized.h:
+
 build/include/ns3/pcap-file.h:
 
 build/include/ns3/energy-generator.h:
@@ -4859,18 +4879,6 @@ build/include/ns3/ipv6-extension-header.h:
 src/internet/model/candidate-queue.h:
 
 /usr/include/boost/mpl/aux_/has_size.hpp:
-
-build/include/ns3/traced-callback.h:
-
-build/include/ns3/global-sync-clocks-strategy.h:
-
-/usr/include/boost/range/distance.hpp:
-
-build/include/ns3/ipv6-raw-socket-factory.h:
-
-src/internet/model/udp-socket-factory.h:
-
-build/include/ns3/radiotap-header.h:
 
 build/include/ns3/uinteger.h:
 
@@ -5141,6 +5149,12 @@ src/internet/model/tcp-bbr.h:
 /usr/include/boost/concept_check.hpp:
 
 build/include/ns3/queue.h:
+
+src/internet/helper/ipv4-static-routing-helper.h:
+
+/usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
+
+src/network/utils/pcap-file.h:
 
 src/internet/helper/ipv6-interface-container.h:
 
@@ -5686,16 +5700,6 @@ src/network/utils/simple-net-device.h:
 
 /usr/include/boost/mpl/aux_/iter_fold_impl.hpp:
 
-/usr/include/c++/13/bits/uniform_int_dist.h:
-
-/usr/include/boost/type_traits/detail/yes_no_type.hpp:
-
-/usr/include/boost/preprocessor/comparison/equal.hpp:
-
-src/internet/model/ripng-header.h:
-
-/usr/include/boost/mpl/list/aux_/preprocessed/plain/list20.hpp:
-
 src/network/utils/timestamp-tag.h:
 
 /usr/include/boost/mpl/aux_/config/bcc.hpp:
@@ -5740,9 +5744,9 @@ build/include/ns3/names.h:
 
 src/wifi/model/wifi-phy-operating-channel.h:
 
-/usr/include/boost/move/utility_core.hpp:
-
 build/include/ns3/priority-queue-scheduler.h:
+
+/usr/include/boost/move/utility_core.hpp:
 
 src/wifi/model/wifi-phy-state-helper.h:
 
@@ -5897,6 +5901,8 @@ src/internet/model/ipv4-end-point.h:
 /usr/include/nlohmann/detail/meta/call_std/end.hpp:
 
 /usr/include/boost/mpl/limits/list.hpp:
+
+build/include/ns3/earp-without-rollback-v2-optimized.h:
 
 /usr/include/boost/core/no_exceptions_support.hpp:
 

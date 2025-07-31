@@ -27,11 +27,6 @@
             "role": "client",
             "checkpoint-interval": 11.0,
             "has-battery": false
-        },
-        "client-node-1":{
-            "role": "client",
-            "checkpoint-interval": 10.0,
-            "has-battery": false
         }
     },
     "comments": {

@@ -2015,6 +2015,8 @@ src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2.h \
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.h \
+ /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2-optimized.h \
+ /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/log-utils.h \
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/util/log-utils.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/node-depleted-exception.h \

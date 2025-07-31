@@ -2075,6 +2075,8 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: \
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2.h \
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.h \
+ /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2-optimized.h \
+ /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/node-asleep-exception.h \
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/exception/node-asleep-exception.h \
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/node-depleted-exception.h \

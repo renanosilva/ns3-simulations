@@ -22,6 +22,7 @@
 #include "ns3/efficient-assync-recovery-protocol.h"
 #include "ns3/earp-without-rollback.h"
 #include "ns3/earp-without-rollback-v2.h"
+#include "ns3/earp-without-rollback-v2-optimized.h"
 #include "ns3/log-utils.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -170,6 +171,14 @@ void CheckpointApp::configureCheckpointStrategy() {
         checkpointStrategy = Create<EARPWithoutRollbackV2>(Seconds(checkpointInterval), totalNodesQuantity, this);
         checkpointStrategy->startCheckpointing();
 
+    } else if (checkpointStrategyName == "EfficientAssyncRecoveryProtocolWithoutRollbackV2Optimized") {
+        
+        string intervalProperty = "nodes." + getNodeName() + ".checkpoint-interval";
+        double checkpointInterval = configHelper->GetDoubleProperty(intervalProperty);
+
+        checkpointStrategy = Create<EARPWithoutRollbackV2Optimized>(Seconds(checkpointInterval), totalNodesQuantity, this);
+        checkpointStrategy->startCheckpointing();
+
     } else {
         NS_ABORT_MSG("Não foi possível identificar a estratégia de checkpoint de " << getNodeName());
     }
@@ -314,15 +323,11 @@ void CheckpointApp::checkModeChange(){
         } else */
         
         if (battery->getBatteryPercentage() <= sleepModePercentage && currentMode == EnergyMode::NORMAL){
-            
-            try {
-                checkpointStrategy->writeCheckpoint();
-            } catch (NodeAsleepException& e) {
-                return;
-            } 
-            
-            currentMode = EnergyMode::SLEEP;
 
+            // checkpointStrategy->writeCheckpoint();
+
+            currentMode = EnergyMode::SLEEP;
+            
             NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo SLEEP.");
             resetNodeData();
 
@@ -360,6 +365,21 @@ void CheckpointApp::decreaseCheckpointEnergy(){
     NS_LOG_FUNCTION(this);
     decreaseEnergy(createCheckpointConsumption);
 }
+
+// void CheckpointApp::decreaseCheckpointEnergy(){
+//     NS_LOG_FUNCTION(this);
+
+//     if (battery != nullptr){
+//         NS_ASSERT_MSG(
+//             (currentMode == EnergyMode::NORMAL), 
+//             "Operação inválida! Bateria está em modo sleep e não pode realizar operações.");
+    
+//         battery->decrementEnergy(createCheckpointConsumption);
+
+//         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", energia consumida por " << getNodeName() << 
+//                     ": " << createCheckpointConsumption << ". Energia restante: " << to_string(battery->getRemainingEnergy()) << ".");
+//     }
+// }
 
 void CheckpointApp::decreaseRollbackEnergy(){
     NS_LOG_FUNCTION(this);

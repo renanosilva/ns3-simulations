@@ -60,6 +60,7 @@ main(int argc, char* argv[])
     LogComponentEnable("EfficientAssyncRecoveryProtocol", LOG_INFO);
     LogComponentEnable("EARPWithoutRollback", LOG_INFO);
     LogComponentEnable("EARPWithoutRollbackV2", LOG_INFO);
+    LogComponentEnable("EARPWithoutRollbackV2Optimized", LOG_INFO);
     LogComponentEnable("EnergyGenerator", LOG_INFO);
     LogComponentEnable("CircularEnergyGenerator", LOG_INFO);
     LogComponentEnable("UDPHelper", LOG_INFO);

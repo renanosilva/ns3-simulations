@@ -40,6 +40,7 @@ build_lib(
     model/protocols/efficient-assync-recovery-protocol.cc
     model/protocols/earp-without-rollback.cc
     model/protocols/earp-without-rollback-v2.cc
+    model/protocols/earp-without-rollback-v2-optimized.cc
     model/apps/checkpoint-app.cc
     model/data/message-data.cc
     exception/node-asleep-exception.cc
@@ -89,6 +90,7 @@ build_lib(
     model/protocols/efficient-assync-recovery-protocol.h
     model/protocols/earp-without-rollback.h
     model/protocols/earp-without-rollback-v2.h
+    model/protocols/earp-without-rollback-v2-optimized.h
     model/application-type.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h

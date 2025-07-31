@@ -108,6 +108,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/efficient-assync-recovery-protocol.h"
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.h"
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.h"
+    "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.h"
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/application-type.h"
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/exception/node-asleep-exception.h"
     "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/exception/node-depleted-exception.h"

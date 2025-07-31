@@ -70,6 +70,7 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/double.h
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/drop-tail-queue.h
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/dynamic-queue-limits.h
+ /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2-optimized.h
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback-v2.h
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/earp-without-rollback.h
  /home/renan/ns-allinone-3.42/ns-3.42/build/include/ns3/efficient-assync-recovery-protocol.h
@@ -414,6 +415,7 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/packet-sink.h
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/checkpoint-strategy.h
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/decentralized-recovery-protocol.h
+ /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.h
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.h
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.h
  /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/efficient-assync-recovery-protocol.h

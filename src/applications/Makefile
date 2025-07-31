@@ -838,6 +838,30 @@ model/protocols/decentralized-recovery-protocol.cc.s:
 	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.s
 .PHONY : model/protocols/decentralized-recovery-protocol.cc.s
 
+model/protocols/earp-without-rollback-v2-optimized.o: model/protocols/earp-without-rollback-v2-optimized.cc.o
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.o
+
+# target to build an object file
+model/protocols/earp-without-rollback-v2-optimized.cc.o:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.o
+
+model/protocols/earp-without-rollback-v2-optimized.i: model/protocols/earp-without-rollback-v2-optimized.cc.i
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.i
+
+# target to preprocess a source file
+model/protocols/earp-without-rollback-v2-optimized.cc.i:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.i
+
+model/protocols/earp-without-rollback-v2-optimized.s: model/protocols/earp-without-rollback-v2-optimized.cc.s
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.s
+
+# target to generate assembly for a file
+model/protocols/earp-without-rollback-v2-optimized.cc.s:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s
+.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.s
+
 model/protocols/earp-without-rollback-v2.o: model/protocols/earp-without-rollback-v2.cc.o
 .PHONY : model/protocols/earp-without-rollback-v2.o
 
@@ -1389,6 +1413,9 @@ help:
 	@echo "... model/protocols/decentralized-recovery-protocol.o"
 	@echo "... model/protocols/decentralized-recovery-protocol.i"
 	@echo "... model/protocols/decentralized-recovery-protocol.s"
+	@echo "... model/protocols/earp-without-rollback-v2-optimized.o"
+	@echo "... model/protocols/earp-without-rollback-v2-optimized.i"
+	@echo "... model/protocols/earp-without-rollback-v2-optimized.s"
 	@echo "... model/protocols/earp-without-rollback-v2.o"
 	@echo "... model/protocols/earp-without-rollback-v2.i"
 	@echo "... model/protocols/earp-without-rollback-v2.s"

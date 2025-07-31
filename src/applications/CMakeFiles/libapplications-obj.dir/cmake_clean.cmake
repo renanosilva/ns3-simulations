@@ -53,6 +53,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/libapplications-obj.dir/model/protocols/checkpoint-strategy.cc.o.d"
   "CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.o"
   "CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.o.d"
+  "CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o"
+  "CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o.d"
   "CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o"
   "CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o.d"
   "CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o"
