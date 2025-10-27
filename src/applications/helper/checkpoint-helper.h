@@ -101,6 +101,22 @@ class CheckpointHelper : public Object {
      * */
     void writeCheckpoint(string data, int checkpointId);
 
+    /** 
+     * Cria um novo checkpoint com um nome específico.
+     * @param basename Nome de base do checkpoint a ser criado.
+     * @param data Dados a serem escritos no checkpoint (em formato JSON).
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
+     * */
+    void writeCheckpoint(string basename, string data, int checkpointId);
+
+    /** 
+     * Cria um novo checkpoint com um nome específico.
+     * @param basename Nome de base do checkpoint a ser criado.
+     * @param data Dados a serem escritos no checkpoint (em formato JSON).
+     * @param checkpointId ID do checkpoint a ser criado. Será incluído no nome do arquivo.
+     * */
+    void writeCheckpoint(string basename, json data);
+
     /** Lê um registro de log presente em arquivo. */
     json readLog(string fileName);   
 
@@ -180,10 +196,16 @@ class CheckpointHelper : public Object {
     bool existCheckpoint(int index);
 
     /** 
-     * Obtém o último índice de um checkpoint criado, lendo diretamente da base de arquivos, caso seja necessário. 
-     * Caso tenha sido feito algum rollback, retorna o índice do último checkpoint a ser usado.
+     * Obtém o último índice de um checkpoint criado deste nó, lendo diretamente da base de arquivos, 
+     * caso seja necessário.
      * */
     int getLastCheckpointId();
+
+    /** 
+     * Obtém o último índice de um checkpoint criado de um nó específico, lendo diretamente da base de arquivos.
+     * @param basename Nome base do nó cujo último ID de checkpoint se está procurando.
+     * */
+    int getLastCheckpointId(string basename);
 
     /** Retorna o ID de checkpoint imediatamente anterior ao ID passado como parâmetro. */
     int getPreviousCheckpointId(int checkpointId);

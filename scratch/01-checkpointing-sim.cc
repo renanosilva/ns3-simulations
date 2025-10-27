@@ -40,7 +40,7 @@ using namespace utils;
 NS_LOG_COMPONENT_DEFINE("Sim01");
 
 /** Nome do arquivo de configuração da simulação */
-static const string CONFIG_FILENAME = "scratch/05-efficient-assync-recovery-without-rollback-v2.json"; 
+static const string CONFIG_FILENAME = "scratch/06-no-rollback-2-optimized.json"; 
 
 int
 main(int argc, char* argv[])

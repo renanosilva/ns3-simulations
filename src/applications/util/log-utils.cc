@@ -25,10 +25,6 @@ namespace utils
 void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay){
     NS_LOG_FUNCTION("LogUtils::logMessageReceived" << md);
 
-    if (md->GetCommand() == REQUEST_VALUE && !replay)
-        //Apenas para fins de organização, dá uma quebra de linha
-        NS_LOG_INFO("");
-
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName 
                                 << (replay ? " registrou o recebimento de " : " recebeu ")
                                 << md->GetSize() << " bytes de "
@@ -45,11 +41,21 @@ void logMessageReceived(string nodeName, Ptr<MessageData> md, bool replay){
                                 << (md->GetCommand() == RESPONSE_VALUE ? 
                                                 ", m_seq: " + to_string(md->GetData()) 
                                                 : "")
-                                << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")
+                                << (!md->GetPiggyBackedInfo().empty() 
+                                    && md->GetPiggyBackedInfo().find("checkpointData") == string::npos ?
+                                                ", " + md->GetPiggyBackedInfo() : "")
                                 << ")");
 }
 
 void logRegularMessageSent(string nodeName, Ptr<MessageData> md, bool replay){
+    
+    if ((md->GetCommand() == REQUEST_VALUE && !replay && md->GetPiggyBackedInfo().find("originalSenderIP") == string::npos)
+        || md->GetCommand() == REQUEST_CHECKPOINT_CREATION
+        || (md->GetCommand() == RESEND_RESPONSE && md->GetPiggyBackedInfo().find("checkpointData") != string::npos)){
+        
+        //Apenas para fins de organização, dá uma quebra de linha
+        NS_LOG_INFO("");
+    }
 
     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", " << nodeName 
                             << (replay ? " registrou o envio de " : " enviou ")
@@ -66,8 +72,14 @@ void logRegularMessageSent(string nodeName, Ptr<MessageData> md, bool replay){
                             << (md->GetCommand() == ACKNOWLEDGEMENT_COMMAND ?
                                             " " + to_string(md->GetData()) : "")
                             << (md->GetCommand() == RESPONSE_VALUE ? (", m_seq: " + to_string(md->GetData())) : "")
-                            << (!md->GetPiggyBackedInfo().empty() ? ", " + md->GetPiggyBackedInfo() : "")
-                            << ")"); 
+                            << " " << md->GetPiggyBackedInfo()
+                            << ")");
+    
+    if (md->GetCommand() == REQUEST_CHECKPOINT_CREATION || 
+        (md->GetCommand() == RESEND_RESPONSE && md->GetPiggyBackedInfo().find("checkpointData") != string::npos)){
+        
+        NS_LOG_INFO("");
+    }
 
 }
 

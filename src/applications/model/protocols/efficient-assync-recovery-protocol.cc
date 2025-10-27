@@ -167,7 +167,7 @@ void EfficientAssyncRecoveryProtocol::rollbackToLastVolatileEvent() {
     
     /* Fazendo rollback para o último evento do log volátil, já que este nó não falhou 
     (apenas tomou conhecimento da falha de outro nó) */
-    Ptr<Event> e = getActiveEvent();
+    Ptr<EventEARP> e = getActiveEvent();
 
     if (e != nullptr)
         rollbackToVolatileEvent(e, true);
@@ -186,7 +186,7 @@ void EfficientAssyncRecoveryProtocol::rollbackToLastVolatileEvent() {
     }
 }
 
-void EfficientAssyncRecoveryProtocol::rollbackToVolatileEvent(Ptr<Event> e, bool notifyNodes) {
+void EfficientAssyncRecoveryProtocol::rollbackToVolatileEvent(Ptr<EventEARP> e, bool notifyNodes) {
     rollbackInProgress = true;
 
     app->StopApplication();
@@ -279,7 +279,7 @@ bool EfficientAssyncRecoveryProtocol::rollback(int cpId) {
     }
     
     //Recupera os eventos presentes no checkpoint
-    events = j.get<vector<Ptr<Event>>>();
+    events = j.get<vector<Ptr<EventEARP>>>();
     
     //Recupera o estado da aplicação presente no último evento do checkpoint
     app->from_json(getActiveEvent()->GetNodeState());
@@ -364,7 +364,7 @@ bool EfficientAssyncRecoveryProtocol::interceptRead(Ptr<MessageData> md){
         if (md->GetCommand() == REQUEST_VALUE){
             
             //O recebimento de uma mensagem de request gera um novo evento
-            Ptr<Event> e = Create<Event>();
+            Ptr<EventEARP> e = Create<EventEARP>();
             e->SetNodeState(app->to_json()); //O estado do nó a ser gravado é o de antes do processamento da mensagem
             e->SetJ(++eventCount);
             e->SetMessage(*md);
@@ -378,7 +378,7 @@ bool EfficientAssyncRecoveryProtocol::interceptRead(Ptr<MessageData> md){
         if (md->GetCommand() == RESPONSE_VALUE){
             
             //O recebimento de uma mensagem de response gera um novo evento (sem novos envios, ou seja, com mSent vazio)
-            Ptr<Event> e = Create<Event>();
+            Ptr<EventEARP> e = Create<EventEARP>();
             e->SetNodeState(app->to_json()); //O estado do nó a ser gravado é o de antes do processamento da mensagem
             e->SetJ(++eventCount);
             e->SetMessage(*md);
@@ -465,7 +465,7 @@ bool EfficientAssyncRecoveryProtocol::interceptSend(Ptr<MessageData> md){
     if (md->GetCommand() == REQUEST_VALUE){
         
         //O envio de uma mensagem de request gera um novo evento
-        Ptr<Event> e = Create<Event>();
+        Ptr<EventEARP> e = Create<EventEARP>();
         e->SetNodeState(app->to_json()); //O estado do nó a ser gravado é o de antes do processamento da mensagem
         e->SetJ(++eventCount);
         e->SetMSent(vector<MessageData>{*md});
@@ -478,7 +478,7 @@ bool EfficientAssyncRecoveryProtocol::interceptSend(Ptr<MessageData> md){
         
         /* Uma mensagem do tipo response é enviada em decorrência do recebimento de uma
         mensagem anterior. Nesse caso, deve-se atualizar o último evento registrado. */
-        Ptr<Event> e = getActiveEvent();
+        Ptr<EventEARP> e = getActiveEvent();
         e->SetMSent(vector<MessageData>{*md});
         
         processMessageSent(md);
@@ -549,7 +549,7 @@ void EfficientAssyncRecoveryProtocol::processRollbackMsgsQueue(){
                     //Percorrendo os eventos do checkpoint atual 
                     for (size_t i = 0; i < events.size(); i++){
                         
-                        Ptr<Event> e = events.at(i);
+                        Ptr<EventEARP> e = events.at(i);
                         json jNodesInfo = e->GetNodeState().at("checkpointStrategy").at("adjacentNodes");
                         vector<EARPNodeInfo> nodesInfo = jNodesInfo.get<vector<EARPNodeInfo>>();
 
@@ -611,7 +611,7 @@ void EfficientAssyncRecoveryProtocol::processRollbackMsgsQueue(){
     }
 }
 
-void EfficientAssyncRecoveryProtocol::replayEvent(Ptr<Event> e){
+void EfficientAssyncRecoveryProtocol::replayEvent(Ptr<EventEARP> e){
     
     MessageData msgReceived = e->GetMessage();
 
@@ -692,7 +692,7 @@ EARPNodeInfo* EfficientAssyncRecoveryProtocol::findAdjacentNodeByAddress(const A
     return findAdjacentNodeByAddress(&adjacentNodes, addr);
 }
 
-Ptr<Event> EfficientAssyncRecoveryProtocol::getActiveEvent(){
+Ptr<EventEARP> EfficientAssyncRecoveryProtocol::getActiveEvent(){
     if (events.size() == 0)
         return nullptr;
     
@@ -738,7 +738,7 @@ void from_json(const json& j, EARPNodeInfo& obj) {
 //     j.at("mSent").get_to(obj.mSent);
 // }
 
-void to_json(json& j, const Ptr<Event>& obj) {
+void to_json(json& j, const Ptr<EventEARP>& obj) {
     j = json{
         {"j", obj->j},
         {"nodeState", obj->nodeState},
@@ -747,8 +747,8 @@ void to_json(json& j, const Ptr<Event>& obj) {
     };
 }
 
-void from_json(const json& j, Ptr<Event>& obj) {
-    obj = CreateObject<Event>();
+void from_json(const json& j, Ptr<EventEARP>& obj) {
+    obj = CreateObject<EventEARP>();
     j.at("j").get_to(obj->j);
     j.at("nodeState").get_to(obj->nodeState);
     j.at("m").get_to(obj->m);

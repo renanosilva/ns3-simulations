@@ -99,12 +99,38 @@ MessageData::~MessageData()
     NS_LOG_FUNCTION(this);
 }
 
+void MessageData::addPiggyBackedInfo(std::string info){
+    if (piggyBackedInfo.empty()){
+        piggyBackedInfo = info;
+    } else {
+        piggyBackedInfo.append(" " + info);
+    }
+}
+
 int MessageData::GetFirstPiggyBackedValue(){
     istringstream iss(piggyBackedInfo);
     string command;
     int value;
     iss >> command >> value;
     return value;
+}
+
+string MessageData::getPiggyBackedValue(string param){
+    map<std::string, std::string> params;
+    istringstream iss(piggyBackedInfo);
+    string key, value;
+
+    while (iss >> key >> value) {
+        params[key] = value;
+    }
+    
+    auto it = params.find(param);
+    
+    if (it != params.end()) {
+        return it->second;
+    }
+    
+    return "";
 }
 
 void to_json(json& j, const MessageData& obj) {

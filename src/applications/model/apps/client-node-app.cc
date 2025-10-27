@@ -136,6 +136,8 @@ ClientNodeApp::StartApplication() {
                 << (battery == nullptr ? "" : "Energia inicial: " + to_string(battery->getRemainingEnergy()) + "."));
 
     NS_LOG_INFO(getNodeName() << " iniciado.");
+
+    decreaseConnectEnergy();
 }
 
 void

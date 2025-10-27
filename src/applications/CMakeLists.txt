@@ -30,6 +30,10 @@ build_lib(
     model/udp-trace-client.cc
     model/apps/server-node-app.cc
     model/apps/client-node-app.cc
+    model/apps/ecs-checkpoint-app.cc
+    model/apps/ecs-node-app.cc
+    model/apps/ecs-requestor-node-app.cc
+    model/apps/ecs-responsor-node-app.cc
     model/energy/battery.cc
     model/energy/energy-generator.cc
     model/energy/fixed-energy-generator.cc
@@ -38,9 +42,11 @@ build_lib(
     model/protocols/decentralized-recovery-protocol.cc
     model/protocols/global-sync-clocks-strategy.cc
     model/protocols/efficient-assync-recovery-protocol.cc
-    model/protocols/earp-without-rollback.cc
-    model/protocols/earp-without-rollback-v2.cc
-    model/protocols/earp-without-rollback-v2-optimized.cc
+    model/protocols/no-rollback-1.cc
+    model/protocols/no-rollback-2.cc
+    model/protocols/no-rollback-2-with-ecs.cc
+    model/protocols/ecs-protocol.cc
+    model/protocols/no-rollback-2-optimized.cc
     model/apps/checkpoint-app.cc
     model/data/message-data.cc
     exception/node-asleep-exception.cc
@@ -79,6 +85,10 @@ build_lib(
     model/data/message-data.h
     model/apps/server-node-app.h
     model/apps/client-node-app.h
+    model/apps/ecs-checkpoint-app.h
+    model/apps/ecs-node-app.h
+    model/apps/ecs-requestor-node-app.h
+    model/apps/ecs-responsor-node-app.h
     model/apps/checkpoint-app.h
     model/energy/battery.h
     model/energy/energy-generator.h
@@ -88,9 +98,11 @@ build_lib(
     model/protocols/global-sync-clocks-strategy.h
     model/protocols/decentralized-recovery-protocol.h
     model/protocols/efficient-assync-recovery-protocol.h
-    model/protocols/earp-without-rollback.h
-    model/protocols/earp-without-rollback-v2.h
-    model/protocols/earp-without-rollback-v2-optimized.h
+    model/protocols/no-rollback-1.h
+    model/protocols/no-rollback-2.h
+    model/protocols/no-rollback-2-with-ecs.h
+    model/protocols/ecs-protocol.h
+    model/protocols/no-rollback-2-optimized.h
     model/application-type.h
     exception/node-asleep-exception.h
     exception/node-depleted-exception.h

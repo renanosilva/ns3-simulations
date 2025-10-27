@@ -31,24 +31,65 @@ namespace ns3
 {
 
 /**
- * \ingroup server
- * \brief Cria uma aplicação referente a um nó que opera a bateria (como, por exemplo, um sensor).
+ * \ingroup ECS
+ * \brief Classe responsável por criar uma aplicação referente a uma ECS (Estação Central de Suporte), que centraliza toda a comunicação
+ * do sistema.
  */
-class ServerNodeAppHelper : public ApplicationHelper
+class ECSNodeAppHelper : public ApplicationHelper
 {
   public:
     /**
      * Create ServerNodeAppHelper which will make life easier for people trying
      * to set up simulations with nodes that operate with batteries.
      *
-     * \param port The port the server will wait on for incoming packets
      */
-    ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename, int nodesQuantity);
+    ECSNodeAppHelper(uint16_t ecsPort, string nodeName, string configFilename, int nodesQuantity);
+};
+
+/**
+ * \ingroup ECS
+ * \brief Classe responsável por criar uma aplicação referente a um nó com papel de Responsor em um cenário de Sistema Distribuído
+ * com ECS (Estação Central de Suporte), que centraliza toda a comunicação do sistema. O Responsor apenas responde requisições
+ * que chegam a ele, ou seja, ele não tem iniciativa de enviar requisições a outros nós, a não ser para responder mensagens.
+ */
+class ResponsorNodeAppHelper : public ApplicationHelper
+{
+  public:
+    
+    ResponsorNodeAppHelper(uint16_t serverPort, string nodeName, Ipv4Address& ecsAddress, uint16_t ecsPort, string configFilename, int nodesQuantity);
+
+};
+
+/**
+ * \ingroup ECS
+ * \brief Classe responsável por criar uma aplicação referente a um nó com papel de Requestor em um cenário de Sistema Distribuído
+ * com ECS (Estação Central de Suporte), que centraliza toda a comunicação do sistema. O Requestor envia requisições a outros nós
+ * do sistema e aguarda as respostas.
+ */
+class RequestorNodeAppHelper : public ApplicationHelper
+{
+  public:
+    
+    RequestorNodeAppHelper(vector<Ipv4Address>& serverAddresses, uint16_t serverPort, Ipv4Address& ecsAddress, uint16_t ecsPort, 
+                          string nodeName, string configFilename, int nodesQuantity);
+    
 };
 
 /**
  * \ingroup server
- * \brief Create an application which sends packets and waits for response
+ * \brief Cria uma aplicação referente a um nó que atua como um servidor, recebendo e respondendo requisições.
+ */
+class ServerNodeAppHelper : public ApplicationHelper
+{
+  public:
+    
+    ServerNodeAppHelper(uint16_t port, string nodeName, string configFilename, int nodesQuantity);
+    
+};
+
+/**
+ * \ingroup client
+ * \brief Cria uma aplicação que envia pacotes e aguarda por resposta.
  */
 class ClientNodeAppHelper : public ApplicationHelper
 {
@@ -61,16 +102,6 @@ class ClientNodeAppHelper : public ApplicationHelper
      * \param port The port number of the remote sensor
      */
     ClientNodeAppHelper(vector<Ipv4Address>& addresses, uint16_t port, string nodeName, string configFilename, int nodesQuantity);
-
-    /**
-     * Create ClientHelper which will make life easier for people trying
-     * to set up simulations with servers that operate with batteries. 
-     * Use this variant with addresses that do
-     * include a port value (e.g., InetSocketAddress and Inet6SocketAddress).
-     *
-     * \param addr The address of the remote sensor
-     */
-    // ClientNodeAppHelper(vector<Ipv4Address>& addresses, string nodeName, string configFilename);
 
 };
 

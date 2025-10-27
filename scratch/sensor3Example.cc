@@ -100,6 +100,8 @@ std::string getThrottlingMode(){
         return "Phase 2";
     else if (throttlingMode == ThrottlingMode::SLEEPING)
         return "Sleeping";
+    
+    return "";
 }
 
 /**

@@ -80,7 +80,7 @@ class EARPNodeInfo {
  * de estados pelas quais o nó passa.
  * 
 */
-class Event : public Object {
+class EventEARP : public Object {
   
   private:
     
@@ -91,7 +91,7 @@ class Event : public Object {
     
   public:
 
-    Event(){};
+    EventEARP(){};
     
     int GetJ() const { return j; }
     json GetNodeState() const { return nodeState; }
@@ -110,10 +110,10 @@ class Event : public Object {
     // friend void from_json(const json& j, Event& obj);
 
     //Especifica como deve ser feita a conversão desta classe em JSON
-    friend void to_json(json& j, const Ptr<Event>& obj);
+    friend void to_json(json& j, const Ptr<EventEARP>& obj);
 
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
-    friend void from_json(const json& j, Ptr<Event>& obj);
+    friend void from_json(const json& j, Ptr<EventEARP>& obj);
 };
 
 /** 
@@ -135,7 +135,7 @@ class EfficientAssyncRecoveryProtocol : public CheckpointStrategy {
      * Representa os eventos que estão armazenados em memória volátil
      * e que posteriormente é gravado na memória permanente.
      */
-    vector<Ptr<Event>> events;
+    vector<Ptr<EventEARP>> events;
 
     /** 
      * Utilizado para armazenar informações sobre outros nós com os quais este nó
@@ -218,7 +218,7 @@ class EfficientAssyncRecoveryProtocol : public CheckpointStrategy {
     EARPNodeInfo* findAdjacentNodeByAddress(vector<EARPNodeInfo>* v, const Address& addr);
 
     /** Reexecuta um determinado evento, após a restauração do estado da aplicação associado a ele. */
-    void replayEvent(Ptr<Event> e);
+    void replayEvent(Ptr<EventEARP> e);
 
     /** Processamentos realizados pelo protocolo quando uma mensagem é recebida. */
     void processMessageReceived(Ptr<MessageData> md);
@@ -237,7 +237,7 @@ class EfficientAssyncRecoveryProtocol : public CheckpointStrategy {
      * @param e Evento para o qual será feito rollback.
      * @param notifyNodes Indica se os demais nós devem ser notificados sobre o rollback.
      */
-    void rollbackToVolatileEvent(Ptr<Event> e, bool notifyNodes);
+    void rollbackToVolatileEvent(Ptr<EventEARP> e, bool notifyNodes);
 
     /** Processa as mensagens de rollback presentes na fila de processamento. */
     void processRollbackMsgsQueue();
@@ -318,7 +318,7 @@ class EfficientAssyncRecoveryProtocol : public CheckpointStrategy {
     virtual void printData() override;
 
     /** Retorna o evento ativo (último evento) deste nó. */
-    Ptr<Event> getActiveEvent();
+    Ptr<EventEARP> getActiveEvent();
 
     //Especifica como deve ser feita a conversão desta classe em JSON
     virtual json to_json() override;

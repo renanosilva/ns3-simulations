@@ -69,9 +69,6 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
   build/include/ns3/double.h \
   build/include/ns3/drop-tail-queue.h \
   build/include/ns3/dynamic-queue-limits.h \
-  build/include/ns3/earp-without-rollback-v2-optimized.h \
-  build/include/ns3/earp-without-rollback-v2.h \
-  build/include/ns3/earp-without-rollback.h \
   build/include/ns3/efficient-assync-recovery-protocol.h \
   build/include/ns3/energy-generator.h \
   build/include/ns3/enum.h \
@@ -208,6 +205,9 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
   build/include/ns3/net-device.h \
   build/include/ns3/network-module.h \
   build/include/ns3/nix-vector.h \
+  build/include/ns3/no-rollback-1.h \
+  build/include/ns3/no-rollback-2-optimized.h \
+  build/include/ns3/no-rollback-2.h \
   build/include/ns3/node-app-helper.h \
   build/include/ns3/node-asleep-exception.h \
   build/include/ns3/node-container.h \
@@ -414,11 +414,11 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
   src/applications/model/packet-sink.h \
   src/applications/model/protocols/checkpoint-strategy.h \
   src/applications/model/protocols/decentralized-recovery-protocol.h \
-  src/applications/model/protocols/earp-without-rollback-v2-optimized.h \
-  src/applications/model/protocols/earp-without-rollback-v2.h \
-  src/applications/model/protocols/earp-without-rollback.h \
   src/applications/model/protocols/efficient-assync-recovery-protocol.h \
   src/applications/model/protocols/global-sync-clocks-strategy.h \
+  src/applications/model/protocols/no-rollback-1.h \
+  src/applications/model/protocols/no-rollback-2-optimized.h \
+  src/applications/model/protocols/no-rollback-2.h \
   src/applications/model/seq-ts-echo-header.h \
   src/applications/model/seq-ts-header.h \
   src/applications/model/seq-ts-size-header.h \
@@ -2192,6 +2192,8 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
 
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
+/usr/include/x86_64-linux-gnu/bits/timesize.h:
+
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
 /usr/include/x86_64-linux-gnu/bits/syscall.h:
@@ -2491,6 +2493,8 @@ scratch/CMakeFiles/scratch_01-checkpointing-sim.dir/01-checkpointing-sim.cc.o: s
 /usr/include/c++/13/bits/mask_array.h:
 
 /usr/include/c++/13/bits/localefwd.h:
+
+/usr/include/c++/13/bits/locale_facets_nonio.h:
 
 /usr/include/c++/13/bits/list.tcc:
 
@@ -3572,12 +3576,6 @@ build/include/ns3/packet-loss-counter.h:
 
 build/include/ns3/type-traits.h:
 
-src/core/model/log-macros-disabled.h:
-
-src/internet/model/tcp-vegas.h:
-
-/usr/include/boost/config/helper_macros.hpp:
-
 src/core/model/list-scheduler.h:
 
 /usr/include/boost/type_traits/declval.hpp:
@@ -3675,6 +3673,18 @@ src/applications/model/seq-ts-size-header.h:
 /usr/include/boost/units/physical_dimensions/mass.hpp:
 
 build/include/ns3/tcp-veno.h:
+
+src/core/model/log-macros-disabled.h:
+
+src/internet/model/tcp-vegas.h:
+
+/usr/include/boost/config/helper_macros.hpp:
+
+src/core/model/traced-value.h:
+
+/usr/include/linux/errno.h:
+
+src/network/utils/packet-socket-client.h:
 
 /usr/include/c++/13/filesystem:
 
@@ -4058,6 +4068,20 @@ build/include/ns3/random-variable-stream-helper.h:
 
 /usr/include/boost/mpl/insert_fwd.hpp:
 
+src/applications/model/application-type.h:
+
+src/core/model/attribute-construction-list.h:
+
+build/include/ns3/udp-header.h:
+
+/usr/include/boost/units/physical_dimensions/moment_of_inertia.hpp:
+
+build/include/ns3/ipv4-raw-socket-impl.h:
+
+build/include/ns3/applications-module.h:
+
+build/include/ns3/ipv4-interface-address.h:
+
 build/include/ns3/ipv4-global-routing.h:
 
 src/core/model/shuffle.h:
@@ -4067,6 +4091,28 @@ build/include/ns3/simple-ref-count.h:
 build/include/ns3/wifi-standards.h:
 
 build/include/ns3/net-device-container.h:
+
+src/core/model/uniform-random-bit-generator.h:
+
+src/core/model/node-printer.h:
+
+build/include/ns3/ipv4-header.h:
+
+/usr/include/boost/type_traits/is_class.hpp:
+
+build/include/ns3/ipv4-global-routing-helper.h:
+
+src/internet/model/icmpv6-l4-protocol.h:
+
+/usr/include/boost/units/base_units/angle/radian.hpp:
+
+build/include/ns3/ipv4-address-helper.h:
+
+/usr/include/boost/preprocessor/facilities/is_empty_variadic.hpp:
+
+/usr/include/boost/mpl/numeric_cast.hpp:
+
+/usr/include/boost/mpl/is_sequence.hpp:
 
 /usr/include/boost/mpl/distance.hpp:
 
@@ -4158,13 +4204,27 @@ src/network/model/channel.h:
 
 build/include/ns3/socket-factory.h:
 
+build/include/ns3/fd-reader.h:
+
 /usr/include/boost/preprocessor/facilities/expand.hpp:
 
 build/include/ns3/ipv4-routing-table-entry.h:
 
+/usr/include/c++/13/version:
+
+build/include/ns3/he-ru.h:
+
+/usr/include/boost/mpl/set/aux_/erase_key_impl.hpp:
+
+build/include/ns3/fatal-error.h:
+
 src/core/model/build-profile.h:
 
 build/include/ns3/error-model.h:
+
+/usr/include/boost/mpl/less.hpp:
+
+src/core/model/assert.h:
 
 /usr/include/boost/mpl/and.hpp:
 
@@ -4194,12 +4254,6 @@ src/core/model/names.h:
 
 build/include/ns3/node-asleep-exception.h:
 
-/usr/include/c++/13/bits/locale_facets_nonio.h:
-
-src/applications/model/protocols/earp-without-rollback.h:
-
-build/include/ns3/message-data.h:
-
 /usr/include/c++/13/bits/stl_vector.h:
 
 build/include/ns3/global-router-interface.h:
@@ -4213,52 +4267,6 @@ build/include/ns3/global-router-interface.h:
 build/include/ns3/ripng.h:
 
 build/include/ns3/environment-variable.h:
-
-/usr/include/boost/mpl/set/aux_/erase_key_impl.hpp:
-
-build/include/ns3/fatal-error.h:
-
-/usr/include/c++/13/version:
-
-build/include/ns3/he-ru.h:
-
-src/core/model/traced-value.h:
-
-/usr/include/linux/errno.h:
-
-src/network/utils/packet-socket-client.h:
-
-src/core/model/assert.h:
-
-/usr/include/boost/mpl/less.hpp:
-
-/usr/include/x86_64-linux-gnu/bits/timesize.h:
-
-build/include/ns3/earp-without-rollback.h:
-
-/usr/include/boost/units/physical_dimensions/momentum.hpp:
-
-build/include/ns3/queue-item.h:
-
-/usr/include/boost/units/base_units/angle/radian.hpp:
-
-build/include/ns3/ipv4-address-helper.h:
-
-/usr/include/boost/preprocessor/facilities/is_empty_variadic.hpp:
-
-/usr/include/boost/mpl/numeric_cast.hpp:
-
-/usr/include/boost/mpl/is_sequence.hpp:
-
-build/include/ns3/fd-reader.h:
-
-build/include/ns3/earp-without-rollback-v2.h:
-
-src/applications/model/protocols/earp-without-rollback-v2.h:
-
-build/include/ns3/data-rate.h:
-
-build/include/ns3/deprecated.h:
 
 /usr/include/c++/13/bits/refwrap.h:
 
@@ -4327,6 +4335,12 @@ src/internet/model/tcp-rate-ops.h:
 build/include/ns3/random-direction-2d-mobility-model.h:
 
 /usr/include/boost/mpl/aux_/empty_impl.hpp:
+
+build/include/ns3/no-rollback-1.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h:
+
+/usr/include/boost/bind/mem_fn.hpp:
 
 build/include/ns3/int64x64.h:
 
@@ -4418,6 +4432,8 @@ build/include/ns3/pcap-test.h:
 
 build/include/ns3/simulation-singleton.h:
 
+build/include/ns3/ipv4-interface-container.h:
+
 build/include/ns3/packet-socket-client.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/time_members.h:
@@ -4465,6 +4481,10 @@ build/include/ns3/ethernet-header.h:
 build/include/ns3/icmpv6-header.h:
 
 build/include/ns3/packet-socket.h:
+
+build/include/ns3/no-rollback-2.h:
+
+src/network/utils/packet-socket-factory.h:
 
 /usr/include/c++/13/debug/assertions.h:
 
@@ -4566,6 +4586,10 @@ build/include/ns3/ipv6-static-routing.h:
 
 src/applications/helper/config-helper.h:
 
+build/include/ns3/deprecated.h:
+
+build/include/ns3/data-rate.h:
+
 src/core/model/default-deleter.h:
 
 /usr/include/boost/mpl/aux_/config/bind.hpp:
@@ -4575,12 +4599,6 @@ build/include/ns3/byte-tag-list.h:
 /usr/include/boost/mpl/void.hpp:
 
 build/include/ns3/packet-data-calculators.h:
-
-build/include/ns3/udp-header.h:
-
-/usr/include/boost/units/physical_dimensions/moment_of_inertia.hpp:
-
-build/include/ns3/ipv4-raw-socket-impl.h:
 
 /usr/include/boost/mpl/vector/aux_/back.hpp:
 
@@ -4624,11 +4642,9 @@ build/include/ns3/neighbor-cache-helper.h:
 
 build/include/ns3/calendar-scheduler.h:
 
-build/include/ns3/attribute-construction-list.h:
-
-build/include/ns3/packet-sink.h:
-
 build/include/ns3/callback.h:
+
+src/applications/model/protocols/no-rollback-2.h:
 
 /usr/include/boost/mpl/aux_/has_begin.hpp:
 
@@ -4670,6 +4686,8 @@ build/include/ns3/trace-helper.h:
 
 src/applications/model/udp-echo-server.h:
 
+src/applications/model/protocols/no-rollback-2-optimized.h:
+
 src/internet/model/ipv4-static-routing.h:
 
 /usr/include/boost/preprocessor/control/expr_if.hpp:
@@ -4692,28 +4710,6 @@ src/internet/model/ripng-header.h:
 
 build/include/ns3/header-serialization-test.h:
 
-src/core/model/uniform-random-bit-generator.h:
-
-src/core/model/node-printer.h:
-
-/usr/include/boost/type_traits/is_class.hpp:
-
-build/include/ns3/ipv4-global-routing-helper.h:
-
-src/internet/model/icmpv6-l4-protocol.h:
-
-build/include/ns3/ipv4-header.h:
-
-src/applications/model/application-type.h:
-
-src/core/model/attribute-construction-list.h:
-
-build/include/ns3/applications-module.h:
-
-build/include/ns3/ipv4-interface-address.h:
-
-build/include/ns3/ipv4-interface-container.h:
-
 /usr/include/c++/13/bits/stl_multiset.h:
 
 /usr/include/boost/mpl/vector/aux_/push_front.hpp:
@@ -4726,15 +4722,15 @@ src/core/model/math.h:
 
 src/network/helper/application-container.h:
 
+build/include/ns3/pointer.h:
+
+/usr/include/alloca.h:
+
 src/internet/model/ipv6-extension.h:
 
 build/include/ns3/tcp-lp.h:
 
 /usr/include/boost/bind/bind.hpp:
-
-build/include/ns3/pointer.h:
-
-/usr/include/alloca.h:
 
 build/include/ns3/ipv4-list-routing-helper.h:
 
@@ -4847,8 +4843,6 @@ build/include/ns3/ipv6-end-point.h:
 build/include/ns3/ipv6-extension-demux.h:
 
 build/include/ns3/node-container.h:
-
-src/applications/model/protocols/earp-without-rollback-v2-optimized.h:
 
 build/include/ns3/pcap-file.h:
 
@@ -4980,6 +4974,20 @@ build/include/ns3/object-vector.h:
 
 build/include/ns3/ipv6-static-routing-helper.h:
 
+build/include/ns3/no-rollback-2-optimized.h:
+
+/usr/include/boost/mpl/sequence_tag.hpp:
+
+build/include/ns3/three-gpp-http-variables.h:
+
+/usr/include/boost/format/detail/msvc_disambiguater.hpp:
+
+/usr/include/boost/mpl/at_fwd.hpp:
+
+build/include/ns3/attribute-accessor-helper.h:
+
+/usr/include/boost/mpl/has_xxx.hpp:
+
 build/include/ns3/ipv6.h:
 
 build/include/ns3/llc-snap-header.h:
@@ -5016,6 +5024,8 @@ src/internet/helper/ipv6-static-routing-helper.h:
 
 build/include/ns3/generic-phy.h:
 
+build/include/ns3/message-data.h:
+
 /usr/include/boost/preprocessor/facilities/detail/is_empty.hpp:
 
 /usr/include/boost/core/serialization.hpp:
@@ -5032,13 +5042,13 @@ build/include/ns3/rectangle.h:
 
 build/include/ns3/node-app-helper.h:
 
+build/include/ns3/icmpv4-l4-protocol.h:
+
 /usr/include/c++/13/bits/codecvt.h:
 
 build/include/ns3/enum.h:
 
 src/network/utils/net-device-queue-interface.h:
-
-build/include/ns3/icmpv4-l4-protocol.h:
 
 build/include/ns3/node-printer.h:
 
@@ -5080,6 +5090,14 @@ src/mobility/model/constant-velocity-helper.h:
 
 /usr/include/boost/mpl/fold.hpp:
 
+build/include/ns3/packet-sink.h:
+
+build/include/ns3/attribute-construction-list.h:
+
+/usr/include/boost/units/physical_dimensions/momentum.hpp:
+
+build/include/ns3/queue-item.h:
+
 build/include/ns3/object-factory.h:
 
 src/internet/helper/ipv4-global-routing-helper.h:
@@ -5088,11 +5106,17 @@ src/core/model/object-base.h:
 
 /usr/include/boost/any/detail/placeholder.hpp:
 
-build/include/ns3/ipv4-packet-probe.h:
-
 /usr/include/boost/mpl/vector/aux_/size.hpp:
 
 build/include/ns3/csv-reader.h:
+
+/usr/include/boost/units/systems/si/angular_acceleration.hpp:
+
+src/internet/model/ipv4-raw-socket-factory.h:
+
+src/internet/model/ipv4-routing-protocol.h:
+
+build/include/ns3/ipv4-packet-probe.h:
 
 build/include/ns3/object-map.h:
 
@@ -5141,6 +5165,8 @@ build/include/ns3/seq-ts-size-header.h:
 src/internet/model/ipv6-list-routing.h:
 
 /usr/include/boost/smart_ptr/bad_weak_ptr.hpp:
+
+src/applications/model/protocols/no-rollback-1.h:
 
 build/include/ns3/client-node-app.h:
 
@@ -5233,12 +5259,6 @@ src/internet/model/ipv4-packet-filter.h:
 /usr/include/boost/units/systems/si/area.hpp:
 
 src/internet/model/ipv4-queue-disc-item.h:
-
-/usr/include/boost/units/systems/si/angular_acceleration.hpp:
-
-src/internet/model/ipv4-routing-protocol.h:
-
-src/internet/model/ipv4-raw-socket-factory.h:
 
 src/internet/model/ipv4-route.h:
 
@@ -5650,8 +5670,6 @@ src/network/utils/packet-probe.h:
 
 src/network/utils/packet-socket-address.h:
 
-src/network/utils/packet-socket-factory.h:
-
 build/include/ns3/packet-probe.h:
 
 src/network/utils/packet-socket.h:
@@ -5744,9 +5762,17 @@ build/include/ns3/names.h:
 
 src/wifi/model/wifi-phy-operating-channel.h:
 
-build/include/ns3/priority-queue-scheduler.h:
+/usr/include/c++/13/bits/memory_resource.h:
+
+/usr/include/boost/bind/bind_mf_cc.hpp:
+
+/usr/include/boost/mpl/aux_/preprocessor/enum.hpp:
+
+/usr/include/boost/config/workaround.hpp:
 
 /usr/include/boost/move/utility_core.hpp:
+
+build/include/ns3/priority-queue-scheduler.h:
 
 src/wifi/model/wifi-phy-state-helper.h:
 
@@ -5794,14 +5820,6 @@ src/internet/model/tcp-scalable.h:
 
 /usr/include/boost/bind/bind_mf2_cc.hpp:
 
-/usr/include/c++/13/bits/memory_resource.h:
-
-/usr/include/boost/mpl/aux_/preprocessor/enum.hpp:
-
-/usr/include/boost/config/workaround.hpp:
-
-/usr/include/boost/bind/bind_mf_cc.hpp:
-
 /usr/include/c++/13/bits/semaphore_base.h:
 
 build/include/ns3/tcp-dctcp.h:
@@ -5809,10 +5827,6 @@ build/include/ns3/tcp-dctcp.h:
 /usr/include/boost/bind/detail/requires_cxx11.hpp:
 
 /usr/include/boost/bind/detail/result_traits.hpp:
-
-/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h:
-
-/usr/include/boost/bind/mem_fn.hpp:
 
 /usr/include/x86_64-linux-gnu/bits/time64.h:
 
@@ -5902,8 +5916,6 @@ src/internet/model/ipv4-end-point.h:
 
 /usr/include/boost/mpl/limits/list.hpp:
 
-build/include/ns3/earp-without-rollback-v2-optimized.h:
-
 /usr/include/boost/core/no_exceptions_support.hpp:
 
 /usr/include/boost/mpl/aux_/at_impl.hpp:
@@ -5953,18 +5965,6 @@ src/internet/model/ipv4-interface.h:
 /usr/include/c++/13/bits/chrono.h:
 
 /usr/include/boost/mpl/aux_/is_msvc_eti_arg.hpp:
-
-/usr/include/boost/mpl/sequence_tag.hpp:
-
-build/include/ns3/three-gpp-http-variables.h:
-
-/usr/include/boost/format/detail/msvc_disambiguater.hpp:
-
-/usr/include/boost/mpl/at_fwd.hpp:
-
-build/include/ns3/attribute-accessor-helper.h:
-
-/usr/include/boost/mpl/has_xxx.hpp:
 
 /usr/include/boost/format/format_class.hpp:
 

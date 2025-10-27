@@ -105,6 +105,9 @@ class CheckpointApp : public Application
     uma mensagem. */
     Callback<void, Ptr<MessageData>> protocolAfterReceiveCallback;
 
+    // Indica se o nó deve checar possível mudança de modo após um desconto de energia. 
+    bool mayCheckMode = true;
+
     //////////////////////////////////////////////////////////////
     //////       ATRIBUTOS ARMAZENADOS EM CHECKPOINTS       //////
     //////////////////////////////////////////////////////////////
@@ -140,9 +143,6 @@ class CheckpointApp : public Application
     */
     virtual void resetNodeData();
 
-    /** Retorna se o nó possui energia suficiente para realizar determinada ação sem entrar em modo SLEEP. */
-    virtual bool hasEnoughEnergy(double requiredEnergy);
-
      /** Diminui a energia da bateria referente ao seu funcionamento básico */
      void decreaseIdleEnergy(); 
     
@@ -156,7 +156,7 @@ class CheckpointApp : public Application
      void decreaseConnectEnergy();
  
      /** Método que centraliza o desconto de energia da bateria do nó. Contém o processamento principal. */
-     void decreaseEnergy(double amount);
+     virtual void decreaseEnergy(double amount);
      
      /** Verifica se a bateria deve mudar de modo, com base na energia restante */
      void checkModeChange();
@@ -165,7 +165,7 @@ class CheckpointApp : public Application
      void generateEnergy();
  
      EnergyMode getCurrentMode();
-     
+
      Time getEnergyUpdateInterval();
 
   public:
@@ -187,7 +187,7 @@ class CheckpointApp : public Application
     virtual void StopApplication();
 
     /** 
-     * Envia um pacote genérico para um nó.
+     * Envia um pacote para um nó.
      * 
      * @param command comando que indica o tipo de mensagem.
      * @param d dado que será transmitido na mensagem. 0 caso não seja necessário.
@@ -298,6 +298,15 @@ class CheckpointApp : public Application
 
     ApplicationType getApplicationType();
 
+    /* Retorna o consumo de energia para se enviar um pacote. */
+    double getSendPacketConsumption();
+
+    /* Retorna o consumo de energia para se criar um checkpoint. */
+    double getCreateCheckpointConsumption();
+
+    /** Retorna se o nó possui energia suficiente para realizar determinada ação sem entrar em modo SLEEP. */
+    virtual bool hasEnoughEnergy(double requiredEnergy);
+
     string getNodeName();
 
     /** Retorna se o nó possui energia suficiente para enviar um pacote sem entrar em modo SLEEP. */
@@ -323,7 +332,6 @@ class CheckpointApp : public Application
      * protocolo, e só depois pela aplicação.
      * */
     void setProtocolAfterReceiveCallback(Callback<void, Ptr<MessageData>> callback);
-
 
     /** 
      * Especifica como esta classe deve ser convertida em JSON (para fins de checkpoint). 

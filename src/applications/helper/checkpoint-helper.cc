@@ -138,6 +138,29 @@ void CheckpointHelper::writeCheckpoint(string data, int checkpointId){
     lastCheckpointId = checkpointId;
 }
 
+void CheckpointHelper::writeCheckpoint(string basename, string data, int checkpointId){
+    NS_LOG_FUNCTION(this);
+    
+    nlohmann::json j;
+    j.push_back(data);
+
+    string fileName = CHECKPOINTS_FOLDER + basename + "-" + 
+                        (checkpointId >= 0 ? to_string(checkpointId) : "")  
+                        + ".json";    
+                        
+    writeFile(fileName, j);
+}
+
+void CheckpointHelper::writeCheckpoint(string basename, json data){
+    NS_LOG_FUNCTION(this);
+    
+    string fileName = (basename.find(".json") == string::npos ?
+                        CHECKPOINTS_FOLDER + basename + ".json" :
+                        CHECKPOINTS_FOLDER + basename);
+
+    editFile(fileName, data);
+}
+
 void CheckpointHelper::writeCheckpoint(Ptr<CheckpointApp> app, int checkpointId){
     NS_LOG_FUNCTION(this);
 
@@ -278,8 +301,14 @@ int CheckpointHelper::getLastCheckpointId(){
         return lastCheckpointId;
     }
 
+    return getLastCheckpointId(checkpointBaseName);
+}
+
+int CheckpointHelper::getLastCheckpointId(string basename){
+    NS_LOG_FUNCTION(this);
+
     //obtendo o último checkpoint criado a partir dos nomes dos arquivos dos checkpoints
-    vector<string> nomes = listFiles(CHECKPOINTS_FOLDER, checkpointBaseName);
+    vector<string> nomes = listFiles(CHECKPOINTS_FOLDER, basename);
 
     if (nomes.empty())
         return -1;

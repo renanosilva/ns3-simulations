@@ -20,9 +20,10 @@
 #include "ns3/global-sync-clocks-strategy.h"
 #include "ns3/decentralized-recovery-protocol.h"
 #include "ns3/efficient-assync-recovery-protocol.h"
-#include "ns3/earp-without-rollback.h"
-#include "ns3/earp-without-rollback-v2.h"
-#include "ns3/earp-without-rollback-v2-optimized.h"
+#include "ns3/no-rollback-1.h"
+#include "ns3/no-rollback-2.h"
+#include "ns3/no-rollback-2-with-ecs.h"
+#include "ns3/no-rollback-2-optimized.h"
 #include "ns3/log-utils.h"
 #include "ns3/node-depleted-exception.h"
 #include "ns3/node-asleep-exception.h"
@@ -335,8 +336,8 @@ void CheckpointApp::checkModeChange(){
 
         } else if (battery->getBatteryPercentage() > normalModePercentage && currentMode != EnergyMode::NORMAL){
             currentMode = EnergyMode::NORMAL;
+            
             NS_LOG_INFO("\nAos " << Simulator::Now().As(Time::S) << ", " << getNodeName() << " entrou em modo NORMAL.");
-
 
             initiateRollbackToLastCheckpoint();
         }
@@ -346,6 +347,20 @@ void CheckpointApp::checkModeChange(){
 void CheckpointApp::decreaseEnergy(double amount) {
     NS_LOG_FUNCTION(this);
     
+    // if (battery != nullptr){
+    //     NS_ASSERT_MSG(
+    //         (currentMode == EnergyMode::SLEEP && amount == sleepEnergyConsumption) ||
+    //         (currentMode == EnergyMode::NORMAL), 
+    //                 "Operação inválida! Bateria está em modo sleep e não pode realizar operações.");
+    
+    //     battery->decrementEnergy(amount);
+
+    //     NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", energia consumida por " << getNodeName() << 
+    //                 ": " << amount << ". Energia restante: " << to_string(battery->getRemainingEnergy()) << ".");
+
+    //     checkModeChange();
+    // }
+
     if (battery != nullptr){
         NS_ASSERT_MSG(
             (currentMode == EnergyMode::SLEEP && amount == sleepEnergyConsumption) ||
@@ -357,7 +372,19 @@ void CheckpointApp::decreaseEnergy(double amount) {
         NS_LOG_INFO("Aos " << Simulator::Now().As(Time::S) << ", energia consumida por " << getNodeName() << 
                     ": " << amount << ". Energia restante: " << to_string(battery->getRemainingEnergy()) << ".");
 
-        checkModeChange();
+        //Se o nó não possui mais energia suficiente para permanecer online
+        if (battery->getBatteryPercentage() <= sleepModePercentage && mayCheckMode && isAlive()){
+            
+            mayCheckMode = false;
+            
+            //Nó irá se descarregar. Dando a oportunidade ao protocolo de realizar algum processamento antes disso.
+            checkpointStrategy->beforeBatteryDischarge();
+
+            mayCheckMode = true;
+        }
+        
+        if (mayCheckMode)
+            checkModeChange();
     }
 }
 
@@ -443,13 +470,23 @@ EnergyMode CheckpointApp::getCurrentMode(){
     return currentMode;
 }
 
-bool CheckpointApp::isSleeping(){
+double CheckpointApp::getSendPacketConsumption(){
     NS_LOG_FUNCTION(this);
+    return sendPacketConsumption;
+}
+
+double CheckpointApp::getCreateCheckpointConsumption(){
+    NS_LOG_FUNCTION(this);
+    return createCheckpointConsumption;
+}
+
+bool CheckpointApp::isSleeping(){
+    // NS_LOG_FUNCTION(this);
     return currentMode == SLEEP;
 }
 
 bool CheckpointApp::isDepleted(){
-    NS_LOG_FUNCTION(this);
+    // NS_LOG_FUNCTION(this);
     return currentMode == DEPLETED;
 }
 

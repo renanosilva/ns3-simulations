@@ -53,6 +53,9 @@ const static string REQUEST_VALUE = "REQUEST_VALUE";
 /** Payload referente a uma resposta a uma requisição de valor feita por um nó. */
 const static string RESPONSE_VALUE = "RESPONSE_VALUE";
 
+/** Payload referente a uma requisição de criação de checkpoint enviada para a ECS. */
+const static string REQUEST_CHECKPOINT_CREATION = "REQUEST_CHECKPOINT_CREATION";
+
 /** Payload referente a um aviso de rollback concluído. */
 const static string ROLLBACK_FINISHED_COMMAND = "ROLLBACK_FINISHED_COMMAND";
 
@@ -186,6 +189,8 @@ public:
      * @param replay Indica que o envio na verdade é um replay. Não reenvia a mensagem de fato, 
      * apenas registra novamente que ela havia sido enviada.
      * @param piggyBackedInfo Informações adicionais que serão enviadas junto à mensagem.
+     * @param addPiggyBackedInfoBeforeInterception Indica se deve adicionar as informações extras à mensagem antes da interceptação
+     * pelo protocolo. Com isso, o protocolo tem a oportunidade de analisar essas informações antes de seu envio.
      * @return A mensagem enviada. Nulo caso não tenha sido possível enviar.
      * */
     Ptr<MessageData> send(string command, int d, Address to, bool replay = false, string piggyBackedInfo = "");
@@ -209,6 +214,9 @@ public:
      * @param m Mensagem que será reenviada.
      * */
     Ptr<MessageData> resend(Ptr<MessageData> m);
+
+    /** Retorna o endereço IP do nó. */
+    Address getNodeIp();
 
     /** Registra o recebimento de uma mensagem que havia sido recebida previamente a uma falha. */
     void replayReceive(Ptr<MessageData> md);

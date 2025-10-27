@@ -111,9 +111,9 @@ libapplications_EXTERNAL_OBJECTS = \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.o" \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/global-sync-clocks-strategy.cc.o" \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.o" \
-"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o" \
-"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o" \
-"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o" \
+"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o" \
+"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o" \
+"/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o" \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o" \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o" \
 "/home/renan/ns-allinone-3.42/ns-3.42/src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o" \
@@ -159,9 +159,9 @@ build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libappl
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.o
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/global-sync-clocks-strategy.cc.o
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.o
-build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o
-build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o
-build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o
+build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o
+build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o
+build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o
 build/lib/libns3.42-applications-default.so: src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o

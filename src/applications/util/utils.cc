@@ -17,6 +17,7 @@
 
 #include "utils.h"
 #include "ns3/inet-socket-address.h"
+#include "ns3/mac48-address.h"
 
 NS_LOG_COMPONENT_DEFINE("Utils");
 
@@ -36,6 +37,27 @@ string convertAddressesToString(vector<Ipv4Address> addresses){
     }
 
     return oss.str();
+}
+
+string convertAddressToString(Ipv4Address address){
+    ostringstream oss;
+    oss << address;
+
+    return oss.str();
+}
+
+string convertIpv4AddressToString(Ipv4Address address){
+    return address.toString();
+}
+
+Ipv4Address convertStringToIpv4Address(string s){
+    Ipv4Address ip(s.c_str());
+    return ip;
+}
+
+Ipv4Address convertAddressToIpv4Address(Address a){
+    InetSocketAddress inetAddr = InetSocketAddress::ConvertFrom(a);
+    return inetAddr.GetIpv4();
 }
 
 } // Namespace utils

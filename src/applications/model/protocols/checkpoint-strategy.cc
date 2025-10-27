@@ -77,6 +77,10 @@ void CheckpointStrategy::rollbackToLastCheckpoint(){
     
 }
 
+void CheckpointStrategy::beforeBatteryDischarge(){
+    
+}
+
 bool CheckpointStrategy::rollback(int checkpointId){
     return false;
 }

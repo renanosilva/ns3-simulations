@@ -23,6 +23,7 @@ namespace ns3
 
 enum ApplicationType
 {
+  CSS, //CentralSupportStation
   CLIENT,
   SERVER
 };

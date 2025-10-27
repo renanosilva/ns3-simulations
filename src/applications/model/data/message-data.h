@@ -31,6 +31,7 @@
 #include "ns3/core-module.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/inet-socket-address.h"
+#include "ns3/utils.h"
 
 #include <nlohmann/json.hpp>
 
@@ -81,9 +82,12 @@ class MessageData : public Object
     //Especifica como deve ser feita a conversão de JSON em um objeto desta classe
     friend void from_json(const json& j, Ptr<MessageData>& obj);
 
+    void addPiggyBackedInfo(std::string info);
+
     // Getters
     Address GetFrom() const { return from; }
     Ipv4Address GetFromIpv4() const { return InetSocketAddress::ConvertFrom(from).GetIpv4(); }
+    string GetFromAsString() const { return utils::convertIpv4AddressToString(GetFromIpv4()); }
     Address GetTo() const { return to; }
     uint32_t GetSequenceNumber() const { return sequenceNumber; }
     string GetCommand() const { return command; }
@@ -93,6 +97,7 @@ class MessageData : public Object
     uint32_t GetSize() const { return size; }
     uint64_t GetUid() const { return uid; }
     int GetFirstPiggyBackedValue();
+    string getPiggyBackedValue(string param); //obtém um valor associado a um parâmetro passado como piggyback
 
 
     // Setters

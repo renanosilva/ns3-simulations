@@ -838,78 +838,6 @@ model/protocols/decentralized-recovery-protocol.cc.s:
 	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.s
 .PHONY : model/protocols/decentralized-recovery-protocol.cc.s
 
-model/protocols/earp-without-rollback-v2-optimized.o: model/protocols/earp-without-rollback-v2-optimized.cc.o
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.o
-
-# target to build an object file
-model/protocols/earp-without-rollback-v2-optimized.cc.o:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.o
-
-model/protocols/earp-without-rollback-v2-optimized.i: model/protocols/earp-without-rollback-v2-optimized.cc.i
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.i
-
-# target to preprocess a source file
-model/protocols/earp-without-rollback-v2-optimized.cc.i:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.i
-
-model/protocols/earp-without-rollback-v2-optimized.s: model/protocols/earp-without-rollback-v2-optimized.cc.s
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.s
-
-# target to generate assembly for a file
-model/protocols/earp-without-rollback-v2-optimized.cc.s:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s
-.PHONY : model/protocols/earp-without-rollback-v2-optimized.cc.s
-
-model/protocols/earp-without-rollback-v2.o: model/protocols/earp-without-rollback-v2.cc.o
-.PHONY : model/protocols/earp-without-rollback-v2.o
-
-# target to build an object file
-model/protocols/earp-without-rollback-v2.cc.o:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o
-.PHONY : model/protocols/earp-without-rollback-v2.cc.o
-
-model/protocols/earp-without-rollback-v2.i: model/protocols/earp-without-rollback-v2.cc.i
-.PHONY : model/protocols/earp-without-rollback-v2.i
-
-# target to preprocess a source file
-model/protocols/earp-without-rollback-v2.cc.i:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.i
-.PHONY : model/protocols/earp-without-rollback-v2.cc.i
-
-model/protocols/earp-without-rollback-v2.s: model/protocols/earp-without-rollback-v2.cc.s
-.PHONY : model/protocols/earp-without-rollback-v2.s
-
-# target to generate assembly for a file
-model/protocols/earp-without-rollback-v2.cc.s:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s
-.PHONY : model/protocols/earp-without-rollback-v2.cc.s
-
-model/protocols/earp-without-rollback.o: model/protocols/earp-without-rollback.cc.o
-.PHONY : model/protocols/earp-without-rollback.o
-
-# target to build an object file
-model/protocols/earp-without-rollback.cc.o:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o
-.PHONY : model/protocols/earp-without-rollback.cc.o
-
-model/protocols/earp-without-rollback.i: model/protocols/earp-without-rollback.cc.i
-.PHONY : model/protocols/earp-without-rollback.i
-
-# target to preprocess a source file
-model/protocols/earp-without-rollback.cc.i:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.i
-.PHONY : model/protocols/earp-without-rollback.cc.i
-
-model/protocols/earp-without-rollback.s: model/protocols/earp-without-rollback.cc.s
-.PHONY : model/protocols/earp-without-rollback.s
-
-# target to generate assembly for a file
-model/protocols/earp-without-rollback.cc.s:
-	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.s
-.PHONY : model/protocols/earp-without-rollback.cc.s
-
 model/protocols/efficient-assync-recovery-protocol.o: model/protocols/efficient-assync-recovery-protocol.cc.o
 .PHONY : model/protocols/efficient-assync-recovery-protocol.o
 
@@ -957,6 +885,78 @@ model/protocols/global-sync-clocks-strategy.s: model/protocols/global-sync-clock
 model/protocols/global-sync-clocks-strategy.cc.s:
 	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/global-sync-clocks-strategy.cc.s
 .PHONY : model/protocols/global-sync-clocks-strategy.cc.s
+
+model/protocols/no-rollback-1.o: model/protocols/no-rollback-1.cc.o
+.PHONY : model/protocols/no-rollback-1.o
+
+# target to build an object file
+model/protocols/no-rollback-1.cc.o:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o
+.PHONY : model/protocols/no-rollback-1.cc.o
+
+model/protocols/no-rollback-1.i: model/protocols/no-rollback-1.cc.i
+.PHONY : model/protocols/no-rollback-1.i
+
+# target to preprocess a source file
+model/protocols/no-rollback-1.cc.i:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.i
+.PHONY : model/protocols/no-rollback-1.cc.i
+
+model/protocols/no-rollback-1.s: model/protocols/no-rollback-1.cc.s
+.PHONY : model/protocols/no-rollback-1.s
+
+# target to generate assembly for a file
+model/protocols/no-rollback-1.cc.s:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.s
+.PHONY : model/protocols/no-rollback-1.cc.s
+
+model/protocols/no-rollback-2-optimized.o: model/protocols/no-rollback-2-optimized.cc.o
+.PHONY : model/protocols/no-rollback-2-optimized.o
+
+# target to build an object file
+model/protocols/no-rollback-2-optimized.cc.o:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o
+.PHONY : model/protocols/no-rollback-2-optimized.cc.o
+
+model/protocols/no-rollback-2-optimized.i: model/protocols/no-rollback-2-optimized.cc.i
+.PHONY : model/protocols/no-rollback-2-optimized.i
+
+# target to preprocess a source file
+model/protocols/no-rollback-2-optimized.cc.i:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.i
+.PHONY : model/protocols/no-rollback-2-optimized.cc.i
+
+model/protocols/no-rollback-2-optimized.s: model/protocols/no-rollback-2-optimized.cc.s
+.PHONY : model/protocols/no-rollback-2-optimized.s
+
+# target to generate assembly for a file
+model/protocols/no-rollback-2-optimized.cc.s:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.s
+.PHONY : model/protocols/no-rollback-2-optimized.cc.s
+
+model/protocols/no-rollback-2.o: model/protocols/no-rollback-2.cc.o
+.PHONY : model/protocols/no-rollback-2.o
+
+# target to build an object file
+model/protocols/no-rollback-2.cc.o:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o
+.PHONY : model/protocols/no-rollback-2.cc.o
+
+model/protocols/no-rollback-2.i: model/protocols/no-rollback-2.cc.i
+.PHONY : model/protocols/no-rollback-2.i
+
+# target to preprocess a source file
+model/protocols/no-rollback-2.cc.i:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.i
+.PHONY : model/protocols/no-rollback-2.cc.i
+
+model/protocols/no-rollback-2.s: model/protocols/no-rollback-2.cc.s
+.PHONY : model/protocols/no-rollback-2.s
+
+# target to generate assembly for a file
+model/protocols/no-rollback-2.cc.s:
+	cd /home/renan/ns-allinone-3.42/ns-3.42 && $(MAKE) $(MAKESILENT) -f src/applications/CMakeFiles/libapplications-obj.dir/build.make src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.s
+.PHONY : model/protocols/no-rollback-2.cc.s
 
 model/seq-ts-echo-header.o: model/seq-ts-echo-header.cc.o
 .PHONY : model/seq-ts-echo-header.o
@@ -1413,21 +1413,21 @@ help:
 	@echo "... model/protocols/decentralized-recovery-protocol.o"
 	@echo "... model/protocols/decentralized-recovery-protocol.i"
 	@echo "... model/protocols/decentralized-recovery-protocol.s"
-	@echo "... model/protocols/earp-without-rollback-v2-optimized.o"
-	@echo "... model/protocols/earp-without-rollback-v2-optimized.i"
-	@echo "... model/protocols/earp-without-rollback-v2-optimized.s"
-	@echo "... model/protocols/earp-without-rollback-v2.o"
-	@echo "... model/protocols/earp-without-rollback-v2.i"
-	@echo "... model/protocols/earp-without-rollback-v2.s"
-	@echo "... model/protocols/earp-without-rollback.o"
-	@echo "... model/protocols/earp-without-rollback.i"
-	@echo "... model/protocols/earp-without-rollback.s"
 	@echo "... model/protocols/efficient-assync-recovery-protocol.o"
 	@echo "... model/protocols/efficient-assync-recovery-protocol.i"
 	@echo "... model/protocols/efficient-assync-recovery-protocol.s"
 	@echo "... model/protocols/global-sync-clocks-strategy.o"
 	@echo "... model/protocols/global-sync-clocks-strategy.i"
 	@echo "... model/protocols/global-sync-clocks-strategy.s"
+	@echo "... model/protocols/no-rollback-1.o"
+	@echo "... model/protocols/no-rollback-1.i"
+	@echo "... model/protocols/no-rollback-1.s"
+	@echo "... model/protocols/no-rollback-2-optimized.o"
+	@echo "... model/protocols/no-rollback-2-optimized.i"
+	@echo "... model/protocols/no-rollback-2-optimized.s"
+	@echo "... model/protocols/no-rollback-2.o"
+	@echo "... model/protocols/no-rollback-2.i"
+	@echo "... model/protocols/no-rollback-2.s"
 	@echo "... model/seq-ts-echo-header.o"
 	@echo "... model/seq-ts-echo-header.i"
 	@echo "... model/seq-ts-echo-header.s"

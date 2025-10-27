@@ -587,47 +587,47 @@ src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/efficient-as
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.s"
 	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/efficient-assync-recovery-protocol.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.s
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o: src/applications/model/protocols/earp-without-rollback.cc
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o: src/applications/model/protocols/no-rollback-1.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-1.cc
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.i"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.cc > CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.i
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.i"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-1.cc > CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.i
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.s"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.s
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.s"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-1.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.s
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o: src/applications/model/protocols/earp-without-rollback-v2.cc
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o: src/applications/model/protocols/no-rollback-2.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2.cc
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.i"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.cc > CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.i
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.i"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2.cc > CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.i
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.s
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.s"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.s
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/model/protocols/earp-without-rollback-v2-optimized.cc
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o: src/applications/model/protocols/no-rollback-2-optimized.cc
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/renan/ns-allinone-3.42/ns-3.42/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o -MF CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o.d -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o -c /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2-optimized.cc
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc > CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.i
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.i"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2-optimized.cc > CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.i
 
-src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s"
-	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/earp-without-rollback-v2-optimized.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.s
+src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.s"
+	cd /home/renan/ns-allinone-3.42/ns-3.42/src/applications && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/renan/ns-allinone-3.42/ns-3.42/src/applications/model/protocols/no-rollback-2-optimized.cc -o CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.s
 
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o: src/applications/CMakeFiles/libapplications-obj.dir/flags.make
 src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o: src/applications/model/apps/checkpoint-app.cc
@@ -764,9 +764,9 @@ libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/p
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/decentralized-recovery-protocol.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/global-sync-clocks-strategy.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/efficient-assync-recovery-protocol.cc.o
-libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback.cc.o
-libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2.cc.o
-libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/earp-without-rollback-v2-optimized.cc.o
+libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-1.cc.o
+libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2.cc.o
+libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/protocols/no-rollback-2-optimized.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/apps/checkpoint-app.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/model/data/message-data.cc.o
 libapplications-obj: src/applications/CMakeFiles/libapplications-obj.dir/exception/node-asleep-exception.cc.o

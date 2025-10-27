@@ -237,6 +237,16 @@ class CheckpointStrategy : public Object
      */
     virtual bool interceptSend(Ptr<MessageData> md);
 
+    /** 
+     * Dá a oportunidade de realizar algum processamento imediatamente antes da bateria do nó se 
+     * descarregar.
+     * Não incluir descarga de energia no método, caso contrário ocorrerá erro. Caso haja necessidade
+     * de desconto de energia, utilizar o return com o valor desejado.
+     * 
+     * @return Indica a quantidade de energia gasta com o processamento do método.
+     * */
+    virtual void beforeBatteryDischarge();
+
     /** Indica se existe um procedimento de criação de checkpoint em progresso. */
     bool isCheckpointInProgress();
 

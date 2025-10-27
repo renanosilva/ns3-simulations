@@ -33,6 +33,15 @@ namespace utils
  */
 string convertAddressesToString(vector<Ipv4Address> addresses);
 
+string convertAddressToString(Ipv4Address addresses);
+
+string convertIpv4AddressToString(Ipv4Address addresses);
+
+Ipv4Address convertStringToIpv4Address(string s);
+
+/** Para que funcione, é necessário saber previamente que o Address é um Ipv4Address. */
+Ipv4Address convertAddressToIpv4Address(Address a);
+
 } // namespace utils
 
 #endif /* UTILS_H */
